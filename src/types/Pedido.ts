@@ -1,23 +1,17 @@
-import {Producto} from './Producto';
-
-/* Union Types - Representa los posibles estados de un pedido */
-/* este valor puede ser de uno de estos tipos, y solo esos */
-export type EstadoPedido = 
-|'PENDIENTE' 
-|'CONFIRMADO' 
-|'EN_CAMINO' 
-|'ENTRREGADO'
-|'CANCELADO';
+export type EstadoPedido = 'pendiente' | 'confirmado' | 'en_camino' | 'entregado';
 
 export interface ItemPedido {
-    producto: Producto;
-    cantidad: number;
+  productoId: string;
+  cantidad: number;
+  precioUnitario: number;
 }
 
 export interface Pedido {
-    id: string;
-    items: ItemPedido[];
-    estado: EstadoPedido;
-    total: number;
-    negocioId: string;
+  id: string;
+  usuarioId: string;
+  negocioId: string;
+  items: ItemPedido[];
+  total: number;
+  estado: EstadoPedido;
+  fecha: string;
 }
