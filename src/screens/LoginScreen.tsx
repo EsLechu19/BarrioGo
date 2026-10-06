@@ -6,6 +6,7 @@ import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../navigation/RootStackParamList';
 import { FormField } from '../components/FormField';
 import { PrimaryButton } from '../components/PrimaryButton';
+import { storage } from '../services/storage';
 import { colors } from '../styles/colors';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Login'>
@@ -24,6 +25,7 @@ export default function LoginScreen ({ navigation }: Props){
         setError(newError);
         if(Object.keys(newError).length === 0){
             console.log('Email: ',email,'Password: ',password)
+            storage.saveSession({ nombre: email.split('@')[0] ?? email, email });
             navigation.replace('Tabs');
         }
     }

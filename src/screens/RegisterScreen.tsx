@@ -5,6 +5,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { RootStackParamList } from '../navigation/RootStackParamList';
 import { FormField } from '../components/FormField';
 import { PrimaryButton } from '../components/PrimaryButton';
+import { storage } from '../services/storage';
 import { colors } from '../styles/colors';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Register'>
@@ -25,6 +26,7 @@ export default function RegisterScreen({ navigation }: Props) {
         if (!password.trim()) newError.password = 'La contraseña es necesaria';
         setError(newError);
         if (Object.keys(newError).length === 0) {
+            storage.saveSession({ nombre, email });
             navigation.navigate('Tabs');
         }
     };

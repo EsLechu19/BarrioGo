@@ -1,12 +1,19 @@
 import { StyleSheet, Text, View, ImageBackground, Image } from 'react-native'
+import { useEffect } from 'react';
 import { RootStackParamList } from '../navigation/RootStackParamList'
 import { NativeStackScreenProps } from '@react-navigation/native-stack'
 import { PrimaryButton } from '../components/PrimaryButton';
+import { storage } from '../services/storage';
 import { colors } from '../styles/colors';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Splash'>
 
 export default function SplashScreen({ navigation }: Props) {
+    useEffect(() => {
+        storage.loadSession().then((session) => {
+            if (session) navigation.replace('Tabs');
+        });
+    }, [navigation]);
     return (
         <ImageBackground source={require('../../assets/img/fondo.jpg')} style={styles.background}>
             <View style={styles.container}>
