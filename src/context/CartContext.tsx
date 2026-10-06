@@ -1,7 +1,8 @@
-import { createContext, useCallback, useContext, useMemo, useState } from 'react';
+import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import type { ReactNode } from 'react';
 import { ItemPedido } from '../types/Pedido';
 import { Producto } from '../types/Producto';
+import { storage } from '../services/storage';
 
 interface CartContextValue {
   items: ItemPedido[];
@@ -18,6 +19,18 @@ const CartContext = createContext<CartContextValue | null>(null);
 
 export function CartProvider({ children }: { children: ReactNode }) {
   const [items, setItems] = useState<ItemPedido[]>([]);
+  const [hydrated, setHydrated] = useState<boolean>(false);
+
+  useEffect(() => {
+    storage.loadCart().then((saved) => {
+      if (saved) setItems(saved);
+      setHydrated(true);
+    });
+  }, []);
+
+  useEffect(() => {
+    if (hydrated) storage.saveCart(items);
+  }, [items, hydrated]);
 
   const add = useCallback((producto: Producto, cantidad = 1) => {
     setItems((prev) => {

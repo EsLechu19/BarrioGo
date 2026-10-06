@@ -1,5 +1,6 @@
-import { createContext, useCallback, useContext, useMemo, useState } from 'react';
+import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import type { ReactNode } from 'react';
+import { storage } from '../services/storage';
 
 // Favoritos en memoria para APF2. En el siguiente feature se persiste
 // con AsyncStorage (Cap. III 3.3 del informe ejemplo).
@@ -13,6 +14,18 @@ const FavoritesContext = createContext<FavoritesContextValue | null>(null);
 
 export function FavoritesProvider({ children }: { children: ReactNode }) {
   const [ids, setIds] = useState<string[]>([]);
+  const [hydrated, setHydrated] = useState<boolean>(false);
+
+  useEffect(() => {
+    storage.loadFavorites().then((saved) => {
+      if (saved) setIds(saved);
+      setHydrated(true);
+    });
+  }, []);
+
+  useEffect(() => {
+    if (hydrated) storage.saveFavorites(ids);
+  }, [ids, hydrated]);
 
   const toggle = useCallback((negocioId: string) => {
     setIds((prev) =>
