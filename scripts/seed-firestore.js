@@ -2,13 +2,14 @@
 // Uso: 1) descargar service-account.json de la consola (Cuentas de servicio)
 //      2) guardarlo en la RAÍZ como service-account.json (NO se sube al repo)
 //      3) npm run seed
-const admin = require('firebase-admin');
+const { initializeApp, cert } = require('firebase-admin/app');
+const { getFirestore } = require('firebase-admin/firestore');
 const serviceAccount = require('../service-account.json');
 const negocios = require('../src/data/negocios.json');
 const productos = require('../src/data/productos.json');
 
-admin.initializeApp({ credential: admin.credential.cert(serviceAccount) });
-const db = admin.firestore();
+initializeApp({ credential: cert(serviceAccount) });
+const db = getFirestore();
 
 (async () => {
   const batch = db.batch();
