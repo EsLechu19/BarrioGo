@@ -1,7 +1,9 @@
 import { Negocio } from '../types/Negocio';
 
-// Misma data que estaba hardcodeada en HomeScreen.
-// Ahora vive acá como fuente del API local + fallback offline.
+// Fuente del API local + fallback offline.
+// 15 negocios: suficiente para que FlatList, buscador y scroll se vean
+// reales en la demo, sin peso de imágenes que rompa rendimiento.
+// (Espejo en scripts/mock-server.js — Node plano no importa .ts.)
 export const negociosMock: Negocio[] = [
   {
     id: '1',
@@ -47,5 +49,129 @@ export const negociosMock: Negocio[] = [
     tiempoEstimado: '5-10 min',
     distancia: '0.4 km',
     envioGratis: true,
+  },
+  {
+    id: '5',
+    nombre: 'Polleria El Corralito',
+    imagen: 'https://images.rappi.pe/restaurants_logo/1871458496846096-1774365845062.jpg',
+    rating: 4.4,
+    opiniones: 203,
+    tiempoEstimado: '15-25 min',
+    distancia: '1.0 km',
+    envioGratis: true,
+  },
+  {
+    id: '6',
+    nombre: 'Chifa Mandarín',
+    imagen:
+      'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTK7PL9nvCC4AO4q6M7QiYztfQWqIJAIXnmxNN8zz-ICQoed7ZJOEZ9lFAF&s=10',
+    rating: 4.2,
+    opiniones: 64,
+    tiempoEstimado: '20-30 min',
+    distancia: '1.5 km',
+    envioGratis: false,
+    envioMinimo: 'Envío gratis desde S/30',
+  },
+  {
+    id: '7',
+    nombre: 'Menú Doña Rosa',
+    imagen:
+      'https://img.magnific.com/vector-premium/plantilla-vector-diseno-logotipo-mascota-pollo_441059-165.jpg?semt=ais_hybrid&w=740&q=80',
+    rating: 4.7,
+    opiniones: 312,
+    tiempoEstimado: '10-15 min',
+    distancia: '0.5 km',
+    envioGratis: true,
+  },
+  {
+    id: '8',
+    nombre: 'Broaster Kike',
+    imagen:
+      'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRgXNJgsPzLYm41MJPlizF__tQb5LYI6QvwebJ_toMCg6a0aj489CYRgkcu&s=10',
+    rating: 4.0,
+    opiniones: 45,
+    tiempoEstimado: '10-20 min',
+    distancia: '0.9 km',
+    envioGratis: false,
+    envioMinimo: 'Envío S/3',
+  },
+  {
+    id: '9',
+    nombre: 'Chifa Sabor Oriental',
+    imagen:
+      'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTK7PL9nvCC4AO4q6M7QiYztfQWqIJAIXnmxNN8zz-ICQoed7ZJOEZ9lFAF&s=10',
+    rating: 4.5,
+    opiniones: 187,
+    tiempoEstimado: '25-35 min',
+    distancia: '2.1 km',
+    envioGratis: false,
+    envioMinimo: 'Envío gratis desde S/35',
+  },
+  {
+    id: '10',
+    nombre: 'Polleria La Brasa Roja',
+    imagen:
+      'https://img.magnific.com/vector-premium/plantilla-vector-diseno-logotipo-mascota-pollo_441059-165.jpg?semt=ais_hybrid&w=740&q=80',
+    rating: 4.3,
+    opiniones: 156,
+    tiempoEstimado: '20-25 min',
+    distancia: '1.3 km',
+    envioGratis: true,
+  },
+  {
+    id: '11',
+    nombre: 'Anticuchos La Tía',
+    imagen: 'https://images.rappi.pe/restaurants_logo/1871458496846096-1774365845062.jpg',
+    rating: 4.8,
+    opiniones: 421,
+    tiempoEstimado: '15-20 min',
+    distancia: '0.6 km',
+    envioGratis: true,
+  },
+  {
+    id: '12',
+    nombre: 'Chifa Fu Kong',
+    imagen:
+      'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTK7PL9nvCC4AO4q6M7QiYztfQWqIJAIXnmxNN8zz-ICQoed7ZJOEZ9lFAF&s=10',
+    rating: 4.1,
+    opiniones: 52,
+    tiempoEstimado: '30-40 min',
+    distancia: '2.5 km',
+    envioGratis: false,
+    envioMinimo: 'Envío S/5',
+  },
+  {
+    id: '13',
+    nombre: 'Menú El Saborcito',
+    imagen: 'https://images.rappi.pe/restaurants_logo/1871458496846096-1774365845062.jpg',
+    rating: 4.4,
+    opiniones: 98,
+    tiempoEstimado: '10-15 min',
+    distancia: '0.7 km',
+    envioGratis: false,
+    envioMinimo: 'Envío gratis desde S/15',
+  },
+  {
+    id: '14',
+    nombre: 'Polleria El Pechugón',
+    imagen:
+      'https://img.magnific.com/vector-premium/plantilla-vector-diseno-logotipo-mascota-pollo_441059-165.jpg?semt=ais_hybrid&w=740&q=80',
+    rating: 4.2,
+    opiniones: 73,
+    tiempoEstimado: '15-20 min',
+    distancia: '1.1 km',
+    envioGratis: true,
+  },
+  {
+    id: '15',
+    nombre: 'Chifa Dragón Dorado',
+    imagen:
+      'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTK7PL9nvCC4AO4q6M7QiYztfQWqIJAIXnmxNN8zz-ICQoed7ZJOEZ9lFAF&s=10',
+    rating: 4.6,
+    opiniones: 234,
+    tiempoEstimado: '20-30 min',
+    distancia: '1.6 km',
+    envioGratis: false,
+    envioMinimo: 'Envío gratis desde S/28',
   },
 ];
