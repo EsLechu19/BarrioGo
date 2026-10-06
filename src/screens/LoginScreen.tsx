@@ -16,12 +16,13 @@ export default function LoginScreen ({ navigation }: Props){
     const [email,setEmail] = useState('');
     const [password,setPassword] = useState('');
     const [error,setError] = useState<{email?: string; password?: string;}>({});
-    const isValidEmail = (value: string): boolean => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
+    const isValidEmail = (value: string): boolean => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value.trim());
     const handleLogin = () => {
         const newError: {email?:string;password?:string} = {};
         if(!email.trim()) newError.email = 'El correo es necesario';
         else if(!isValidEmail(email)) newError.email = 'Ingresa un correo válido';
-        if(!password.trim()) newError.password = 'La contraseña es necesaria';
+        if(!password) newError.password = 'La contraseña es necesaria';
+        else if(password.length < 6) newError.password = 'Mínimo 6 caracteres';
         setError(newError);
         if(Object.keys(newError).length === 0){
             console.log('Email: ',email,'Password: ',password)
