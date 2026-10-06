@@ -21,6 +21,7 @@
   },
   "devDependencies": {
     "@types/react": "~19.2.2",
+    "firebase-admin": "^14.5.0",
     "typescript": "~6.0.3"
   },
   "scripts": {
@@ -28,7 +29,8 @@
     "android": "expo start --android",
     "ios": "expo start --ios",
     "web": "expo start --web",
-    "mock-api": "node scripts/mock-server.js"
+    "mock-api": "node scripts/mock-server.js",
+    "seed": "node scripts/seed-firestore.js"
   },
   "private": true
 }
