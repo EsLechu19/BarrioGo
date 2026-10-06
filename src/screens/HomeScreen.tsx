@@ -9,7 +9,7 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { BottomTabScreenProps } from '@react-navigation/bottom-tabs';
 import { CompositeScreenProps } from '@react-navigation/native';
@@ -17,6 +17,7 @@ import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { Negocio } from '../types/Negocio';
 import { RestaurantCard } from '../components/RestaurantCard';
 import { getNegocios } from '../services/api';
+import { UserCoords, formatDistancia, getUserCoords, haversineKm } from '../services/location';
 import { useFavorites } from '../context/FavoritesContext';
 import { RootStackParamList } from '../navigation/RootStackParamList';
 import { TabParamList } from '../navigation/TabParamList';
@@ -34,6 +35,7 @@ export default function HomeScreen({ navigation }: Props) {
   const [error, setError] = useState<string | null>(null);
   const [refreshing, setRefreshing] = useState<boolean>(false);
   const [query, setQuery] = useState<string>('');
+  const [userLoc, setUserLoc] = useState<UserCoords | null>(null);
   const { toggle, esFavorito } = useFavorites();
 
   const load = useCallback(async (isRefresh = false) => {
@@ -56,6 +58,7 @@ export default function HomeScreen({ navigation }: Props) {
 
   useEffect(() => {
     load();
+    getUserCoords().then(setUserLoc);
   }, [load]);
 
   const handleMore = () => {
@@ -65,9 +68,20 @@ export default function HomeScreen({ navigation }: Props) {
     console.log('Ver todos');
   };
 
-  const filtered: Negocio[] = query.trim()
-    ? negocios.filter((n) => n.nombre.toLowerCase().includes(query.trim().toLowerCase()))
-    : negocios;
+  const filtered: Negocio[] = useMemo(() => {
+    const base = query.trim()
+      ? negocios.filter((n) => n.nombre.toLowerCase().includes(query.trim().toLowerCase()))
+      : negocios;
+    // Sin GPS: orden del API. Con GPS: distancia real + orden por cercanía.
+    if (!userLoc) return base;
+    return base
+      .map((n) => {
+        const km = haversineKm(userLoc, { latitude: n.lat, longitude: n.lng });
+        return { negocio: { ...n, distancia: formatDistancia(km) }, km };
+      })
+      .sort((a, b) => a.km - b.km)
+      .map((r) => r.negocio);
+  }, [negocios, query, userLoc]);
 
   if (loading && !refreshing) {
     return (
@@ -160,6 +174,11 @@ export default function HomeScreen({ navigation }: Props) {
                 <Text style={styles.seeAll}>Ver todos</Text>
               </TouchableOpacity>
             </View>
+            <Text style={styles.gpsNote}>
+              {userLoc
+                ? '📍 Ordenado por tu ubicación real'
+                : 'Sin ubicación: activá el GPS para ordenar por cercanía'}
+            </Text>
           </View>
         }
         ListEmptyComponent={
@@ -213,6 +232,7 @@ const styles = StyleSheet.create({
   input: { flex: 1, paddingVertical: 10 },
 
   sectionHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+  gpsNote: { color: colors.textMuted, fontSize: 12 },
   sectionTitle: { color: colors.textPrimary, fontSize: 18, fontWeight: '800' },
   seeAll: { color: colors.primary, fontSize: 14, fontWeight: '700' },
 });

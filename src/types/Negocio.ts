@@ -8,4 +8,8 @@ export interface Negocio {
     distancia: string;
     envioGratis: boolean;
     envioMinimo?: string;
+    // Coordenadas del local (Lima). El GPS del cliente se compara
+    // contra esto para ordenar por cercanía real.
+    lat: number;
+    lng: number;
 }

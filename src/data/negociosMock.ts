@@ -1,8 +1,8 @@
 import { Negocio } from '../types/Negocio';
 
 // Fuente del API local + fallback offline.
-// 15 negocios: suficiente para que FlatList, buscador y scroll se vean
-// reales en la demo, sin peso de imágenes que rompa rendimiento.
+// 15 negocios de San Juan de Lurigancho con coordenadas reales
+// aproximadas para ordenar por cercanía con el GPS del cliente.
 // (Espejo en scripts/mock-server.js — Node plano no importa .ts.)
 export const negociosMock: Negocio[] = [
   {
@@ -15,6 +15,8 @@ export const negociosMock: Negocio[] = [
     tiempoEstimado: '15-20 min',
     distancia: '0.8 km',
     envioGratis: true,
+    lat: -11.9785,
+    lng: -77.0025,
   },
   {
     id: '2',
@@ -27,6 +29,8 @@ export const negociosMock: Negocio[] = [
     distancia: '1.2 km',
     envioGratis: false,
     envioMinimo: 'Envío gratis desde S/25',
+    lat: -11.973,
+    lng: -76.991,
   },
   {
     id: '3',
@@ -38,6 +42,8 @@ export const negociosMock: Negocio[] = [
     distancia: '1.8 km',
     envioGratis: false,
     envioMinimo: 'Envío gratis desde S/5',
+    lat: -11.968,
+    lng: -77.008,
   },
   {
     id: '4',
@@ -49,6 +55,8 @@ export const negociosMock: Negocio[] = [
     tiempoEstimado: '5-10 min',
     distancia: '0.4 km',
     envioGratis: true,
+    lat: -11.9805,
+    lng: -76.997,
   },
   {
     id: '5',
@@ -59,6 +67,8 @@ export const negociosMock: Negocio[] = [
     tiempoEstimado: '15-25 min',
     distancia: '1.0 km',
     envioGratis: true,
+    lat: -11.99,
+    lng: -77.004,
   },
   {
     id: '6',
@@ -71,6 +81,8 @@ export const negociosMock: Negocio[] = [
     distancia: '1.5 km',
     envioGratis: false,
     envioMinimo: 'Envío gratis desde S/30',
+    lat: -11.97,
+    lng: -76.993,
   },
   {
     id: '7',
@@ -82,6 +94,8 @@ export const negociosMock: Negocio[] = [
     tiempoEstimado: '10-15 min',
     distancia: '0.5 km',
     envioGratis: true,
+    lat: -11.984,
+    lng: -77.003,
   },
   {
     id: '8',
@@ -94,6 +108,8 @@ export const negociosMock: Negocio[] = [
     distancia: '0.9 km',
     envioGratis: false,
     envioMinimo: 'Envío S/3',
+    lat: -11.976,
+    lng: -76.994,
   },
   {
     id: '9',
@@ -106,6 +122,8 @@ export const negociosMock: Negocio[] = [
     distancia: '2.1 km',
     envioGratis: false,
     envioMinimo: 'Envío gratis desde S/35',
+    lat: -11.965,
+    lng: -77.01,
   },
   {
     id: '10',
@@ -117,6 +135,8 @@ export const negociosMock: Negocio[] = [
     tiempoEstimado: '20-25 min',
     distancia: '1.3 km',
     envioGratis: true,
+    lat: -11.988,
+    lng: -76.99,
   },
   {
     id: '11',
@@ -127,6 +147,8 @@ export const negociosMock: Negocio[] = [
     tiempoEstimado: '15-20 min',
     distancia: '0.6 km',
     envioGratis: true,
+    lat: -11.981,
+    lng: -77.005,
   },
   {
     id: '12',
@@ -138,6 +160,8 @@ export const negociosMock: Negocio[] = [
     tiempoEstimado: '15-20 min',
     distancia: '0.9 km',
     envioGratis: true,
+    lat: -11.986,
+    lng: -76.995,
   },
   {
     id: '13',
@@ -149,6 +173,8 @@ export const negociosMock: Negocio[] = [
     distancia: '0.7 km',
     envioGratis: false,
     envioMinimo: 'Envío gratis desde S/15',
+    lat: -11.979,
+    lng: -77.0005,
   },
   {
     id: '14',
@@ -160,6 +186,8 @@ export const negociosMock: Negocio[] = [
     tiempoEstimado: '15-20 min',
     distancia: '1.1 km',
     envioGratis: true,
+    lat: -11.993,
+    lng: -76.998,
   },
   {
     id: '15',
@@ -172,5 +200,7 @@ export const negociosMock: Negocio[] = [
     distancia: '1.6 km',
     envioGratis: false,
     envioMinimo: 'Envío gratis desde S/28',
+    lat: -11.971,
+    lng: -77.002,
   },
 ];
