@@ -1,51 +1,25 @@
-import { ActivityIndicator, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import { useEffect, useState } from 'react';
+import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { BottomTabScreenProps } from '@react-navigation/bottom-tabs';
-import { CompositeScreenProps } from '@react-navigation/native';
-import { NativeStackScreenProps } from '@react-navigation/native-stack';
-import { RootStackParamList } from '../navigation/RootStackParamList';
-import { TabParamList } from '../navigation/TabParamList';
-import { useCart } from '../context/CartContext';
-import { Session, storage } from '../services/storage';
+import { useAuth } from '../context/AuthContext';
 import { colors } from '../styles/colors';
 
-type Props = CompositeScreenProps<
-  BottomTabScreenProps<TabParamList, 'PerfilTab'>,
-  NativeStackScreenProps<RootStackParamList>
->;
-
-export default function PerfilScreen({ navigation }: Props) {
+export default function PerfilScreen() {
   const insets = useSafeAreaInsets();
-  const { clear } = useCart();
-  const [session, setSession] = useState<Session | null>(null);
-  const [loading, setLoading] = useState<boolean>(true);
+  const { user, rol, logout } = useAuth();
 
-  useEffect(() => {
-    storage.loadSession().then((s) => {
-      setSession(s);
-      setLoading(false);
-    });
-  }, []);
-
-  const handleLogout = () => {
-    storage.clearSession();
-    clear();
-    navigation.getParent()?.navigate('Login');
+  const handleLogout = async () => {
+    await logout();
+    // La raíz (App.tsx) monta AuthNavigator sola al cerrarse la sesión.
   };
 
   return (
     <View style={[styles.container, { paddingTop: insets.top + 12 }]}>
       <Text style={styles.title}>Mi perfil</Text>
-      {loading ? (
-        <ActivityIndicator size="large" color={colors.primary} />
-      ) : (
-        <View style={styles.card}>
-          <Text style={styles.name}>{session?.nombre ?? 'Invitado'}</Text>
-          <Text style={styles.email}>{session?.email ?? 'Sin sesión guardada'}</Text>
-          <Text style={styles.note}>Sesión local — login real con Firebase en APF3.</Text>
-        </View>
-      )}
+      <View style={styles.card}>
+        <Text style={styles.name}>{user?.email?.split('@')[0] ?? 'Invitado'}</Text>
+        <Text style={styles.email}>{user?.email ?? 'Sin sesión'}</Text>
+        <Text style={styles.role}>Rol: {rol ?? 'cliente'} (Firebase Auth)</Text>
+      </View>
       <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
         <Text style={styles.logoutText}>Cerrar sesión</Text>
       </TouchableOpacity>
@@ -66,7 +40,7 @@ const styles = StyleSheet.create({
   },
   name: { color: colors.textPrimary, fontSize: 18, fontWeight: '800' },
   email: { color: colors.textMuted, fontSize: 14 },
-  note: { color: colors.textPlaceholder, fontSize: 12, marginTop: 4 },
+  role: { color: colors.textPlaceholder, fontSize: 12, marginTop: 4 },
   logoutButton: {
     paddingVertical: 14,
     borderRadius: 14,
