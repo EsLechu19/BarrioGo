@@ -130,15 +130,14 @@ export const negociosMock: Negocio[] = [
   },
   {
     id: '12',
-    nombre: 'Chifa Fu Kong',
+    nombre: 'Ping Chung Long',
     imagen:
       'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTK7PL9nvCC4AO4q6M7QiYztfQWqIJAIXnmxNN8zz-ICQoed7ZJOEZ9lFAF&s=10',
-    rating: 4.1,
-    opiniones: 52,
-    tiempoEstimado: '30-40 min',
-    distancia: '2.5 km',
-    envioGratis: false,
-    envioMinimo: 'Envío S/5',
+    rating: 4.9,
+    opiniones: 512,
+    tiempoEstimado: '15-20 min',
+    distancia: '0.9 km',
+    envioGratis: true,
   },
   {
     id: '13',
