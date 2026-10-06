@@ -11,18 +11,30 @@ import {
 } from 'react-native';
 import { useCallback, useEffect, useState } from 'react';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { BottomTabScreenProps } from '@react-navigation/bottom-tabs';
+import { CompositeScreenProps } from '@react-navigation/native';
+import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { Negocio } from '../types/Negocio';
 import { RestaurantCard } from '../components/RestaurantCard';
 import { getNegocios } from '../services/api';
+import { useFavorites } from '../context/FavoritesContext';
+import { RootStackParamList } from '../navigation/RootStackParamList';
+import { TabParamList } from '../navigation/TabParamList';
 import { colors } from '../styles/colors';
 
-export default function HomeScreen() {
+type Props = CompositeScreenProps<
+  BottomTabScreenProps<TabParamList, 'InicioTab'>,
+  NativeStackScreenProps<RootStackParamList>
+>;
+
+export default function HomeScreen({ navigation }: Props) {
   const insets = useSafeAreaInsets();
   const [negocios, setNegocios] = useState<Negocio[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [refreshing, setRefreshing] = useState<boolean>(false);
   const [query, setQuery] = useState<string>('');
+  const { toggle, esFavorito } = useFavorites();
 
   const load = useCallback(async (isRefresh = false) => {
     if (isRefresh) {
@@ -101,7 +113,29 @@ export default function HomeScreen() {
       <FlatList
         data={filtered}
         keyExtractor={(item) => item.id}
-        renderItem={({ item }) => <RestaurantCard negocio={item} />}
+        renderItem={({ item }) => (
+          <View>
+            <TouchableOpacity
+              activeOpacity={0.85}
+              onPress={() => navigation.navigate('Detalle', { negocioId: item.id })}
+            >
+              <RestaurantCard negocio={item} />
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.favRow}
+              onPress={() => toggle(item.id)}
+            >
+              <Ionicons
+                name={esFavorito(item.id) ? 'heart' : 'heart-outline'}
+                size={18}
+                color={esFavorito(item.id) ? colors.primary : colors.textPlaceholder}
+              />
+              <Text style={styles.favText}>
+                {esFavorito(item.id) ? 'En favoritos' : 'Guardar en favoritos'}
+              </Text>
+            </TouchableOpacity>
+          </View>
+        )}
         contentContainerStyle={styles.listContent}
         ItemSeparatorComponent={() => <View style={styles.separator} />}
         ListHeaderComponent={
@@ -159,6 +193,8 @@ const styles = StyleSheet.create({
   locationAddress: { color: colors.textPrimary, fontSize: 14, fontWeight: 'bold' },
 
   listContent: { gap: 12, paddingBottom: 24 },
+  favRow: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingTop: 6, paddingLeft: 4 },
+  favText: { color: colors.textMuted, fontSize: 13, fontWeight: '600' },
   separator: { height: 12 },
   headerBlock: { gap: 12, marginBottom: 4 },
   greeting: { gap: 2 },

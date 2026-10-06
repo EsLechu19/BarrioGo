@@ -25,7 +25,7 @@ export default function RegisterScreen({ navigation }: Props) {
         if (!password.trim()) newError.password = 'La contraseña es necesaria';
         setError(newError);
         if (Object.keys(newError).length === 0) {
-            navigation.navigate('Home');
+            navigation.navigate('Tabs');
         }
     };
 

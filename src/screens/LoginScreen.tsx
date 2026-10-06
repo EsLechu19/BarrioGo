@@ -24,7 +24,7 @@ export default function LoginScreen ({ navigation }: Props){
         setError(newError);
         if(Object.keys(newError).length === 0){
             console.log('Email: ',email,'Password: ',password)
-            navigation.replace('Home');
+            navigation.replace('Tabs');
         }
     }
 
