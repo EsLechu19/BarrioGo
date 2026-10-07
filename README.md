@@ -76,8 +76,11 @@ npm run seed   # 15 negocios + 48 productos
 - **APF1** — idea, mockups, pantallas base, tipos del dominio.
 - **APF2** (rama `APF2`, en GitHub) — Tabs + Detalle + Carrito, FlatList,
   consumo de API, formularios validados, AsyncStorage, GPS por cercanía.
-- **APF3** (en curso) — F1 Auth real con roles ✔, F2 Firestore + seed ✔,
-  F3 pedidos con tracking, F4 panel negocio, F5 notificaciones.
+- **APF3** (rama `feature/apf3-firebase-base`) — F1 Auth real con roles ✔,
+  F2 Firestore + seed (15 negocios, 48 productos) ✔, F3 pedidos con
+  tracking en tiempo real ✔, F4 panel negocio (estados + alta de menú) ✔,
+  F5 notificaciones locales ✔ (activas en dev build/APK; en Expo Go son
+  no-op desde SDK 53).
 
 ## Convenciones
 
