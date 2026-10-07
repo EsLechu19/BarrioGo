@@ -8,10 +8,21 @@ type Props = {
 }
 
 export function RestaurantCard({ negocio }: Props) {
+    // uri vacía ('') rompe <Image>: solo se renderiza con URL real.
+    const foto: string | null =
+        negocio.portada?.trim() ? negocio.portada
+        : negocio.imagen?.trim() ? negocio.imagen
+        : null;
     return (
         <View style={styles.card}>
             {/* Portada si existe, con fallback al icono (S3 apf6-negocio-propio). */}
-            <Image source={{ uri: negocio.portada ? negocio.portada : negocio.imagen }} style={styles.restaurantImage} resizeMode="cover" />
+            {foto ? (
+                <Image source={{ uri: foto }} style={styles.restaurantImage} resizeMode="cover" />
+            ) : (
+                <View style={[styles.restaurantImage, styles.placeholder]}>
+                    <Ionicons name='storefront-outline' size={28} color={colors.textPlaceholder} />
+                </View>
+            )}
             {/*Informacion */}
             <View style={styles.info}>
                 {/* Fila 1: nombre + favorito */}
@@ -46,6 +57,7 @@ const styles = StyleSheet.create({
     // Card del restaurante
     card: { flexDirection: 'row',alignItems:'center', gap: 12, padding: 12, borderWidth: 1, borderColor: colors.border, borderRadius: 20, backgroundColor: colors.surface },
     restaurantImage: { width: 60, height: 60, borderRadius: 12 },
+    placeholder: { justifyContent: 'center', alignItems: 'center', backgroundColor: colors.background },
 
     // Informacion del restaurante
     info: { flex: 1, gap: 6 },
