@@ -1,6 +1,18 @@
 import { Negocio } from '../types/Negocio';
 import { Producto } from '../types/Producto';
-import { collection, doc, getDoc, getDocs, query, where } from 'firebase/firestore';
+import { EstadoPedido, ItemPedido, Pedido } from '../types/Pedido';
+import {
+  addDoc,
+  collection,
+  doc,
+  getDoc,
+  getDocs,
+  onSnapshot,
+  orderBy,
+  query,
+  where,
+} from 'firebase/firestore';
+import type { Unsubscribe } from 'firebase/firestore';
 import { firebaseReady, getFirestoreDb } from './firebase';
 
 // Toda lectura de datos pasa por acá. Ninguna pantalla usa fetch ni
@@ -107,4 +119,131 @@ export async function getMenu(negocioId: string): Promise<Producto[]> {
     await new Promise((resolve) => setTimeout(resolve, 500));
   }
   return productosMock.filter((p) => p.negocioId === negocioId);
+}
+
+// ---------- F3 Pedidos con tracking ----------
+
+const FIREBASE_NO_CONFIG_MSG =
+  'Firebase no configurado: falta el .env (ver .env.example)';
+
+export interface CrearPedidoInput {
+  usuarioId: string;
+  negocioId: string;
+  items: ItemPedido[];
+  total: number;
+}
+
+const ESTADOS_PEDIDO: readonly EstadoPedido[] = [
+  'pendiente',
+  'confirmado',
+  'en_camino',
+  'entregado',
+];
+
+function isEstadoPedido(value: unknown): value is EstadoPedido {
+  return (
+    typeof value === 'string' &&
+    (ESTADOS_PEDIDO as readonly string[]).includes(value)
+  );
+}
+
+function isItemPedido(value: unknown): value is ItemPedido {
+  return (
+    typeof value === 'object' &&
+    value !== null &&
+    typeof (value as ItemPedido).productoId === 'string' &&
+    typeof (value as ItemPedido).cantidad === 'number' &&
+    typeof (value as ItemPedido).precioUnitario === 'number'
+  );
+}
+
+function isPedido(value: unknown): value is Pedido {
+  if (typeof value !== 'object' || value === null) return false;
+  const p = value as Pedido;
+  return (
+    typeof p.id === 'string' &&
+    typeof p.usuarioId === 'string' &&
+    typeof p.negocioId === 'string' &&
+    Array.isArray(p.items) &&
+    p.items.every(isItemPedido) &&
+    typeof p.total === 'number' &&
+    isEstadoPedido(p.estado) &&
+    typeof p.fecha === 'string'
+  );
+}
+
+export async function crearPedido(input: CrearPedidoInput): Promise<string> {
+  if (!firebaseReady) throw new Error(FIREBASE_NO_CONFIG_MSG);
+  if (!input.usuarioId.trim()) throw new Error('Falta el usuario del pedido.');
+  if (!input.negocioId.trim()) throw new Error('Falta el negocio del pedido.');
+  if (input.items.length === 0) throw new Error('El pedido no tiene productos.');
+  if (!(input.total > 0)) throw new Error('El total del pedido no es válido.');
+  try {
+    const ref = await addDoc(collection(getFirestoreDb(), 'pedidos'), {
+      usuarioId: input.usuarioId,
+      negocioId: input.negocioId,
+      items: input.items,
+      total: input.total,
+      estado: 'pendiente',
+      fecha: new Date().toISOString(),
+    });
+    return ref.id;
+  } catch (e) {
+    throw new Error(
+      e instanceof Error
+        ? `No se pudo crear el pedido: ${e.message}`
+        : 'No se pudo crear el pedido. Intentá de nuevo.',
+    );
+  }
+}
+
+export function escucharMisPedidos(
+  usuarioId: string,
+  cb: (pedidos: Pedido[]) => void,
+  onError?: (e: Error) => void,
+): Unsubscribe {
+  if (!firebaseReady) return () => {};
+  if (!usuarioId.trim()) return () => {};
+  try {
+    const q = query(
+      collection(getFirestoreDb(), 'pedidos'),
+      where('usuarioId', '==', usuarioId),
+      orderBy('fecha', 'desc'),
+    );
+    return onSnapshot(
+      q,
+      (snap) => {
+        try {
+          const data: unknown = snap.docs.map((d) => ({
+            id: d.id,
+            ...d.data(),
+          }));
+          const pedidos: Pedido[] = Array.isArray(data)
+            ? data.filter(isPedido)
+            : [];
+          cb(pedidos);
+        } catch (e) {
+          onError?.(
+            e instanceof Error
+              ? e
+              : new Error('No se pudieron leer tus pedidos.'),
+          );
+        }
+      },
+      (err: Error) => {
+        onError?.(
+          err instanceof Error
+            ? err
+            : new Error('Se perdió la conexión con tus pedidos.'),
+        );
+      },
+    );
+  } catch (e) {
+    onError?.(
+      e instanceof Error
+        ? e
+        : new Error('No se pudo escuchar tus pedidos.'),
+    );
+    return () => {};
+  }
 }
