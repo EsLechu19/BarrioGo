@@ -544,17 +544,26 @@ export async function subirFotoNegocio(
     ) {
       throw e;
     }
-    // Si el servidor respondió algo útil (serverResponse), se muestra para
-    // diagnosticar sin adivinar.
-    const detalleServidor: string =
-      e instanceof Object && 'serverResponse' in e &&
-      typeof (e as { serverResponse?: unknown }).serverResponse === 'string'
-        ? ` Servidor: ${(e as { serverResponse: string }).serverResponse.slice(0, 200)}`
-        : '';
-    throw new Error(
-      e instanceof Error
-        ? `No se pudo subir la foto: ${e.message}.${detalleServidor}`
-        : 'No se pudo subir la foto. Intentá de nuevo.',
-    );
+    // Diagnóstico total: código, mensaje y payload del servidor (si hay).
+    // Temporal hasta cazar el storage/unknown.
+    if (e instanceof Object) {
+      const err = e as {
+        code?: unknown;
+        message?: unknown;
+        serverResponse?: unknown;
+        customData?: unknown;
+      };
+      const volcado: string = JSON.stringify({
+        code: typeof err.code === 'string' ? err.code : null,
+        message: e instanceof Error ? e.message : String(e),
+        serverResponse:
+          typeof err.serverResponse === 'string'
+            ? err.serverResponse.slice(0, 300)
+            : (err.serverResponse ?? null),
+        customData: err.customData ?? null,
+      }).slice(0, 600);
+      throw new Error(`No se pudo subir la foto [diag]: ${volcado}`);
+    }
+    throw new Error('No se pudo subir la foto. Intentá de nuevo.');
   }
 }
