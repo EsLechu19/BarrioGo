@@ -14,9 +14,12 @@ import {
   where,
 } from 'firebase/firestore';
 import type { Unsubscribe } from 'firebase/firestore';
-import { getDownloadURL, ref, uploadBytes } from 'firebase/storage';
-import { firebaseReady, getFirestoreDb, getStorageBucket } from './firebase';
-
+import {
+  firebaseReady,
+  getFirebaseAuth,
+  getFirestoreDb,
+  getStorageBucketName,
+} from './firebase';
 // Toda lectura de datos pasa por acá. Ninguna pantalla usa fetch ni
 // Firestore directo. Cadena de orígenes (el primero que responde gana):
 //   1. Firestore (datos reales, necesita reglas publicadas + seed)
@@ -527,12 +530,33 @@ export async function subirFotoNegocio(
     } catch {
       throw new Error('No se pudo leer la foto elegida. Probá con otra imagen.');
     }
-    const storageRef = ref(
-      getStorageBucket(),
-      `negocios/${negocioId}/${tipo}.jpg`,
+    // Subida por REST en vez del SDK: en este dispositivo el transporte del
+    // SDK falla antes de llegar al servidor (storage/unknown sin respuesta).
+    // El endpoint es el mismo y la lectura es pública por storage.rules.
+    const token = await getFirebaseAuth().currentUser?.getIdToken();
+    if (!token) {
+      throw new Error('Tu sesión expiró. Cerrá sesión y volvé a entrar.');
+    }
+    const objectPath = `negocios/${negocioId}/${tipo}.jpg`;
+    const bucket = getStorageBucketName();
+    const subida = await fetch(
+      `https://firebasestorage.googleapis.com/v0/b/${bucket}/o?uploadType=media&name=${encodeURIComponent(objectPath)}`,
+      {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'image/jpeg',
+        },
+        body: blob,
+      },
     );
-    await uploadBytes(storageRef, blob, { contentType: 'image/jpeg' });
-    const url = await getDownloadURL(storageRef);
+    if (!subida.ok) {
+      const cuerpo: string = await subida.text().catch(() => '');
+      throw new Error(
+        `Storage HTTP ${subida.status}: ${cuerpo.slice(0, 200) || 'sin detalle'}`,
+      );
+    }
+    const url = `https://firebasestorage.googleapis.com/v0/b/${bucket}/o/${encodeURIComponent(objectPath)}?alt=media`;
     await updateDoc(refDoc, tipo === 'icono' ? { imagen: url } : { portada: url });
     return url;
   } catch (e) {
@@ -544,26 +568,7 @@ export async function subirFotoNegocio(
     ) {
       throw e;
     }
-    // Diagnóstico total: código, mensaje y payload del servidor (si hay).
-    // Temporal hasta cazar el storage/unknown.
-    if (e instanceof Object) {
-      const err = e as {
-        code?: unknown;
-        message?: unknown;
-        serverResponse?: unknown;
-        customData?: unknown;
-      };
-      const volcado: string = JSON.stringify({
-        code: typeof err.code === 'string' ? err.code : null,
-        message: e instanceof Error ? e.message : String(e),
-        serverResponse:
-          typeof err.serverResponse === 'string'
-            ? err.serverResponse.slice(0, 300)
-            : (err.serverResponse ?? null),
-        customData: err.customData ?? null,
-      }).slice(0, 600);
-      throw new Error(`No se pudo subir la foto [diag]: ${volcado}`);
-    }
+    if (e instanceof Error) throw e;
     throw new Error('No se pudo subir la foto. Intentá de nuevo.');
   }
 }

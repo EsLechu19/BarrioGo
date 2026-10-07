@@ -57,3 +57,10 @@ export function getStorageBucket(): FirebaseStorage {
   if (!storage) throw new Error('Firebase no configurado: falta el .env (ver .env.example)');
   return storage;
 }
+
+export function getStorageBucketName(): string {
+  if (!firebaseReady || !firebaseConfig.storageBucket) {
+    throw new Error('Firebase no configurado: falta el .env (ver .env.example)');
+  }
+  return firebaseConfig.storageBucket;
+}
