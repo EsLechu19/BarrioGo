@@ -9,6 +9,7 @@ import {
   getDocs,
   onSnapshot,
   query,
+  setDoc,
   updateDoc,
   where,
 } from 'firebase/firestore';
@@ -343,11 +344,71 @@ export async function crearProducto(input: CrearProductoInput): Promise<string> 
       disponible: true,
     });
     return ref.id;
+    } catch (e) {
+      throw new Error(
+        e instanceof Error
+          ? `No se pudo crear el producto: ${e.message}`
+          : 'No se pudo crear el producto. Intentá de nuevo.',
+      );
+    }
+  }
+
+// ---------- F6 Negocio propio por cuenta (S1 Registro + vínculo) ----------
+
+export interface RegistrarNegocioInput {
+  usuarioId: string;
+  nombre: string;
+  descripcion?: string;
+  direccion?: string;
+  lat: number;
+  lng: number;
+}
+
+export async function registrarNegocio(
+  input: RegistrarNegocioInput,
+): Promise<string> {
+  if (!firebaseReady) throw new Error(FIREBASE_NO_CONFIG_MSG);
+  if (!input.usuarioId.trim()) throw new Error('Falta el usuario del negocio.');
+  if (!input.nombre.trim()) throw new Error('El negocio necesita un nombre.');
+  if (!Number.isFinite(input.lat) || !Number.isFinite(input.lng)) {
+    throw new Error('La ubicación del negocio no es válida.');
+  }
+  let negocioId: string;
+  try {
+    const ref = await addDoc(collection(getFirestoreDb(), 'negocios'), {
+      nombre: input.nombre.trim(),
+      descripcion: input.descripcion?.trim() ?? '',
+      direccion: input.direccion?.trim() ?? '',
+      imagen: '',
+      rating: 0,
+      opiniones: 0,
+      tiempoEstimado: '',
+      distancia: '',
+      envioGratis: false,
+      lat: input.lat,
+      lng: input.lng,
+      dueñoId: input.usuarioId,
+    });
+    negocioId = ref.id;
   } catch (e) {
     throw new Error(
       e instanceof Error
-        ? `No se pudo crear el producto: ${e.message}`
-        : 'No se pudo crear el producto. Intentá de nuevo.',
+        ? `No se pudo registrar el negocio: ${e.message}`
+        : 'No se pudo registrar el negocio. Intentá de nuevo.',
     );
   }
+  try {
+    await setDoc(
+      doc(getFirestoreDb(), 'users', input.usuarioId),
+      { rol: 'negocio', negocioId },
+      { merge: true },
+    );
+  } catch (e) {
+    const detalle: string =
+      e instanceof Error ? e.message : 'error desconocido';
+    throw new Error(
+      `El negocio se creó (id ${negocioId}) pero no se pudo vincular a tu cuenta: ${detalle}. Pedí al equipo que en users/${input.usuarioId} ponga negocioId:'${negocioId}' y rol:'negocio'.`,
+    );
+  }
+  return negocioId;
 }

@@ -7,4 +7,5 @@ export type RootStackParamList = {
   Tabs: NavigatorScreenParams<TabParamList> | undefined;
   Detalle: { negocioId: string };
   Carrito: undefined;
+  RegistrarNegocio: undefined;
 };

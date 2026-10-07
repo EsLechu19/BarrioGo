@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useMemo, useState } from 'react';
+import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import type { ReactNode } from 'react';
 import {
   User,
@@ -19,6 +19,7 @@ interface AuthContextValue {
   login: (email: string, password: string) => Promise<void>;
   register: (nombre: string, email: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
+  refreshRol: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null);
@@ -53,6 +54,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [rol, setRol] = useState<Rol | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
 
+  const cargarRol = useCallback(async (uid: string): Promise<void> => {
+    try {
+      const snap = await getDoc(doc(getFirestoreDb(), 'users', uid));
+      const r: unknown = snap.data()?.rol;
+      setRol(isRol(r) ? r : 'cliente');
+    } catch {
+      setRol('cliente');
+    }
+  }, []);
+
   useEffect(() => {
     if (!firebaseReady) {
       setLoading(false);
@@ -62,20 +73,26 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const unsub = onAuthStateChanged(auth, async (u) => {
       setUser(u);
       if (u) {
-        try {
-          const snap = await getDoc(doc(getFirestoreDb(), 'users', u.uid));
-          const r: unknown = snap.data()?.rol;
-          setRol(isRol(r) ? r : 'cliente');
-        } catch {
-          setRol('cliente');
-        }
+        await cargarRol(u.uid);
       } else {
         setRol(null);
       }
       setLoading(false);
     });
     return unsub;
-  }, []);
+  }, [cargarRol]);
+
+  // Relee el rol sin pedir re-login (ej. tras registrar el negocio propio,
+  // para que el tab Negocio aparezca al instante).
+  const refreshRol = useCallback(async (): Promise<void> => {
+    try {
+      if (!firebaseReady) return;
+      const u = getFirebaseAuth().currentUser;
+      if (u) await cargarRol(u.uid);
+    } catch {
+      // Silencioso: el rol se re-lee en el próximo cambio de sesión.
+    }
+  }, [cargarRol]);
 
   const login = async (email: string, password: string): Promise<void> => {
     await signInWithEmailAndPassword(
@@ -105,8 +122,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const value = useMemo(
-    () => ({ user, rol, loading, login, register, logout }),
-    [user, rol, loading],
+    () => ({ user, rol, loading, login, register, logout, refreshRol }),
+    [user, rol, loading, login, register, logout, refreshRol],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

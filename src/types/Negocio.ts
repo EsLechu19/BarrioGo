@@ -12,4 +12,7 @@ export interface Negocio {
     // contra esto para ordenar por cercanía real.
     lat: number;
     lng: number;
+    descripcion?: string;
+    direccion?: string;
+    dueñoId?: string;
 }
