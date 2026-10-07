@@ -520,12 +520,31 @@ export async function subirFotoNegocio(
         'Falta configurar Cloudinary: poné EXPO_PUBLIC_CLOUDINARY_CLOUD y EXPO_PUBLIC_CLOUDINARY_PRESET en tu .env (ver .env.example).',
       );
     }
+    // El fetch de este runtime rechaza el objeto {uri,type,name} como parte
+    // del form ("Unsupported FormDataPart"). Vía segura: Blob por XHR y de
+    // ahí data-URL en base64 (texto plano, siempre aceptado por FormData y
+    // por Cloudinary como parámetro `file`).
+    const blob = await new Promise<Blob>((resolve, reject) => {
+      const xhr = new XMLHttpRequest();
+      xhr.onload = () => resolve(xhr.response as Blob);
+      xhr.onerror = () =>
+        reject(new Error('No se pudo leer la foto elegida.'));
+      xhr.responseType = 'blob';
+      xhr.open('GET', uriLocal, true);
+      xhr.send(null);
+    }).catch(() => {
+      throw new Error('No se pudo leer la foto elegida. Probá con otra imagen.');
+    });
+    const dataUrl: string = await new Promise<string>((resolve, reject) => {
+      const lector = new FileReader();
+      lector.onload = () => resolve(String(lector.result));
+      lector.onerror = () => reject(new Error('No se pudo procesar la foto.'));
+      lector.readAsDataURL(blob);
+    }).catch(() => {
+      throw new Error('No se pudo procesar la foto. Probá con otra imagen.');
+    });
     const form = new FormData();
-    form.append('file', {
-      uri: uriLocal,
-      type: 'image/jpeg',
-      name: `${tipo}.jpg`,
-    } as unknown as Blob);
+    form.append('file', dataUrl);
     form.append('upload_preset', preset);
     form.append('folder', `barriogo/${negocioId}`);
     let url: string;
