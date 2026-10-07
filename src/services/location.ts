@@ -8,13 +8,27 @@ export interface UserCoords {
   longitude: number;
 }
 
-export async function getUserCoords(): Promise<UserCoords | null> {
+export async function getUserCoords(timeoutMs = 8000): Promise<UserCoords | null> {
   try {
     const { status } = await Location.requestForegroundPermissionsAsync();
     if (status !== 'granted') return null;
-    const pos = await Location.getCurrentPositionAsync({
-      accuracy: Location.Accuracy.Balanced,
-    });
+    // Vía rápida: última posición conocida (instantánea, sin esperar al GPS).
+    const conocida = await Location.getLastKnownPositionAsync();
+    if (conocida) {
+      return {
+        latitude: conocida.coords.latitude,
+        longitude: conocida.coords.longitude,
+      };
+    }
+    // Si no hay caché, fix fresco pero con tope: pasado el timeout
+    // devolvemos null en vez de dejar el botón colgado 30 segundos.
+    const pos = await Promise.race([
+      Location.getCurrentPositionAsync({
+        accuracy: Location.Accuracy.Balanced,
+      }),
+      new Promise<null>((resolve) => setTimeout(() => resolve(null), timeoutMs)),
+    ]);
+    if (!pos) return null;
     return { latitude: pos.coords.latitude, longitude: pos.coords.longitude };
   } catch {
     return null;
