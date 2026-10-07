@@ -1,20 +1,20 @@
 rules_version = '2';
 // Pegar en consola Firebase → Firestore → Reglas → Publicar.
-// Catálogo público; escritura solo del dueño (dueñoId). S4.
+// Catálogo público; escritura solo del dueño (duenioId). S4.
 // Los 15 del seed no tienen dueño: nadie los edita desde la app.
 service cloud.firestore {
   match /databases/{database}/documents {
 
     function esDuenoNegocio(negocioId) {
       return request.auth != null
-        && get(/databases/$(database)/documents/negocios/$(negocioId)).data.dueñoId == request.auth.uid;
+        && get(/databases/$(database)/documents/negocios/$(negocioId)).data.duenioId == request.auth.uid;
     }
 
     match /negocios/{id} {
       allow read: if true;
       allow create: if request.auth != null;
       allow update, delete: if request.auth != null
-        && resource.data.dueñoId == request.auth.uid;
+        && resource.data.duenioId == request.auth.uid;
     }
     match /productos/{id} {
       allow read: if true;

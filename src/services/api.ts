@@ -388,10 +388,10 @@ export async function actualizarNegocio(
     const data: unknown = snap.data();
     const duenoId: unknown =
       typeof data === 'object' && data !== null
-        ? (data as { dueñoId?: unknown }).dueñoId
+        ? (data as { duenioId?: unknown }).duenioId
         : undefined;
     // Chequeo de dueño en cliente (S4 lo cierra con rules). Estricto a
-    // propósito: los 15 del seed no tienen dueñoId, así que nadie los edita.
+    // propósito: los 15 del seed no tienen duenioId, así que nadie los edita.
     if (typeof duenoId !== 'string' || duenoId !== input.usuarioId) {
       throw new Error('Solo el dueño puede editar este negocio.');
     }
@@ -457,7 +457,7 @@ export async function registrarNegocio(
       envioGratis: false,
       lat: input.lat,
       lng: input.lng,
-      dueñoId: input.usuarioId,
+      duenioId: input.usuarioId,
     });
     negocioId = ref.id;
   } catch (e) {

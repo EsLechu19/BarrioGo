@@ -14,5 +14,5 @@ export interface Negocio {
     lng: number;
     descripcion?: string;
     direccion?: string;
-    dueñoId?: string;
+    duenioId?: string;
 }
