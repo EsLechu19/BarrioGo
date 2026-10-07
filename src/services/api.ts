@@ -557,8 +557,12 @@ export async function subirFotoNegocio(
       ) {
         throw e;
       }
+      const causa: string =
+        e instanceof Error && e.message
+          ? ` Causa: ${e.message.slice(0, 200)}`
+          : '';
       throw new Error(
-        'No se pudo subir la foto a Cloudinary. Revisá tu conexión.',
+        `No se pudo subir la foto a Cloudinary. Revisá tu conexión.${causa}`,
       );
     }
     await updateDoc(refDoc, tipo === 'icono' ? { imagen: url } : { portada: url });
