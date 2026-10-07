@@ -6,11 +6,16 @@ service cloud.firestore {
   match /databases/{database}/documents {
     match /negocios/{id} {
       allow read: if true;
-      allow write: if false;
+      // S1: cualquier usuario logueado puede CREAR su negocio (el vínculo
+      // dueño queda en dueñoId). Editar/borrar se cierra en S4 (solo dueño).
+      allow create: if request.auth != null;
+      allow update, delete: if false;
     }
     match /productos/{id} {
       allow read: if true;
-      allow write: if false;
+      // F4/S1: alta de menú por usuarios logueados. S4 lo restringe al dueño.
+      allow create: if request.auth != null;
+      allow update, delete: if false;
     }
     match /users/{uid} {
       allow read, write: if request.auth != null && request.auth.uid == uid;
