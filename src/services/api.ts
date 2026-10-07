@@ -14,12 +14,7 @@ import {
   where,
 } from 'firebase/firestore';
 import type { Unsubscribe } from 'firebase/firestore';
-import {
-  firebaseReady,
-  getFirebaseAuth,
-  getFirestoreDb,
-  getStorageBucketName,
-} from './firebase';
+import { firebaseReady, getFirestoreDb } from './firebase';
 // Toda lectura de datos pasa por acá. Ninguna pantalla usa fetch ni
 // Firestore directo. Cadena de orígenes (el primero que responde gana):
 //   1. Firestore (datos reales, necesita reglas publicadas + seed)
@@ -514,49 +509,58 @@ export async function subirFotoNegocio(
     if (typeof duenoId !== 'string' || duenoId !== usuarioId) {
       throw new Error('Solo el dueño puede cambiar las fotos de este negocio.');
     }
-    let blob: Blob;
-    try {
-      // En React Native el Blob de fetch() hace fallar uploadBytes con
-      // storage/unknown; el Blob vía XMLHttpRequest sí lo acepta.
-      blob = await new Promise<Blob>((resolve, reject) => {
-        const xhr = new XMLHttpRequest();
-        xhr.onload = () => resolve(xhr.response as Blob);
-        xhr.onerror = () =>
-          reject(new Error('No se pudo leer la foto elegida.'));
-        xhr.responseType = 'blob';
-        xhr.open('GET', uriLocal, true);
-        xhr.send(null);
-      });
-    } catch {
-      throw new Error('No se pudo leer la foto elegida. Probá con otra imagen.');
-    }
-    // Subida por REST en vez del SDK: en este dispositivo el transporte del
-    // SDK falla antes de llegar al servidor (storage/unknown sin respuesta).
-    // El endpoint es el mismo y la lectura es pública por storage.rules.
-    const token = await getFirebaseAuth().currentUser?.getIdToken();
-    if (!token) {
-      throw new Error('Tu sesión expiró. Cerrá sesión y volvé a entrar.');
-    }
-    const objectPath = `negocios/${negocioId}/${tipo}.jpg`;
-    const bucket = getStorageBucketName();
-    const subida = await fetch(
-      `https://firebasestorage.googleapis.com/v0/b/${bucket}/o?uploadType=media&name=${encodeURIComponent(objectPath)}`,
-      {
-        method: 'POST',
-        headers: {
-          Authorization: `Bearer ${token}`,
-          'Content-Type': 'image/jpeg',
-        },
-        body: blob,
-      },
-    );
-    if (!subida.ok) {
-      const cuerpo: string = await subida.text().catch(() => '');
+    // Subida a Cloudinary con preset sin firma (plan Free, sin tarjeta).
+    // Por qué no Firebase Storage: exige plan Blaze con tarjeta y además el
+    // transporte del SDK fallaba en este dispositivo (storage/unknown).
+    const cloud: string = process.env.EXPO_PUBLIC_CLOUDINARY_CLOUD?.trim() ?? '';
+    const preset: string =
+      process.env.EXPO_PUBLIC_CLOUDINARY_PRESET?.trim() ?? '';
+    if (!cloud || !preset) {
       throw new Error(
-        `Storage HTTP ${subida.status}: ${cuerpo.slice(0, 200) || 'sin detalle'}`,
+        'Falta configurar Cloudinary: poné EXPO_PUBLIC_CLOUDINARY_CLOUD y EXPO_PUBLIC_CLOUDINARY_PRESET en tu .env (ver .env.example).',
       );
     }
-    const url = `https://firebasestorage.googleapis.com/v0/b/${bucket}/o/${encodeURIComponent(objectPath)}?alt=media`;
+    const form = new FormData();
+    form.append('file', {
+      uri: uriLocal,
+      type: 'image/jpeg',
+      name: `${tipo}.jpg`,
+    } as unknown as Blob);
+    form.append('upload_preset', preset);
+    form.append('folder', `barriogo/${negocioId}`);
+    let url: string;
+    try {
+      const subida = await fetch(
+        `https://api.cloudinary.com/v1_1/${cloud}/image/upload`,
+        { method: 'POST', body: form },
+      );
+      if (!subida.ok) {
+        const cuerpo: string = await subida.text().catch(() => '');
+        throw new Error(
+          `Cloudinary HTTP ${subida.status}: ${cuerpo.slice(0, 200) || 'sin detalle'}`,
+        );
+      }
+      const json: unknown = await subida.json();
+      const segura: unknown =
+        typeof json === 'object' && json !== null
+          ? (json as { secure_url?: unknown }).secure_url
+          : undefined;
+      if (typeof segura !== 'string' || !segura) {
+        throw new Error('Cloudinary no devolvió la URL de la foto.');
+      }
+      url = segura;
+    } catch (e) {
+      if (
+        e instanceof Error &&
+        (e.message.startsWith('Cloudinary HTTP') ||
+          e.message === 'Cloudinary no devolvió la URL de la foto.')
+      ) {
+        throw e;
+      }
+      throw new Error(
+        'No se pudo subir la foto a Cloudinary. Revisá tu conexión.',
+      );
+    }
     await updateDoc(refDoc, tipo === 'icono' ? { imagen: url } : { portada: url });
     return url;
   } catch (e) {
