@@ -8,7 +8,6 @@ import {
   getDoc,
   getDocs,
   onSnapshot,
-  orderBy,
   query,
   where,
 } from 'firebase/firestore';
@@ -205,10 +204,11 @@ export function escucharMisPedidos(
   if (!firebaseReady) return () => {};
   if (!usuarioId.trim()) return () => {};
   try {
+    // Sin orderBy a propósito: where + orderBy exige índice compuesto en
+    // Firestore y rompía la demo. Ordenamos en memoria (fecha desc).
     const q = query(
       collection(getFirestoreDb(), 'pedidos'),
       where('usuarioId', '==', usuarioId),
-      orderBy('fecha', 'desc'),
     );
     return onSnapshot(
       q,
@@ -219,7 +219,7 @@ export function escucharMisPedidos(
             ...d.data(),
           }));
           const pedidos: Pedido[] = Array.isArray(data)
-            ? data.filter(isPedido)
+            ? data.filter(isPedido).sort((a, b) => (a.fecha < b.fecha ? 1 : -1))
             : [];
           cb(pedidos);
         } catch (e) {
