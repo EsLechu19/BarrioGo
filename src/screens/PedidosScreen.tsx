@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   FlatList,
@@ -16,6 +16,10 @@ import { TabParamList } from '../navigation/TabParamList';
 import { useAuth } from '../context/AuthContext';
 import { escucharMisPedidos } from '../services/api';
 import { firebaseReady } from '../services/firebase';
+import {
+  asegurarPermisoNotificaciones,
+  notificarCambioEstado,
+} from '../services/notificaciones';
 import { EstadoPedido, Pedido } from '../types/Pedido';
 import { colors } from '../styles/colors';
 
@@ -44,6 +48,13 @@ export default function PedidosScreen({ navigation }: Props) {
   const [pedidos, setPedidos] = useState<Pedido[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
+  const estadosPrevios = useRef<Record<string, EstadoPedido>>({});
+  const primeraCarga = useRef<boolean>(true);
+
+  useEffect(() => {
+    // Permiso al montar. No bloquea el listener: si es false, Pedidos sigue en vivo sin notificar.
+    void asegurarPermisoNotificaciones();
+  }, []);
 
   useEffect(() => {
     if (!firebaseReady || !uid) {
@@ -55,6 +66,31 @@ export default function PedidosScreen({ navigation }: Props) {
     const unsubscribe = escucharMisPedidos(
       uid,
       (data: Pedido[]) => {
+        try {
+          if (primeraCarga.current) {
+            const mapa: Record<string, EstadoPedido> = {};
+            for (const p of data) {
+              mapa[p.id] = p.estado;
+            }
+            estadosPrevios.current = mapa;
+            primeraCarga.current = false;
+          } else {
+            for (const p of data) {
+              const previo: EstadoPedido | undefined =
+                estadosPrevios.current[p.id];
+              if (previo !== undefined && previo !== p.estado) {
+                void notificarCambioEstado(p.estado);
+              }
+            }
+            const mapa: Record<string, EstadoPedido> = {};
+            for (const p of data) {
+              mapa[p.id] = p.estado;
+            }
+            estadosPrevios.current = mapa;
+          }
+        } catch {
+          // Silencioso: un fallo notificando jamás rompe la lista en vivo.
+        }
         setPedidos(data);
         setLoading(false);
       },
