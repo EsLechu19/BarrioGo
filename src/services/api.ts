@@ -9,6 +9,7 @@ import {
   getDocs,
   onSnapshot,
   query,
+  updateDoc,
   where,
 } from 'firebase/firestore';
 import type { Unsubscribe } from 'firebase/firestore';
@@ -245,5 +246,108 @@ export function escucharMisPedidos(
         : new Error('No se pudo escuchar tus pedidos.'),
     );
     return () => {};
+  }
+}
+
+// ---------- F4 Panel negocio ----------
+
+export function escucharPedidosNegocio(
+  negocioId: string,
+  cb: (pedidos: Pedido[]) => void,
+  onError?: (e: Error) => void,
+): Unsubscribe {
+  if (!firebaseReady) return () => {};
+  if (!negocioId.trim()) return () => {};
+  try {
+    // Sin orderBy a propósito (igual que F3): where + orderBy exige índice
+    // compuesto en Firestore. Ordenamos en memoria (fecha desc).
+    const q = query(
+      collection(getFirestoreDb(), 'pedidos'),
+      where('negocioId', '==', negocioId),
+    );
+    return onSnapshot(
+      q,
+      (snap) => {
+        try {
+          const data: unknown = snap.docs.map((d) => ({
+            id: d.id,
+            ...d.data(),
+          }));
+          const pedidos: Pedido[] = Array.isArray(data)
+            ? data.filter(isPedido).sort((a, b) => (a.fecha < b.fecha ? 1 : -1))
+            : [];
+          cb(pedidos);
+        } catch (e) {
+          onError?.(
+            e instanceof Error
+              ? e
+              : new Error('No se pudieron leer los pedidos del negocio.'),
+          );
+        }
+      },
+      (err: Error) => {
+        onError?.(
+          err instanceof Error
+            ? err
+            : new Error('Se perdió la conexión con los pedidos del negocio.'),
+        );
+      },
+    );
+  } catch (e) {
+    onError?.(
+      e instanceof Error
+        ? e
+        : new Error('No se pudo escuchar los pedidos del negocio.'),
+    );
+    return () => {};
+  }
+}
+
+export async function cambiarEstadoPedido(
+  pedidoId: string,
+  estado: EstadoPedido,
+): Promise<void> {
+  if (!firebaseReady) throw new Error(FIREBASE_NO_CONFIG_MSG);
+  if (!pedidoId.trim()) throw new Error('Falta el id del pedido.');
+  if (!isEstadoPedido(estado)) throw new Error('El estado del pedido no es válido.');
+  try {
+    await updateDoc(doc(getFirestoreDb(), 'pedidos', pedidoId), { estado });
+  } catch (e) {
+    throw new Error(
+      e instanceof Error
+        ? `No se pudo cambiar el estado del pedido: ${e.message}`
+        : 'No se pudo cambiar el estado del pedido. Intentá de nuevo.',
+    );
+  }
+}
+
+export interface CrearProductoInput {
+  negocioId: string;
+  nombre: string;
+  precio: number;
+  descripcion?: string;
+}
+
+export async function crearProducto(input: CrearProductoInput): Promise<string> {
+  if (!firebaseReady) throw new Error(FIREBASE_NO_CONFIG_MSG);
+  if (!input.negocioId.trim()) throw new Error('Falta el negocio del producto.');
+  if (!input.nombre.trim()) throw new Error('El producto necesita un nombre.');
+  if (!(input.precio > 0)) throw new Error('El precio debe ser mayor a 0.');
+  try {
+    const ref = await addDoc(collection(getFirestoreDb(), 'productos'), {
+      negocioId: input.negocioId,
+      nombre: input.nombre.trim(),
+      precio: input.precio,
+      descripcion: input.descripcion?.trim() ?? '',
+      imagenUrl: '',
+      disponible: true,
+    });
+    return ref.id;
+  } catch (e) {
+    throw new Error(
+      e instanceof Error
+        ? `No se pudo crear el producto: ${e.message}`
+        : 'No se pudo crear el producto. Intentá de nuevo.',
+    );
   }
 }

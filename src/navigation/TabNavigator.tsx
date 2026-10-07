@@ -5,11 +5,14 @@ import HomeScreen from '../screens/HomeScreen';
 import PedidosScreen from '../screens/PedidosScreen';
 import FavoritosScreen from '../screens/FavoritosScreen';
 import PerfilScreen from '../screens/PerfilScreen';
+import NegocioScreen from '../screens/NegocioScreen';
+import { useAuth } from '../context/AuthContext';
 import { colors } from '../styles/colors';
 
 const Tab = createBottomTabNavigator<TabParamList>();
 
 export function TabNavigator() {
+  const { rol } = useAuth();
   return (
     <Tab.Navigator screenOptions={{ headerShown: false }}>
       <Tab.Screen
@@ -53,6 +56,18 @@ export function TabNavigator() {
           tabBarActiveTintColor: colors.primary,
         }}
       />
+      {rol === 'negocio' ? (
+        <Tab.Screen
+          name="NegocioTab"
+          component={NegocioScreen}
+          options={{
+            title: 'Negocio',
+            tabBarIcon: ({ color, size }) => (
+              <Ionicons name="storefront-outline" size={size} color={color} />
+            ),
+          }}
+        />
+      ) : null}
     </Tab.Navigator>
   );
 }

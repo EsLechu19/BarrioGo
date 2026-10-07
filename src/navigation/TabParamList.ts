@@ -3,4 +3,5 @@ export type TabParamList = {
   PedidosTab: undefined;
   FavoritosTab: undefined;
   PerfilTab: undefined;
+  NegocioTab: undefined;
 };
