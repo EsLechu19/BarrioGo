@@ -8,4 +8,5 @@ export type RootStackParamList = {
   Detalle: { negocioId: string };
   Carrito: undefined;
   RegistrarNegocio: undefined;
+  MiLocal: undefined;
 };

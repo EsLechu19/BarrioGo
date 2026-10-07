@@ -9,8 +9,13 @@ import {
   View,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { BottomTabScreenProps } from '@react-navigation/bottom-tabs';
+import { CompositeScreenProps } from '@react-navigation/native';
+import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { doc, getDoc } from 'firebase/firestore';
 import { useAuth } from '../context/AuthContext';
+import { RootStackParamList } from '../navigation/RootStackParamList';
+import { TabParamList } from '../navigation/TabParamList';
 import { firebaseReady, getFirestoreDb } from '../services/firebase';
 import {
   cambiarEstadoPedido,
@@ -45,7 +50,12 @@ function fechaCorta(iso: string): string {
   return d.toLocaleDateString();
 }
 
-export default function NegocioScreen() {
+type Props = CompositeScreenProps<
+  BottomTabScreenProps<TabParamList, 'NegocioTab'>,
+  NativeStackScreenProps<RootStackParamList>
+>;
+
+export default function NegocioScreen({ navigation }: Props) {
   const insets = useSafeAreaInsets();
   const { user, rol } = useAuth();
   const uid: string | undefined = user?.uid;
@@ -217,6 +227,12 @@ export default function NegocioScreen() {
     <View style={[styles.container, { paddingTop: insets.top + 12 }]}>
       <Text style={styles.title}>Panel negocio</Text>
       <Text style={styles.subtitle}>Negocio {negocioId} — pedidos en tiempo real</Text>
+      <TouchableOpacity
+        style={styles.editButton}
+        onPress={() => navigation.navigate('MiLocal')}
+      >
+        <Text style={styles.editText}>Editar mi local</Text>
+      </TouchableOpacity>
       {pedidosError ? <Text style={styles.error}>{pedidosError}</Text> : null}
 
       {loadingPedidos ? (
@@ -318,6 +334,15 @@ const styles = StyleSheet.create({
   centerRow: { alignItems: 'center', gap: 8, paddingVertical: 12 },
   title: { color: colors.textPrimary, fontSize: 22, fontWeight: '900' },
   subtitle: { color: colors.textMuted, fontSize: 14, textAlign: 'center' },
+  editButton: {
+    paddingVertical: 12,
+    borderRadius: 14,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: colors.border,
+    backgroundColor: colors.surface,
+  },
+  editText: { color: colors.primary, fontSize: 15, fontWeight: '700' },
   error: { color: colors.error, fontSize: 14, fontWeight: '600' },
   ok: { color: colors.success, fontSize: 14, fontWeight: '600' },
   list: { paddingVertical: 4 },

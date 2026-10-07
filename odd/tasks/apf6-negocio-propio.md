@@ -5,7 +5,7 @@ Cualquier usuario puede registrar SU propio negocio y queda vinculado como dueñ
 
 ## Slices
 - [ ] S1 Registro + vínculo (ESTE): form + crea doc + `users/{uid}` `{rol:'negocio', negocioId}`.
-- [ ] S2 Mi local: editar info del negocio propio.
+- [x] S2 Mi local: editar info con chequeo de dueño en cliente (commit pendiente). Los 15 del seed quedan no editables (sin dueño).
 - [ ] S3 Icono + portada con Storage (requiere habilitar Storage en consola + rules).
 - [ ] S4 Reglas: solo el dueño escribe su negocio/productos.
 

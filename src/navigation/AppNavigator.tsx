@@ -4,6 +4,7 @@ import { TabNavigator } from './TabNavigator';
 import DetalleScreen from '../screens/DetalleScreen';
 import CarritoScreen from '../screens/CarritoScreen';
 import RegistrarNegocioScreen from '../screens/RegistrarNegocioScreen';
+import MiLocalScreen from '../screens/MiLocalScreen';
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
@@ -14,6 +15,7 @@ export function AppNavigator() {
       <Stack.Screen name="Detalle" component={DetalleScreen} />
       <Stack.Screen name="Carrito" component={CarritoScreen} />
       <Stack.Screen name="RegistrarNegocio" component={RegistrarNegocioScreen} />
+      <Stack.Screen name="MiLocal" component={MiLocalScreen} />
     </Stack.Navigator>
   );
 }

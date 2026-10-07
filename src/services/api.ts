@@ -353,7 +353,77 @@ export async function crearProducto(input: CrearProductoInput): Promise<string> 
     }
   }
 
-// ---------- F6 Negocio propio por cuenta (S1 Registro + vínculo) ----------
+// ---------- F6 Negocio propio por cuenta (S1 Registro + vínculo / S2 Mi local) ----------
+
+export interface ActualizarNegocioInput {
+  negocioId: string;
+  usuarioId: string;
+  nombre: string;
+  descripcion?: string;
+  direccion?: string;
+  tiempoEstimado?: string;
+  envioGratis?: boolean;
+  lat?: number;
+  lng?: number;
+}
+
+export async function actualizarNegocio(
+  input: ActualizarNegocioInput,
+): Promise<void> {
+  if (!firebaseReady) throw new Error(FIREBASE_NO_CONFIG_MSG);
+  if (!input.negocioId.trim()) throw new Error('Falta el negocio a editar.');
+  if (!input.usuarioId.trim())
+    throw new Error('Falta el usuario del negocio.');
+  if (!input.nombre.trim()) throw new Error('El negocio necesita un nombre.');
+  if (
+    (input.lat !== undefined && !Number.isFinite(input.lat)) ||
+    (input.lng !== undefined && !Number.isFinite(input.lng))
+  ) {
+    throw new Error('La ubicación del negocio no es válida.');
+  }
+  try {
+    const ref = doc(getFirestoreDb(), 'negocios', input.negocioId);
+    const snap = await getDoc(ref);
+    if (!snap.exists()) throw new Error('El negocio no existe.');
+    const data: unknown = snap.data();
+    const duenoId: unknown =
+      typeof data === 'object' && data !== null
+        ? (data as { dueñoId?: unknown }).dueñoId
+        : undefined;
+    // Chequeo de dueño en cliente (S4 lo cierra con rules). Estricto a
+    // propósito: los 15 del seed no tienen dueñoId, así que nadie los edita.
+    if (typeof duenoId !== 'string' || duenoId !== input.usuarioId) {
+      throw new Error('Solo el dueño puede editar este negocio.');
+    }
+    const cambios: { [campo: string]: string | boolean | number } = {
+      nombre: input.nombre.trim(),
+    };
+    if (input.descripcion !== undefined)
+      cambios['descripcion'] = input.descripcion.trim();
+    if (input.direccion !== undefined)
+      cambios['direccion'] = input.direccion.trim();
+    if (input.tiempoEstimado !== undefined)
+      cambios['tiempoEstimado'] = input.tiempoEstimado.trim();
+    if (input.envioGratis !== undefined)
+      cambios['envioGratis'] = input.envioGratis;
+    if (input.lat !== undefined) cambios['lat'] = input.lat;
+    if (input.lng !== undefined) cambios['lng'] = input.lng;
+    await updateDoc(ref, cambios);
+  } catch (e) {
+    if (
+      e instanceof Error &&
+      (e.message === 'El negocio no existe.' ||
+        e.message === 'Solo el dueño puede editar este negocio.')
+    ) {
+      throw e;
+    }
+    throw new Error(
+      e instanceof Error
+        ? `No se pudo actualizar el negocio: ${e.message}`
+        : 'No se pudo actualizar el negocio. Intentá de nuevo.',
+    );
+  }
+}
 
 export interface RegistrarNegocioInput {
   usuarioId: string;
