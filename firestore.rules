@@ -1,27 +1,42 @@
 rules_version = '2';
 // Pegar en consola Firebase → Firestore → Reglas → Publicar.
-// Lectura pública del catálogo; escritura solo vía Admin SDK (seed) o
-// panel negocio (F4). Pedidos: solo autenticados (se refina en F4).
+// Catálogo público; escritura solo del dueño (dueñoId). S4.
+// Los 15 del seed no tienen dueño: nadie los edita desde la app.
 service cloud.firestore {
   match /databases/{database}/documents {
+
+    function esDuenoNegocio(negocioId) {
+      return request.auth != null
+        && get(/databases/$(database)/documents/negocios/$(negocioId)).data.dueñoId == request.auth.uid;
+    }
+
     match /negocios/{id} {
       allow read: if true;
-      // S1: cualquier usuario logueado puede CREAR su negocio (el vínculo
-      // dueño queda en dueñoId). Editar/borrar se cierra en S4 (solo dueño).
       allow create: if request.auth != null;
-      allow update, delete: if false;
+      allow update, delete: if request.auth != null
+        && resource.data.dueñoId == request.auth.uid;
     }
     match /productos/{id} {
       allow read: if true;
-      // F4/S1: alta de menú por usuarios logueados. S4 lo restringe al dueño.
-      allow create: if request.auth != null;
-      allow update, delete: if false;
+      allow create: if esDuenoNegocio(request.resource.data.negocioId);
+      allow update, delete: if esDuenoNegocio(resource.data.negocioId);
     }
     match /users/{uid} {
       allow read, write: if request.auth != null && request.auth.uid == uid;
     }
     match /pedidos/{id} {
-      allow read, write: if request.auth != null;
+      // Crear: solo tus propios pedidos (anti-suplantación).
+      allow create: if request.auth != null
+        && request.resource.data.usuarioId == request.auth.uid;
+      // Leer: el cliente ve los suyos, el dueño los de su negocio.
+      allow read: if request.auth != null && (
+        resource.data.usuarioId == request.auth.uid
+        || esDuenoNegocio(resource.data.negocioId)
+      );
+      // Cambiar estado: solo el dueño, y solo el campo estado.
+      allow update: if esDuenoNegocio(resource.data.negocioId)
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['estado']);
+      allow delete: if false;
     }
   }
 }

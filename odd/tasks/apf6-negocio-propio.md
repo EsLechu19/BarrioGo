@@ -7,7 +7,7 @@ Cualquier usuario puede registrar SU propio negocio y queda vinculado como dueñ
 - [ ] S1 Registro + vínculo (ESTE): form + crea doc + `users/{uid}` `{rol:'negocio', negocioId}`.
 - [x] S2 Mi local: editar info con chequeo de dueño en cliente (commit pendiente). Los 15 del seed quedan no editables (sin dueño).
 - [ ] S3 Icono + portada con Storage (requiere habilitar Storage en consola + rules).
-- [ ] S4 Reglas: solo el dueño escribe su negocio/productos.
+- [x] S4 Reglas: solo el dueño escribe su negocio/productos/pedidos-estado (commit pendiente; REQUIERE republicar en consola). Backfill: negocios/1 → dueño negocio@barriogo.pe.
 
 ## Alcance S1
 - IN: `Negocio` con opcionales `descripcion`, `direccion`, `dueñoId`; `api.registrarNegocio`; pantalla `RegistrarNegocioScreen`; entrada desde Perfil; GPS opcional con fallback.
