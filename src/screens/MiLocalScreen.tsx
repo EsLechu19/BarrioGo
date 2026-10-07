@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import {
   ActivityIndicator,
+  Image,
   ScrollView,
   StyleSheet,
   Switch,
@@ -9,12 +10,13 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
+import * as ImagePicker from 'expo-image-picker';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { doc, getDoc } from 'firebase/firestore';
 import { useAuth } from '../context/AuthContext';
 import { firebaseReady, getFirestoreDb } from '../services/firebase';
-import { actualizarNegocio } from '../services/api';
+import { actualizarNegocio, subirFotoNegocio, TipoFotoNegocio } from '../services/api';
 import { getUserCoords } from '../services/location';
 import { RootStackParamList } from '../navigation/RootStackParamList';
 import { colors } from '../styles/colors';
@@ -47,6 +49,12 @@ export default function MiLocalScreen({ navigation }: Props) {
   const [guardando, setGuardando] = useState<boolean>(false);
   const [formError, setFormError] = useState<string | null>(null);
   const [formOk, setFormOk] = useState<string | null>(null);
+
+  // S3 Fotos: icono (cuadrado) + portada (16:9) con Firebase Storage.
+  const [iconoUrl, setIconoUrl] = useState<string>('');
+  const [portadaUrl, setPortadaUrl] = useState<string>('');
+  const [subiendo, setSubiendo] = useState<TipoFotoNegocio | null>(null);
+  const [fotoError, setFotoError] = useState<string | null>(null);
 
   // Mismo patrón que NegocioScreen: negocioId en users/{uid} + precarga
   // con getDoc del negocio.
@@ -87,6 +95,8 @@ export default function MiLocalScreen({ navigation }: Props) {
             envioGratis?: unknown;
             lat?: unknown;
             lng?: unknown;
+            imagen?: unknown;
+            portada?: unknown;
           };
           if (typeof n.nombre === 'string') setNombre(n.nombre);
           if (typeof n.descripcion === 'string') setDescripcion(n.descripcion);
@@ -99,6 +109,8 @@ export default function MiLocalScreen({ navigation }: Props) {
             setLatTxt(String(n.lat));
           if (typeof n.lng === 'number' && Number.isFinite(n.lng))
             setLngTxt(String(n.lng));
+          if (typeof n.imagen === 'string') setIconoUrl(n.imagen);
+          if (typeof n.portada === 'string') setPortadaUrl(n.portada);
         }
       } catch (e) {
         setCargaError(
@@ -137,6 +149,77 @@ export default function MiLocalScreen({ navigation }: Props) {
       );
     } finally {
       setLeyendoGps(false);
+    }
+  }
+
+  async function elegirFoto(
+    tipo: TipoFotoNegocio,
+    desdeCamara: boolean,
+  ): Promise<void> {
+    if (subiendo || !negocioId || !uid) return;
+    setFotoError(null);
+    try {
+      // Icono cuadrado, portada 16:9 (el aspect solo aplica en Android; en
+      // iOS el recorte siempre es cuadrado — docs SDK 57).
+      const aspect: [number, number] =
+        tipo === 'icono' ? [1, 1] : [16, 9];
+      if (desdeCamara) {
+        const permiso = await ImagePicker.requestCameraPermissionsAsync();
+        if (!permiso.granted) {
+          setFotoError('Necesitamos permiso de cámara para tomar la foto.');
+          return;
+        }
+        const resultado = await ImagePicker.launchCameraAsync({
+          mediaTypes: ['images'],
+          allowsEditing: true,
+          aspect,
+          quality: 0.7,
+        });
+        if (resultado.canceled) return;
+        const asset = resultado.assets[0];
+        if (!asset) return;
+        await subirElegida(tipo, asset.uri);
+        return;
+      }
+      // Galería: no hace falta pedir permiso antes (docs SDK 57).
+      const resultado = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ['images'],
+        allowsEditing: true,
+        aspect,
+        quality: 0.7,
+      });
+      // El usuario canceló → no hace nada, nunca crashea.
+      if (resultado.canceled) return;
+      const asset = resultado.assets[0];
+      if (!asset) return;
+      await subirElegida(tipo, asset.uri);
+    } catch (e) {
+      setFotoError(
+        e instanceof Error
+          ? e.message
+          : 'No se pudo elegir la foto. Intentá de nuevo.',
+      );
+    }
+  }
+
+  async function subirElegida(
+    tipo: TipoFotoNegocio,
+    uriLocal: string,
+  ): Promise<void> {
+    if (!negocioId || !uid) return;
+    setSubiendo(tipo);
+    try {
+      const url = await subirFotoNegocio(negocioId, uid, uriLocal, tipo);
+      if (tipo === 'icono') setIconoUrl(url);
+      else setPortadaUrl(url);
+    } catch (e) {
+      setFotoError(
+        e instanceof Error
+          ? e.message
+          : 'No se pudo subir la foto. Intentá de nuevo.',
+      );
+    } finally {
+      setSubiendo(null);
     }
   }
 
@@ -294,6 +377,69 @@ export default function MiLocalScreen({ navigation }: Props) {
       </View>
       {formError ? <Text style={styles.error}>{formError}</Text> : null}
       {formOk ? <Text style={styles.ok}>{formOk}</Text> : null}
+      <Text style={styles.sectionTitle}>Fotos</Text>
+      <View style={styles.fotoRow}>
+        {iconoUrl ? (
+          <Image source={{ uri: iconoUrl }} style={styles.iconoPreview} />
+        ) : (
+          <View style={[styles.iconoPreview, styles.placeholder]}>
+            <Text style={styles.placeholderText}>Sin icono</Text>
+          </View>
+        )}
+        <View style={styles.fotoBotones}>
+          <Text style={styles.fotoLabel}>Icono (cuadrado)</Text>
+          <View style={styles.fotoAcciones}>
+            <TouchableOpacity
+              style={[styles.fotoButton, subiendo && styles.disabledButton]}
+              disabled={subiendo !== null}
+              onPress={() => void elegirFoto('icono', false)}
+            >
+              <Text style={styles.fotoButtonText}>
+                {subiendo === 'icono' ? 'Subiendo...' : 'Galería'}
+              </Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.fotoButton, subiendo && styles.disabledButton]}
+              disabled={subiendo !== null}
+              onPress={() => void elegirFoto('icono', true)}
+            >
+              <Text style={styles.fotoButtonText}>Cámara</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </View>
+      <View style={styles.fotoColumna}>
+        {portadaUrl ? (
+          <Image source={{ uri: portadaUrl }} style={styles.portadaPreview} />
+        ) : (
+          <View style={[styles.portadaPreview, styles.placeholder]}>
+            <Text style={styles.placeholderText}>Sin portada</Text>
+          </View>
+        )}
+        <Text style={styles.fotoLabel}>Portada (16:9)</Text>
+        <View style={styles.fotoAcciones}>
+          <TouchableOpacity
+            style={[styles.fotoButton, subiendo && styles.disabledButton]}
+            disabled={subiendo !== null}
+            onPress={() => void elegirFoto('portada', false)}
+          >
+            <Text style={styles.fotoButtonText}>
+              {subiendo === 'portada' ? 'Subiendo...' : 'Galería'}
+            </Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.fotoButton, subiendo && styles.disabledButton]}
+            disabled={subiendo !== null}
+            onPress={() => void elegirFoto('portada', true)}
+          >
+            <Text style={styles.fotoButtonText}>Cámara</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+      {subiendo ? (
+        <ActivityIndicator size="small" color={colors.primary} />
+      ) : null}
+      {fotoError ? <Text style={styles.error}>{fotoError}</Text> : null}
       <TouchableOpacity
         style={[styles.primaryButton, guardando && styles.disabledButton]}
         disabled={guardando}
@@ -347,6 +493,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.surface,
   },
   gpsText: { color: colors.primary, fontSize: 15, fontWeight: '700' },
+  sectionTitle: { color: colors.textPrimary, fontSize: 17, fontWeight: '800' },
   primaryButton: {
     paddingVertical: 14,
     paddingHorizontal: 24,
@@ -356,4 +503,29 @@ const styles = StyleSheet.create({
   },
   primaryText: { color: colors.surface, fontSize: 15, fontWeight: '700' },
   disabledButton: { opacity: 0.6 },
+  fotoRow: { flexDirection: 'row', gap: 12, alignItems: 'center' },
+  fotoColumna: { gap: 8 },
+  iconoPreview: { width: 72, height: 72, borderRadius: 14 },
+  portadaPreview: { width: '100%', height: 140, borderRadius: 14 },
+  placeholder: {
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: colors.surface,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  placeholderText: { color: colors.textMuted, fontSize: 13 },
+  fotoBotones: { flex: 1, gap: 8 },
+  fotoLabel: { color: colors.textPrimary, fontSize: 14, fontWeight: '700' },
+  fotoAcciones: { flexDirection: 'row', gap: 8 },
+  fotoButton: {
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+    borderRadius: 12,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: colors.border,
+    backgroundColor: colors.surface,
+  },
+  fotoButtonText: { color: colors.primary, fontSize: 14, fontWeight: '700' },
 });

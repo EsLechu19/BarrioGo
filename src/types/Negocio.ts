@@ -15,4 +15,7 @@ export interface Negocio {
     descripcion?: string;
     direccion?: string;
     duenioId?: string;
+    // Portada 16:9 del negocio (S3 apf6-negocio-propio). `imagen` sigue
+    // siendo el icono/cuadrado que se muestra en las cards.
+    portada?: string;
 }

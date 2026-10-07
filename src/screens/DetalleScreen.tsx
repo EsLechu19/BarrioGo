@@ -1,6 +1,7 @@
 import {
   ActivityIndicator,
   FlatList,
+  Image,
   StyleSheet,
   Text,
   TouchableOpacity,
@@ -85,6 +86,15 @@ export default function DetalleScreen({ navigation, route }: Props) {
         </TouchableOpacity>
       </View>
 
+      {/* Portada 16:9 solo si el dueño subió una (S3 apf6-negocio-propio). */}
+      {negocio.portada ? (
+        <Image
+          source={{ uri: negocio.portada }}
+          style={styles.portada}
+          resizeMode="cover"
+        />
+      ) : null}
+
       <Text style={styles.sectionTitle}>Menú</Text>
       <FlatList
         data={menu}
@@ -151,6 +161,7 @@ const styles = StyleSheet.create({
   headerInfo: { flex: 1, gap: 2 },
   name: { color: colors.textPrimary, fontSize: 20, fontWeight: '900' },
   meta: { color: colors.textMuted, fontSize: 13 },
+  portada: { width: '100%', height: 180, borderRadius: 16, marginTop: 12 },
   sectionTitle: { color: colors.textPrimary, fontSize: 18, fontWeight: '800', marginTop: 12 },
   list: { gap: 4, paddingVertical: 12, paddingBottom: 90 },
   separator: { height: 8 },

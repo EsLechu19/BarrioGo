@@ -6,6 +6,7 @@ import { getAuth, initializeAuth, Auth } from 'firebase/auth';
 // @ts-expect-error - símbolo RN ausente en los .d.ts web, presente en runtime
 import { getReactNativePersistence } from 'firebase/auth';
 import { getFirestore, Firestore } from 'firebase/firestore';
+import { getStorage, FirebaseStorage } from 'firebase/storage';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 // Config vía EXPO_PUBLIC_ (nunca commitear el .env real — ver .env.example).
@@ -26,6 +27,7 @@ export const firebaseReady: boolean = Boolean(
 let app: FirebaseApp | null = null;
 let auth: Auth | null = null;
 let db: Firestore | null = null;
+let storage: FirebaseStorage | null = null;
 
 if (firebaseReady) {
   app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApps()[0]!;
@@ -38,6 +40,7 @@ if (firebaseReady) {
     auth = getAuth(app);
   }
   db = getFirestore(app);
+  storage = getStorage(app);
 }
 
 export function getFirebaseAuth(): Auth {
@@ -48,4 +51,9 @@ export function getFirebaseAuth(): Auth {
 export function getFirestoreDb(): Firestore {
   if (!db) throw new Error('Firebase no configurado: falta el .env (ver .env.example)');
   return db;
+}
+
+export function getStorageBucket(): FirebaseStorage {
+  if (!storage) throw new Error('Firebase no configurado: falta el .env (ver .env.example)');
+  return storage;
 }

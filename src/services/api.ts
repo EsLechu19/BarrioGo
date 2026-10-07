@@ -14,7 +14,8 @@ import {
   where,
 } from 'firebase/firestore';
 import type { Unsubscribe } from 'firebase/firestore';
-import { firebaseReady, getFirestoreDb } from './firebase';
+import { getDownloadURL, ref, uploadBytes } from 'firebase/storage';
+import { firebaseReady, getFirestoreDb, getStorageBucket } from './firebase';
 
 // Toda lectura de datos pasa por acá. Ninguna pantalla usa fetch ni
 // Firestore directo. Cadena de orígenes (el primero que responde gana):
@@ -481,4 +482,63 @@ export async function registrarNegocio(
     );
   }
   return negocioId;
+}
+
+// ---------- F6 Negocio propio por cuenta (S3 Icono + portada con Storage) ----------
+
+export type TipoFotoNegocio = 'icono' | 'portada';
+
+export async function subirFotoNegocio(
+  negocioId: string,
+  usuarioId: string,
+  uriLocal: string,
+  tipo: TipoFotoNegocio,
+): Promise<string> {
+  if (!firebaseReady) throw new Error(FIREBASE_NO_CONFIG_MSG);
+  if (!negocioId.trim()) throw new Error('Falta el negocio de la foto.');
+  if (!usuarioId.trim()) throw new Error('Falta el usuario del negocio.');
+  if (!uriLocal.trim()) throw new Error('Falta la foto a subir.');
+  try {
+    const refDoc = doc(getFirestoreDb(), 'negocios', negocioId);
+    const snap = await getDoc(refDoc);
+    if (!snap.exists()) throw new Error('El negocio no existe.');
+    const data: unknown = snap.data();
+    const duenoId: unknown =
+      typeof data === 'object' && data !== null
+        ? (data as { duenioId?: unknown }).duenioId
+        : undefined;
+    // Dueño estricto, igual que actualizarNegocio (S4 lo cierra con rules).
+    if (typeof duenoId !== 'string' || duenoId !== usuarioId) {
+      throw new Error('Solo el dueño puede cambiar las fotos de este negocio.');
+    }
+    let blob: Blob;
+    try {
+      const respuesta = await fetch(uriLocal);
+      blob = await respuesta.blob();
+    } catch {
+      throw new Error('No se pudo leer la foto elegida. Probá con otra imagen.');
+    }
+    const storageRef = ref(
+      getStorageBucket(),
+      `negocios/${negocioId}/${tipo}.jpg`,
+    );
+    await uploadBytes(storageRef, blob, { contentType: 'image/jpeg' });
+    const url = await getDownloadURL(storageRef);
+    await updateDoc(refDoc, tipo === 'icono' ? { imagen: url } : { portada: url });
+    return url;
+  } catch (e) {
+    if (
+      e instanceof Error &&
+      (e.message === 'El negocio no existe.' ||
+        e.message === 'Solo el dueño puede cambiar las fotos de este negocio.' ||
+        e.message === 'No se pudo leer la foto elegida. Probá con otra imagen.')
+    ) {
+      throw e;
+    }
+    throw new Error(
+      e instanceof Error
+        ? `No se pudo subir la foto: ${e.message}`
+        : 'No se pudo subir la foto. Intentá de nuevo.',
+    );
+  }
 }

@@ -10,7 +10,8 @@ type Props = {
 export function RestaurantCard({ negocio }: Props) {
     return (
         <View style={styles.card}>
-            <Image source={{ uri: negocio.imagen }} style={styles.restaurantImage} resizeMode="cover" />
+            {/* Portada si existe, con fallback al icono (S3 apf6-negocio-propio). */}
+            <Image source={{ uri: negocio.portada ? negocio.portada : negocio.imagen }} style={styles.restaurantImage} resizeMode="cover" />
             {/*Informacion */}
             <View style={styles.info}>
                 {/* Fila 1: nombre + favorito */}
