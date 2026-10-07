@@ -513,8 +513,17 @@ export async function subirFotoNegocio(
     }
     let blob: Blob;
     try {
-      const respuesta = await fetch(uriLocal);
-      blob = await respuesta.blob();
+      // En React Native el Blob de fetch() hace fallar uploadBytes con
+      // storage/unknown; el Blob vía XMLHttpRequest sí lo acepta.
+      blob = await new Promise<Blob>((resolve, reject) => {
+        const xhr = new XMLHttpRequest();
+        xhr.onload = () => resolve(xhr.response as Blob);
+        xhr.onerror = () =>
+          reject(new Error('No se pudo leer la foto elegida.'));
+        xhr.responseType = 'blob';
+        xhr.open('GET', uriLocal, true);
+        xhr.send(null);
+      });
     } catch {
       throw new Error('No se pudo leer la foto elegida. Probá con otra imagen.');
     }
@@ -535,9 +544,16 @@ export async function subirFotoNegocio(
     ) {
       throw e;
     }
+    // Si el servidor respondió algo útil (serverResponse), se muestra para
+    // diagnosticar sin adivinar.
+    const detalleServidor: string =
+      e instanceof Object && 'serverResponse' in e &&
+      typeof (e as { serverResponse?: unknown }).serverResponse === 'string'
+        ? ` Servidor: ${(e as { serverResponse: string }).serverResponse.slice(0, 200)}`
+        : '';
     throw new Error(
       e instanceof Error
-        ? `No se pudo subir la foto: ${e.message}`
+        ? `No se pudo subir la foto: ${e.message}.${detalleServidor}`
         : 'No se pudo subir la foto. Intentá de nuevo.',
     );
   }
