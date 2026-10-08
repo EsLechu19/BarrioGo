@@ -1,0 +1,19 @@
+# BarrioGo — reglas de Cloud Storage (S3 de apf6-negocio-propio).
+#
+# DONDE PEGARLAS: consola de Firebase → Storage → pestaña Reglas → pegar
+# todo este archivo → Publicar. Requiere haber habilitado Storage antes
+# (Storage → Comenzar). Sin esto, subirFotoNegocio falla con permiso denegado.
+#
+# Lectura pública (las cards de Home y Detalle muestran las fotos sin login).
+# Escritura solo del dueño verificado contra Firestore (duenioId == auth.uid).
+
+rules_version = '2';
+
+service firebase.storage {
+  match /b/{bucket}/o {
+    match /negocios/{negocioId}/{file} {
+      allow read: if true;
+      allow write: if request.auth != null && firestore.get(/databases/(default)/documents/negocios/$(negocioId)).data.duenioId == request.auth.uid;
+    }
+  }
+}

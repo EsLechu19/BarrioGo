@@ -1,10 +1,10 @@
 import { StyleSheet, Text, View, ImageBackground, Image } from 'react-native'
-import { RootStackParamList } from '../navigation/RootStackParamList'
+import { AuthStackParamList } from '../navigation/AuthStackParamList'
 import { NativeStackScreenProps } from '@react-navigation/native-stack'
 import { PrimaryButton } from '../components/PrimaryButton';
 import { colors } from '../styles/colors';
 
-type Props = NativeStackScreenProps<RootStackParamList, 'Splash'>
+type Props = NativeStackScreenProps<AuthStackParamList, 'Splash'>
 
 export default function SplashScreen({ navigation }: Props) {
     return (

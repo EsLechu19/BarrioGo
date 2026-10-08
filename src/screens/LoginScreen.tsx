@@ -3,28 +3,39 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useState } from 'react'
 import { Ionicons } from '@expo/vector-icons';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
-import { RootStackParamList } from '../navigation/RootStackParamList';
+import { AuthStackParamList } from '../navigation/AuthStackParamList';
 import { FormField } from '../components/FormField';
 import { PrimaryButton } from '../components/PrimaryButton';
+import { authErrorEs, useAuth } from '../context/AuthContext';
 import { colors } from '../styles/colors';
 
-type Props = NativeStackScreenProps<RootStackParamList, 'Login'>
+type Props = NativeStackScreenProps<AuthStackParamList, 'Login'>
 
 export default function LoginScreen ({ navigation }: Props){
     const insets = useSafeAreaInsets();
+    const { login } = useAuth();
     const [email,setEmail] = useState('');
     const [password,setPassword] = useState('');
-    const [error,setError] = useState<{email?: string; password?: string;}>({});
-    const isValidEmail = (value: string): boolean => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
-    const handleLogin = () => {
+    const [error,setError] = useState<{email?: string; password?: string; auth?: string}>({});
+    const [submitting, setSubmitting] = useState<boolean>(false);
+    const isValidEmail = (value: string): boolean => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value.trim());
+    const handleLogin = async () => {
         const newError: {email?:string;password?:string} = {};
         if(!email.trim()) newError.email = 'El correo es necesario';
         else if(!isValidEmail(email)) newError.email = 'Ingresa un correo válido';
-        if(!password.trim()) newError.password = 'La contraseña es necesaria';
+        if(!password) newError.password = 'La contraseña es necesaria';
+        else if(password.length < 6) newError.password = 'Mínimo 6 caracteres';
         setError(newError);
-        if(Object.keys(newError).length === 0){
-            console.log('Email: ',email,'Password: ',password)
-            navigation.replace('Home');
+        if(Object.keys(newError).length > 0) return;
+        setSubmitting(true);
+        try {
+            await login(email, password);
+            // La raíz (App.tsx) monta AppNavigator sola al detectar sesión.
+        } catch (e: unknown) {
+            const code = e instanceof Object && 'code' in e ? String((e as { code: unknown }).code) : '';
+            setError({ auth: authErrorEs(code) });
+        } finally {
+            setSubmitting(false);
         }
     }
 
@@ -87,7 +98,8 @@ export default function LoginScreen ({ navigation }: Props){
 
             {/* Area de botón de ingresar + link a registro */}
             <View style={styles.actionArea}>
-                <PrimaryButton title="Ingresar" onPress={handleLogin} />
+                {error.auth && <Text style={styles.authError}>{error.auth}</Text>}
+                <PrimaryButton title={submitting ? 'Ingresando...' : 'Ingresar'} onPress={handleLogin} />
                 <View style={styles.registerRow}>
                     <Text style={styles.registerText}>¿No tienes cuenta? </Text>
                     <TouchableOpacity onPress={handleRegister}>
@@ -137,6 +149,7 @@ const styles = StyleSheet.create({
 
     // Area de botón de ingresar + link a registro
     actionArea: { width: '100%', height: 89, paddingTop: 8, gap: 16 },
+    authError: { color: colors.google, fontSize: 14, fontWeight: '600', textAlign: 'center' },
     registerRow: { flexDirection: 'row', justifyContent: 'center', alignItems: 'center' },
     registerText: { height: 17, fontSize: 14 },
     registerLink: { height: 17, color: colors.primary, fontSize: 14, fontWeight: '600' },

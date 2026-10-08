@@ -2,30 +2,45 @@ import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useState } from 'react';
 import { StyleSheet, View, Image, Text, TouchableOpacity } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
-import { RootStackParamList } from '../navigation/RootStackParamList';
+import { AuthStackParamList } from '../navigation/AuthStackParamList';
 import { FormField } from '../components/FormField';
 import { PrimaryButton } from '../components/PrimaryButton';
+import { authErrorEs, useAuth } from '../context/AuthContext';
 import { colors } from '../styles/colors';
 
-type Props = NativeStackScreenProps<RootStackParamList, 'Register'>
+type Props = NativeStackScreenProps<AuthStackParamList, 'Register'>
 
 export default function RegisterScreen({ navigation }: Props) {
     const insets = useSafeAreaInsets();
+    const { register } = useAuth();
     const [nombre, setNombre] = useState('');
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [confirmPassword, setConfirmPassword] = useState('');
-    const [error, setError] = useState<{ nombre?: string; email?: string; password?: string }>({});
-    const isValidEmail = (value: string): boolean => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
-    const handleRegister = () => {
-        const newError: { nombre?: string; email?: string; password?: string } = {};
+    const [error, setError] = useState<{ nombre?: string; email?: string; password?: string; confirmPassword?: string; auth?: string }>({});
+    const [submitting, setSubmitting] = useState<boolean>(false);
+    const isValidEmail = (value: string): boolean => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value.trim());
+    const handleRegister = async () => {
+        const newError: { nombre?: string; email?: string; password?: string; confirmPassword?: string } = {};
         if (!nombre.trim()) newError.nombre = 'El nombre es necesario';
+        else if (nombre.trim().length < 3) newError.nombre = 'El nombre debe tener al menos 3 letras';
         if (!email.trim()) newError.email = 'El correo es necesario';
         else if (!isValidEmail(email)) newError.email = 'Ingresa un correo válido';
-        if (!password.trim()) newError.password = 'La contraseña es necesaria';
+        if (!password) newError.password = 'La contraseña es necesaria';
+        else if (password.length < 6) newError.password = 'Mínimo 6 caracteres';
+        if (!confirmPassword) newError.confirmPassword = 'Repite tu contraseña';
+        else if (confirmPassword !== password) newError.confirmPassword = 'No coincide con la contraseña';
         setError(newError);
-        if (Object.keys(newError).length === 0) {
-            navigation.navigate('Home');
+        if (Object.keys(newError).length > 0) return;
+        setSubmitting(true);
+        try {
+            await register(nombre, email, password);
+            // La raíz (App.tsx) monta AppNavigator sola al detectar sesión.
+        } catch (e: unknown) {
+            const code = e instanceof Object && 'code' in e ? String((e as { code: unknown }).code) : '';
+            setError({ auth: authErrorEs(code) });
+        } finally {
+            setSubmitting(false);
         }
     };
 
@@ -74,6 +89,7 @@ export default function RegisterScreen({ navigation }: Props) {
                     value={confirmPassword}
                     onChangeText={setConfirmPassword}
                     placeholder="Repite tu contraseña"
+                    error={error.confirmPassword}
                     autoCapitalize="none"
                     keyboardType="default"
                     secureTextEntry
@@ -81,7 +97,8 @@ export default function RegisterScreen({ navigation }: Props) {
             </View>
             {/* Area de boton de registrarse + link de inicia sesion */}
             <View style={styles.actionArea}>
-                <PrimaryButton title="Registrarme" onPress={handleRegister} />
+                {error.auth && <Text style={styles.authError}>{error.auth}</Text>}
+                <PrimaryButton title={submitting ? 'Creando cuenta...' : 'Registrarme'} onPress={handleRegister} />
                 <View style={styles.loginRow}>
                     <Text style={styles.loginText}>¿Ya tienes cuenta? </Text>
                     <TouchableOpacity onPress={() => navigation.navigate('Login')}>
@@ -109,6 +126,7 @@ const styles = StyleSheet.create({
 
     // Area de boton de registrarse + link de inicia sesion
     actionArea: { width: '100%', height: 89, paddingTop: 8, gap: 16 },
+    authError: { color: colors.google, fontSize: 14, fontWeight: '600', textAlign: 'center' },
     loginRow: { flexDirection: 'row', justifyContent: 'center', alignItems: 'center' },
     loginText: { height: 17, fontSize: 14 },
     loginLink: { height: 17, color: colors.primary, fontSize: 14, fontWeight: '600' }
