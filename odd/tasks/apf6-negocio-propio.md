@@ -6,7 +6,7 @@ Cualquier usuario puede registrar SU propio negocio y queda vinculado como dueñ
 ## Slices
 - [ ] S1 Registro + vínculo (ESTE): form + crea doc + `users/{uid}` `{rol:'negocio', negocioId}`.
 - [x] S2 Mi local: editar info con chequeo de dueño en cliente (commit pendiente). Los 15 del seed quedan no editables (sin dueño).
-- [x] S3 Icono + portada con Cloudinary Free (reemplaza Storage: pedía Blaze con tarjeta). Requiere cuenta + preset unsigned y las 2 vars en .env. storage.rules queda para el futuro.
+- [x] S3 Icono + portada con Cloudinary Free ✔ verificado en físico (cuenta + preset unsigned + vars en .env; subida por base64 tras fixes XHR/REST/FormData). storage.rules queda para el futuro.
 - [x] S4 Reglas: solo el dueño escribe su negocio/productos/pedidos-estado (commit pendiente; REQUIERE republicar en consola). Backfill: negocios/1 → dueño negocio@barriogo.pe.
 
 ## Alcance S1

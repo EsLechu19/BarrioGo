@@ -81,6 +81,9 @@ npm run seed   # 15 negocios + 48 productos
   tracking en tiempo real ✔, F4 panel negocio (estados + alta de menú) ✔,
   F5 notificaciones locales ✔ (activas en dev build/APK; en Expo Go son
   no-op desde SDK 53).
+- **F6** (misma rama) — cada cuenta registra su propio negocio ✔ (S1), edita
+  su local ✔ (S2), icono + portada por Cloudinary Free ✔ (S3, verificado en
+  físico), reglas solo-dueño ✔ (S4, campo `duenioId` sin eñe).
 
 ## Convenciones
 
