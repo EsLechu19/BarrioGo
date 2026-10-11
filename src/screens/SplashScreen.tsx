@@ -10,17 +10,19 @@ export default function SplashScreen({ navigation }: Props) {
     return (
         <ImageBackground source={require('../../assets/img/fondo.jpg')} style={styles.background}>
             <View style={styles.container}>
+                {/* Area del logo*/}
                 <View style={styles.logoArea}>
                     <View style={styles.logoFrame}>
-                        <Image source={require('../../assets/img/logo2.png')} style={styles.logo} resizeMode="contain" />
+                        <Image source={require('../../assets/img/logoLlama.png')} style={styles.logo} resizeMode="contain" />
                     </View>
                     <Text style={styles.brand}>Barrio<Text style={styles.go}>Go</Text></Text>
                     <Text style={styles.tagline}>Tu barrio, a un pedido de distancia</Text>
                 </View>
 
+                {/* Area del footer*/}
                 <View style={styles.footer}>
                     <PrimaryButton title="Comenzar" onPress={() => navigation.replace('Login')} />
-                    <Text style={styles.version}>Versión 1.0.0</Text>
+                    <Text style={styles.version}>Versión 1.1.2</Text>
                 </View>
             </View>
         </ImageBackground>
