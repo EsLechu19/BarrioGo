@@ -12,4 +12,8 @@ export const colors = {
   rating: 'gold',
   google: '#db4437',
   facebook: '#1877f2',
+  // Tonos de apoyo reutilizados en toda la app (mismos valores de siempre).
+  white: '#FFFFFF',
+  primarySoft: '#FFF7ED',
+  successSoft: '#ECFDF5',
 };

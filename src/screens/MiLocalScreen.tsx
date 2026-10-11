@@ -4,36 +4,48 @@ import {
   Image,
   ScrollView,
   StyleSheet,
-  Switch,
   Text,
-  TextInput,
   TouchableOpacity,
   View,
 } from 'react-native';
-import * as ImagePicker from 'expo-image-picker';
+import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { doc, getDoc } from 'firebase/firestore';
 import { useAuth } from '../context/AuthContext';
 import { firebaseReady, getFirestoreDb } from '../services/firebase';
-import { actualizarNegocio, subirFotoNegocio, TipoFotoNegocio } from '../services/api';
-import { getUserCoords } from '../services/location';
+import { actualizarNegocio } from '../services/api';
+import { useNegocioId } from '../hooks/useNegocioId';
+import { useUbicacionGps } from '../hooks/useUbicacionGps';
+import { useFotoNegocio } from '../hooks/useFotoNegocio';
+import { ScreenHeader } from '../components/ScreenHeader';
+import { FormField } from '../components/FormField';
+import { PrimaryButton } from '../components/PrimaryButton';
+import { UbicacionInput } from '../components/UbicacionInput';
+import { LoadingState } from '../components/StateView';
 import { RootStackParamList } from '../navigation/RootStackParamList';
 import { colors } from '../styles/colors';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'MiLocal'>;
 
 const GUIA_SIN_NEGOCIO =
-  'Todavía no tenés un negocio vinculado. Registralo desde tu perfil para editarlo acá.';
+  'Todavía no tienes un negocio vinculado. Regístralo desde tu perfil para editarlo aquí.';
 
 export default function MiLocalScreen({ navigation }: Props) {
   const insets = useSafeAreaInsets();
   const { user } = useAuth();
   const uid: string | undefined = user?.uid;
 
-  const [negocioId, setNegocioId] = useState<string | null>(null);
-  const [cargando, setCargando] = useState<boolean>(true);
-  const [cargaError, setCargaError] = useState<string | null>(null);
+  // Mismo patrón que NegocioScreen: negocioId en users/{uid} + precarga
+  // con getDoc del negocio.
+  const {
+    negocioId,
+    loading: leyendoVinculo,
+    error: vinculoError,
+  } = useNegocioId();
+
+  const [cargandoNegocio, setCargandoNegocio] = useState<boolean>(true);
+  const [negocioError, setNegocioError] = useState<string | null>(null);
 
   const [nombre, setNombre] = useState<string>('');
   const [descripcion, setDescripcion] = useState<string>('');
@@ -43,46 +55,56 @@ export default function MiLocalScreen({ navigation }: Props) {
   const [latTxt, setLatTxt] = useState<string>('');
   const [lngTxt, setLngTxt] = useState<string>('');
 
-  const [gpsAviso, setGpsAviso] = useState<string | null>(null);
-  const [leyendoGps, setLeyendoGps] = useState<boolean>(false);
+  const {
+    leyendo: leyendoGps,
+    aviso: gpsAviso,
+    usar: obtenerUbicacion,
+  } = useUbicacionGps({
+    mensajeSinUbicacion:
+      'No pudimos obtener tu ubicación (permiso denegado o sin señal). Mantenemos la actual.',
+    mensajeExito: 'Ubicación actualizada con tu GPS.',
+    mensajeError: (e) =>
+      e instanceof Error
+        ? `No pudimos obtener tu ubicación: ${e.message}. Mantenemos la actual.`
+        : 'No pudimos obtener tu ubicación. Mantenemos la actual.',
+  });
 
   const [guardando, setGuardando] = useState<boolean>(false);
   const [formError, setFormError] = useState<string | null>(null);
   const [formOk, setFormOk] = useState<string | null>(null);
 
-  // S3 Fotos: icono (cuadrado) + portada (16:9) con Firebase Storage.
+  // S3 Fotos: icono (cuadrado) + portada (16:9) con subida a Cloudinary.
   const [iconoUrl, setIconoUrl] = useState<string>('');
   const [portadaUrl, setPortadaUrl] = useState<string>('');
-  const [subiendo, setSubiendo] = useState<TipoFotoNegocio | null>(null);
-  const [fotoError, setFotoError] = useState<string | null>(null);
+  const {
+    subiendo,
+    error: fotoError,
+    elegir: elegirFoto,
+  } = useFotoNegocio({
+    negocioId,
+    uid,
+    onSubida: (tipo, url) => {
+      if (tipo === 'icono') setIconoUrl(url);
+      else setPortadaUrl(url);
+    },
+  });
 
-  // Mismo patrón que NegocioScreen: negocioId en users/{uid} + precarga
-  // con getDoc del negocio.
   useEffect(() => {
-    async function precargar(): Promise<void> {
-      if (!firebaseReady || !uid) {
-        setCargando(false);
-        return;
-      }
-      setCargando(true);
-      setCargaError(null);
+    if (leyendoVinculo) return;
+    if (!negocioId) {
+      setCargandoNegocio(false);
+      return;
+    }
+    let activo = true;
+    setCargandoNegocio(true);
+    setNegocioError(null);
+    (async () => {
       try {
-        const userSnap = await getDoc(doc(getFirestoreDb(), 'users', uid));
-        const userData: unknown = userSnap.exists() ? userSnap.data() : null;
-        const id: unknown =
-          typeof userData === 'object' && userData !== null
-            ? (userData as { negocioId?: unknown }).negocioId
-            : undefined;
-        if (typeof id !== 'string' || !id.trim()) {
-          setNegocioId(null);
-          return;
-        }
-        setNegocioId(id);
         const negocioSnap = await getDoc(
-          doc(getFirestoreDb(), 'negocios', id),
+          doc(getFirestoreDb(), 'negocios', negocioId),
         );
         if (!negocioSnap.exists()) {
-          setCargaError('El negocio no existe.');
+          if (activo) setNegocioError('El negocio no existe.');
           return;
         }
         const negocio: unknown = negocioSnap.data();
@@ -113,113 +135,30 @@ export default function MiLocalScreen({ navigation }: Props) {
           if (typeof n.portada === 'string') setPortadaUrl(n.portada);
         }
       } catch (e) {
-        setCargaError(
-          e instanceof Error
-            ? `No se pudo leer tu negocio: ${e.message}`
-            : 'No se pudo leer tu negocio. Intentá de nuevo.',
-        );
-        setNegocioId(null);
+        if (activo) {
+          setNegocioError(
+            e instanceof Error
+              ? `No se pudo leer tu negocio: ${e.message}`
+              : 'No se pudo leer tu negocio. Intentá de nuevo.',
+          );
+        }
       } finally {
-        setCargando(false);
+        if (activo) setCargandoNegocio(false);
       }
-    }
-    void precargar();
-  }, [uid]);
+    })();
+    return () => {
+      activo = false;
+    };
+  }, [negocioId, leyendoVinculo]);
+
+  const cargando: boolean = leyendoVinculo || cargandoNegocio;
+  const cargaError: string | null = vinculoError ?? negocioError;
 
   async function usarMiUbicacion(): Promise<void> {
-    if (leyendoGps) return;
-    setLeyendoGps(true);
-    setGpsAviso(null);
-    try {
-      const coords = await getUserCoords();
-      if (!coords) {
-        setGpsAviso(
-          'No pudimos obtener tu ubicación (permiso denegado o sin señal). Mantenemos la actual.',
-        );
-      } else {
-        setLatTxt(String(coords.latitude));
-        setLngTxt(String(coords.longitude));
-        setGpsAviso('Ubicación actualizada con tu GPS.');
-      }
-    } catch (e) {
-      setGpsAviso(
-        e instanceof Error
-          ? `No pudimos obtener tu ubicación: ${e.message}. Mantenemos la actual.`
-          : 'No pudimos obtener tu ubicación. Mantenemos la actual.',
-      );
-    } finally {
-      setLeyendoGps(false);
-    }
-  }
-
-  async function elegirFoto(
-    tipo: TipoFotoNegocio,
-    desdeCamara: boolean,
-  ): Promise<void> {
-    if (subiendo || !negocioId || !uid) return;
-    setFotoError(null);
-    try {
-      // Icono cuadrado, portada 16:9 (el aspect solo aplica en Android; en
-      // iOS el recorte siempre es cuadrado — docs SDK 57).
-      const aspect: [number, number] =
-        tipo === 'icono' ? [1, 1] : [16, 9];
-      if (desdeCamara) {
-        const permiso = await ImagePicker.requestCameraPermissionsAsync();
-        if (!permiso.granted) {
-          setFotoError('Necesitamos permiso de cámara para tomar la foto.');
-          return;
-        }
-        const resultado = await ImagePicker.launchCameraAsync({
-          mediaTypes: ['images'],
-          allowsEditing: true,
-          aspect,
-          quality: 0.7,
-        });
-        if (resultado.canceled) return;
-        const asset = resultado.assets[0];
-        if (!asset) return;
-        await subirElegida(tipo, asset.uri);
-        return;
-      }
-      // Galería: no hace falta pedir permiso antes (docs SDK 57).
-      const resultado = await ImagePicker.launchImageLibraryAsync({
-        mediaTypes: ['images'],
-        allowsEditing: true,
-        aspect,
-        quality: 0.7,
-      });
-      // El usuario canceló → no hace nada, nunca crashea.
-      if (resultado.canceled) return;
-      const asset = resultado.assets[0];
-      if (!asset) return;
-      await subirElegida(tipo, asset.uri);
-    } catch (e) {
-      setFotoError(
-        e instanceof Error
-          ? e.message
-          : 'No se pudo elegir la foto. Intentá de nuevo.',
-      );
-    }
-  }
-
-  async function subirElegida(
-    tipo: TipoFotoNegocio,
-    uriLocal: string,
-  ): Promise<void> {
-    if (!negocioId || !uid) return;
-    setSubiendo(tipo);
-    try {
-      const url = await subirFotoNegocio(negocioId, uid, uriLocal, tipo);
-      if (tipo === 'icono') setIconoUrl(url);
-      else setPortadaUrl(url);
-    } catch (e) {
-      setFotoError(
-        e instanceof Error
-          ? e.message
-          : 'No se pudo subir la foto. Intentá de nuevo.',
-      );
-    } finally {
-      setSubiendo(null);
+    const coords = await obtenerUbicacion();
+    if (coords) {
+      setLatTxt(String(coords.latitude));
+      setLngTxt(String(coords.longitude));
     }
   }
 
@@ -287,97 +226,100 @@ export default function MiLocalScreen({ navigation }: Props) {
   }
 
   if (cargando) {
+    // Area loading
     return (
-      <View style={[styles.container, styles.center, { paddingTop: insets.top + 12 }]}>
-        <ActivityIndicator size="large" color={colors.primary} />
-        <Text style={styles.subtitle}>Leyendo tu negocio...</Text>
-      </View>
+      <LoadingState
+        mensaje="Leyendo tu negocio..."
+        style={[styles.container, styles.center, { paddingTop: insets.top + 12 }]}
+        textoStyle={styles.subtitle}
+      />
     );
   }
 
   if (!negocioId) {
+    // Area vacio
     return (
       <View style={[styles.container, styles.center, { paddingTop: insets.top + 12 }]}>
         <Text style={styles.title}>Mi local</Text>
         {cargaError ? <Text style={styles.error}>{cargaError}</Text> : null}
         <Text style={styles.subtitle}>{GUIA_SIN_NEGOCIO}</Text>
-        <TouchableOpacity
-          style={styles.primaryButton}
+        <PrimaryButton
+          title="Registrar mi negocio"
           onPress={() => navigation.navigate('RegistrarNegocio')}
-        >
-          <Text style={styles.primaryText}>Registrar mi negocio</Text>
-        </TouchableOpacity>
+        />
       </View>
     );
   }
 
   return (
-    <ScrollView
-      style={{ paddingTop: insets.top + 12 }}
-      contentContainerStyle={styles.container}
-    >
-      <Text style={styles.title}>Mi local</Text>
-      <Text style={styles.subtitle}>
-        Editá la info que ven tus clientes en Detalle.
-      </Text>
+    <View style={[styles.screen, { paddingTop: insets.top + 12 }]}>
+      <ScrollView contentContainerStyle={styles.container}>
+      {/* Area titulo */}
+      <ScreenHeader
+        titulo="Mi local"
+        subtitulo="Editá la info que ven tus clientes en Detalle."
+        onBack={() => navigation.goBack()}
+        backAccessibilityLabel="Volver"
+      />
       {cargaError ? <Text style={styles.error}>{cargaError}</Text> : null}
-      <TextInput
-        style={styles.input}
+      {/* Area formulario */}
+      <FormField
         placeholder="Nombre del negocio"
         value={nombre}
         onChangeText={setNombre}
       />
-      <TextInput
-        style={styles.input}
+      <FormField
         placeholder="Descripción (opcional)"
         value={descripcion}
         onChangeText={setDescripcion}
       />
-      <TextInput
-        style={styles.input}
+      <FormField
         placeholder="Dirección (opcional)"
         value={direccion}
         onChangeText={setDireccion}
       />
-      <TextInput
-        style={styles.input}
+      <FormField
         placeholder="Tiempo estimado (ej. 20-30 min)"
         value={tiempoEstimado}
         onChangeText={setTiempoEstimado}
       />
       <View style={styles.switchRow}>
         <Text style={styles.switchLabel}>Envío gratis</Text>
-        <Switch value={envioGratis} onValueChange={setEnvioGratis} />
+        <TouchableOpacity
+          style={[styles.toggleTrack, envioGratis && styles.toggleTrackOn]}
+          onPress={() => setEnvioGratis(!envioGratis)}
+          activeOpacity={0.8}
+          accessibilityRole="switch"
+          accessibilityState={{ checked: envioGratis }}
+          accessibilityLabel="Envío gratis"
+        >
+          <View
+            style={[
+              styles.toggleThumb,
+              envioGratis ? styles.toggleThumbOn : styles.toggleThumbOff,
+            ]}
+          >
+            {envioGratis ? (
+              <Ionicons name="checkmark" size={14} color={colors.primary} />
+            ) : null}
+          </View>
+        </TouchableOpacity>
       </View>
-      <TouchableOpacity
-        style={[styles.gpsButton, leyendoGps && styles.disabledButton]}
-        disabled={leyendoGps}
-        onPress={() => void usarMiUbicacion()}
-      >
-        <Text style={styles.gpsText}>
-          {leyendoGps ? 'Leyendo GPS...' : 'Usar mi ubicación'}
-        </Text>
-      </TouchableOpacity>
-      {gpsAviso ? <Text style={styles.subtitle}>{gpsAviso}</Text> : null}
-      <View style={styles.coordsRow}>
-        <TextInput
-          style={[styles.input, styles.coordInput]}
-          placeholder="Latitud"
-          value={latTxt}
-          onChangeText={setLatTxt}
-          keyboardType="decimal-pad"
-        />
-        <TextInput
-          style={[styles.input, styles.coordInput]}
-          placeholder="Longitud"
-          value={lngTxt}
-          onChangeText={setLngTxt}
-          keyboardType="decimal-pad"
-        />
-      </View>
+      {/* Area ubicacion */}
+      <UbicacionInput
+        leyendo={leyendoGps}
+        aviso={gpsAviso}
+        onUsar={() => void usarMiUbicacion()}
+        lat={latTxt}
+        lng={lngTxt}
+        onLatChange={setLatTxt}
+        onLngChange={setLngTxt}
+      />
       {formError ? <Text style={styles.error}>{formError}</Text> : null}
       {formOk ? <Text style={styles.ok}>{formOk}</Text> : null}
+      {/* Area fotos */}
       <Text style={styles.sectionTitle}>Fotos</Text>
+      {/* Fila foto */}
       <View style={styles.fotoRow}>
         {iconoUrl ? (
           <Image source={{ uri: iconoUrl }} style={styles.iconoPreview} />
@@ -408,6 +350,7 @@ export default function MiLocalScreen({ navigation }: Props) {
           </View>
         </View>
       </View>
+      {/* Fila foto */}
       <View style={styles.fotoColumna}>
         {portadaUrl ? (
           <Image source={{ uri: portadaUrl }} style={styles.portadaPreview} />
@@ -440,36 +383,33 @@ export default function MiLocalScreen({ navigation }: Props) {
         <ActivityIndicator size="small" color={colors.primary} />
       ) : null}
       {fotoError ? <Text style={styles.error}>{fotoError}</Text> : null}
-      <TouchableOpacity
-        style={[styles.primaryButton, guardando && styles.disabledButton]}
-        disabled={guardando}
-        onPress={() => void guardar()}
-      >
-        <Text style={styles.primaryText}>
-          {guardando ? 'Guardando...' : 'Guardar cambios'}
-        </Text>
-      </TouchableOpacity>
+      {/* Area guardar */}
+      <View style={{ marginBottom: insets.bottom + 40 }}>
+        <PrimaryButton
+          title={guardando ? 'Guardando...' : 'Guardar cambios'}
+          onPress={() => void guardar()}
+          disabled={guardando}
+        />
+      </View>
     </ScrollView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
+  // Base
+  screen: { flex: 1, backgroundColor: colors.background },
   container: { flexGrow: 1, gap: 12, padding: 16, backgroundColor: colors.background },
   center: { flex: 1, justifyContent: 'center', alignItems: 'center' },
-  title: { color: colors.textPrimary, fontSize: 22, fontWeight: '900' },
   subtitle: { color: colors.textMuted, fontSize: 14, textAlign: 'center' },
   error: { color: colors.error, fontSize: 14, fontWeight: '600' },
   ok: { color: colors.success, fontSize: 14, fontWeight: '600' },
-  input: {
-    borderWidth: 1,
-    borderColor: colors.border,
-    borderRadius: 12,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-    fontSize: 15,
-    color: colors.textPrimary,
-    backgroundColor: colors.surface,
-  },
+  disabledButton: { opacity: 0.6 },
+
+  // Area titulo
+  title: { color: colors.textPrimary, fontSize: 22, fontWeight: '900' },
+
+  // Area formulario
   switchRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -482,39 +422,36 @@ const styles = StyleSheet.create({
     backgroundColor: colors.surface,
   },
   switchLabel: { color: colors.textPrimary, fontSize: 15, fontWeight: '600' },
-  coordsRow: { flexDirection: 'row', gap: 8 },
-  coordInput: { flex: 1 },
-  gpsButton: {
-    paddingVertical: 12,
-    borderRadius: 14,
+  // Toggle (mismo estilo que Configuración)
+  toggleTrack: {
+    width: 54,
+    height: 32,
+    borderRadius: 16,
+    padding: 3,
+    flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'flex-start',
+    backgroundColor: colors.border,
     borderWidth: 1,
     borderColor: colors.border,
-    backgroundColor: colors.surface,
   },
-  gpsText: { color: colors.primary, fontSize: 15, fontWeight: '700' },
-  sectionTitle: { color: colors.textPrimary, fontSize: 17, fontWeight: '800' },
-  primaryButton: {
-    paddingVertical: 14,
-    paddingHorizontal: 24,
-    borderRadius: 14,
+  toggleTrackOn: { backgroundColor: colors.primary, borderColor: colors.primary },
+  toggleThumb: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
     alignItems: 'center',
-    backgroundColor: colors.primary,
-  },
-  primaryText: { color: colors.surface, fontSize: 15, fontWeight: '700' },
-  disabledButton: { opacity: 0.6 },
-  fotoRow: { flexDirection: 'row', gap: 12, alignItems: 'center' },
-  fotoColumna: { gap: 8 },
-  iconoPreview: { width: 72, height: 72, borderRadius: 14 },
-  portadaPreview: { width: '100%', height: 140, borderRadius: 14 },
-  placeholder: {
     justifyContent: 'center',
-    alignItems: 'center',
     backgroundColor: colors.surface,
-    borderWidth: 1,
-    borderColor: colors.border,
   },
-  placeholderText: { color: colors.textMuted, fontSize: 13 },
+  toggleThumbOn: { marginLeft: 22 },
+  toggleThumbOff: { marginLeft: 0 },
+
+  // Area fotos
+  sectionTitle: { color: colors.textPrimary, fontSize: 17, fontWeight: '800' },
+  // Fila foto
+  fotoRow: { flexDirection: 'row', gap: 12, alignItems: 'center' },
+  iconoPreview: { width: 72, height: 72, borderRadius: 14 },
   fotoBotones: { flex: 1, gap: 8 },
   fotoLabel: { color: colors.textPrimary, fontSize: 14, fontWeight: '700' },
   fotoAcciones: { flexDirection: 'row', gap: 8 },
@@ -528,4 +465,15 @@ const styles = StyleSheet.create({
     backgroundColor: colors.surface,
   },
   fotoButtonText: { color: colors.primary, fontSize: 14, fontWeight: '700' },
+  // Fila foto
+  fotoColumna: { gap: 8 },
+  portadaPreview: { width: '100%', height: 140, borderRadius: 14 },
+  placeholder: {
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: colors.surface,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  placeholderText: { color: colors.textMuted, fontSize: 13 },
 });

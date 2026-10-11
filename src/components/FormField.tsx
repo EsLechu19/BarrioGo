@@ -1,8 +1,10 @@
-import { StyleSheet, Text, View, TextInput, KeyboardTypeOptions } from 'react-native';
+import { useState } from 'react';
+import { StyleSheet, Text, View, TextInput, TouchableOpacity, KeyboardTypeOptions } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { colors } from '../styles/colors';
 
 type Props = {
-    label: string;
+    label?: string;
     value: string;
     onChangeText: (text: string) => void;
     placeholder?: string;
@@ -22,30 +24,58 @@ export function FormField({
     keyboardType,
     autoCapitalize,
 }: Props) {
+    const [hidden, setHidden] = useState<boolean>(secureTextEntry ?? false);
+    const showEye = secureTextEntry === true;
     return (
+        // contenedor del campo
         <View style={styles.wrapper}>
-            <View style={styles.labelRow}>
-                <Text style={styles.label}>{label}</Text>
-                {error && <Text style={styles.errorAsterisk}>*{error}</Text>}
+            {/* Label arriba (opcional) */}
+            {label ? <Text style={styles.label}>{label}</Text> : null}
+            {/* Input + error debajo (el error nunca compite en ancho con el label) */}
+            <View style={styles.fieldGroup}>
+                <View style={styles.inputContainer}>
+                    <TextInput
+                        style={[styles.input, showEye && styles.inputWithIcon]}
+                        placeholder={placeholder}
+                        placeholderTextColor={colors.textPlaceholder}
+                        value={value}
+                        onChangeText={onChangeText}
+                        secureTextEntry={showEye ? hidden : secureTextEntry}
+                        keyboardType={keyboardType}
+                        autoCapitalize={autoCapitalize}
+                    />
+                    {showEye && (
+                        <TouchableOpacity
+                            style={styles.eyeButton}
+                            onPress={() => setHidden((prev: boolean) => !prev)}
+                            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                        >
+                            <Ionicons
+                                name={hidden ? 'eye-off-outline' : 'eye-outline'}
+                                size={20}
+                                color={colors.textPlaceholder}
+                            />
+                        </TouchableOpacity>
+                    )}
+                </View>
+                {error ? <Text style={styles.errorText}>*{error}</Text> : null}
             </View>
-            <TextInput
-                style={styles.input}
-                placeholder={placeholder}
-                placeholderTextColor={colors.textPlaceholder}
-                value={value}
-                onChangeText={onChangeText}
-                secureTextEntry={secureTextEntry}
-                keyboardType={keyboardType}
-                autoCapitalize={autoCapitalize}
-            />
         </View>
     );
 }
 
 const styles = StyleSheet.create({
+    // Base
     wrapper: { width: '100%', gap: 16 },
-    labelRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+
+    // Label
     label: { fontSize: 14, fontWeight: 'bold' },
-    errorAsterisk: { color: colors.error, fontSize: 13, fontWeight: '600' },
+    errorText: { color: colors.error, fontSize: 13, fontWeight: '600' },
+
+    // Input + error juntos (gap corto entre uno y otro)
+    fieldGroup: { width: '100%', gap: 6 },
+    inputContainer: { width: '100%', position: 'relative', justifyContent: 'center' },
     input: { width: '100%', height: 48, paddingHorizontal: 16, borderWidth: 1, borderColor: colors.border, borderRadius: 12, backgroundColor: colors.surface, fontSize: 16 },
+    inputWithIcon: { paddingRight: 48 },
+    eyeButton: { position: 'absolute', right: 14, height: 48, justifyContent: 'center', alignItems: 'center' },
 });

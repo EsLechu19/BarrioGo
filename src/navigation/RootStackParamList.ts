@@ -6,7 +6,15 @@ import { TabParamList } from './TabParamList';
 export type RootStackParamList = {
   Tabs: NavigatorScreenParams<TabParamList> | undefined;
   Detalle: { negocioId: string };
+  Restaurants: undefined;
   Carrito: undefined;
+  PedidoDetalle: { pedidoId: string };
+  Notificaciones: undefined;
   RegistrarNegocio: undefined;
   MiLocal: undefined;
+  MisDatos: undefined;
+  Direcciones: undefined;
+  MetodosPago: undefined;
+  Ayuda: undefined;
+  Configuracion: undefined;
 };

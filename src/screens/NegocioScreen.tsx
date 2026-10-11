@@ -1,68 +1,47 @@
-import { useEffect, useState } from 'react';
-import {
-  ActivityIndicator,
-  FlatList,
-  StyleSheet,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  View,
-} from 'react-native';
+import { useEffect, useMemo, useState } from 'react';
+import { StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { BottomTabScreenProps } from '@react-navigation/bottom-tabs';
-import { CompositeScreenProps } from '@react-navigation/native';
-import { NativeStackScreenProps } from '@react-navigation/native-stack';
-import { doc, getDoc } from 'firebase/firestore';
 import { useAuth } from '../context/AuthContext';
-import { RootStackParamList } from '../navigation/RootStackParamList';
-import { TabParamList } from '../navigation/TabParamList';
-import { firebaseReady, getFirestoreDb } from '../services/firebase';
+import { TabScreenProps } from '../navigation/TabScreenProps';
+import { firebaseReady } from '../services/firebase';
 import {
   cambiarEstadoPedido,
   crearProducto,
   escucharPedidosNegocio,
+  getMenu,
+  getNegocioById,
 } from '../services/api';
 import { EstadoPedido, Pedido } from '../types/Pedido';
+import { Negocio } from '../types/Negocio';
+import { Producto } from '../types/Producto';
+import { LoadingState } from '../components/StateView';
+import { Perfil } from '../components/negocio/Perfil';
+import { Seccion, CircleTabBar } from '../components/negocio/CircleTabBar';
+import { Pedidos, Stats } from '../components/negocio/Pedidos';
+import { Menu } from '../components/negocio/Menu';
+import { Ganancias } from '../components/negocio/Ganancias';
+import { Repartidores } from '../components/negocio/Repartidores';
+import { Locales } from '../components/negocio/Locales';
+import { useNegocioId } from '../hooks/useNegocioId';
 import { colors } from '../styles/colors';
-
-const ESTADO_COLORS: Record<EstadoPedido, string> = {
-  pendiente: '#F59E0B',
-  confirmado: '#3B82F6',
-  en_camino: '#8B5CF6',
-  entregado: '#10B981',
-};
-
-const SIGUIENTE_ESTADO: Record<
-  Exclude<EstadoPedido, 'entregado'>,
-  EstadoPedido
-> = {
-  pendiente: 'confirmado',
-  confirmado: 'en_camino',
-  en_camino: 'entregado',
-};
+import { SIGUIENTE_ESTADO } from '../utils/estadosPedido';
 
 const GUIA_HABILITACION =
   "Pedí al equipo que en Firestore users/{uid} te ponga rol:'negocio' y negocioId:'1'";
 
-function fechaCorta(iso: string): string {
-  const d = new Date(iso);
-  if (Number.isNaN(d.getTime())) return iso;
-  return d.toLocaleDateString();
-}
-
-type Props = CompositeScreenProps<
-  BottomTabScreenProps<TabParamList, 'NegocioTab'>,
-  NativeStackScreenProps<RootStackParamList>
->;
+type Props = TabScreenProps<'NegocioTab'>;
 
 export default function NegocioScreen({ navigation }: Props) {
   const insets = useSafeAreaInsets();
   const { user, rol } = useAuth();
   const uid: string | undefined = user?.uid;
 
-  const [negocioId, setNegocioId] = useState<string | null>(null);
-  const [loadingNegocio, setLoadingNegocio] = useState<boolean>(true);
-  const [negocioError, setNegocioError] = useState<string | null>(null);
+  const {
+    negocioId,
+    loading: loadingNegocio,
+    error: negocioError,
+  } = useNegocioId();
+  const [negocio, setNegocio] = useState<Negocio | null>(null);
 
   const [pedidos, setPedidos] = useState<Pedido[]>([]);
   const [loadingPedidos, setLoadingPedidos] = useState<boolean>(true);
@@ -76,35 +55,23 @@ export default function NegocioScreen({ navigation }: Props) {
   const [formError, setFormError] = useState<string | null>(null);
   const [formOk, setFormOk] = useState<string | null>(null);
 
-  useEffect(() => {
-    async function leerNegocioId(): Promise<void> {
-      if (!firebaseReady || !uid) {
-        setLoadingNegocio(false);
-        return;
-      }
-      setLoadingNegocio(true);
-      setNegocioError(null);
-      try {
-        const snap = await getDoc(doc(getFirestoreDb(), 'users', uid));
-        const data: unknown = snap.exists() ? snap.data() : null;
-        const id: unknown =
-          typeof data === 'object' && data !== null
-            ? (data as { negocioId?: unknown }).negocioId
-            : undefined;
-        setNegocioId(typeof id === 'string' && id.trim() ? id : null);
-      } catch (e) {
-        setNegocioError(
-          e instanceof Error
-            ? `No se pudo leer tu negocio: ${e.message}`
-            : 'No se pudo leer tu negocio. Intentá de nuevo.',
-        );
-        setNegocioId(null);
-      } finally {
-        setLoadingNegocio(false);
-      }
-    }
-    void leerNegocioId();
-  }, [uid]);
+  // Secciones del panel (botones circulares, Mi menú primero).
+  const [seccion, setSeccion] = useState<Seccion>('menu');
+
+  // Mi menú: productos reales del negocio (getMenu). Pausar/eliminar/editar
+  // son SOLO DISEÑO en memoria.
+  // TODO(back): `disponible` en Firestore + updateDoc/deleteDoc reales.
+  const [productos, setProductos] = useState<Producto[]>([]);
+  const [loadingMenu, setLoadingMenu] = useState<boolean>(false);
+  const [menuError, setMenuError] = useState<string | null>(null);
+  const [pausados, setPausados] = useState<string[]>([]);
+  const [eliminados, setEliminados] = useState<string[]>([]);
+  const [editandoId, setEditandoId] = useState<string | null>(null);
+  const [editNombre, setEditNombre] = useState<string>('');
+  const [editPrecio, setEditPrecio] = useState<string>('');
+
+  // Aviso para acciones futuras (invitar repartidor, añadir local).
+  const [proximo, setProximo] = useState<string | null>(null);
 
   useEffect(() => {
     if (!firebaseReady || rol !== 'negocio' || !negocioId) {
@@ -126,6 +93,44 @@ export default function NegocioScreen({ navigation }: Props) {
     );
     return unsubscribe;
   }, [rol, negocioId]);
+
+  useEffect(() => {
+    if (!negocioId) {
+      setNegocio(null);
+      return;
+    }
+    let activo = true;
+    getNegocioById(negocioId)
+      .then((n) => {
+        if (activo) setNegocio(n);
+      })
+      .catch(() => {
+        if (activo) setNegocio(null);
+      });
+    return () => {
+      activo = false;
+    };
+  }, [negocioId]);
+
+  useEffect(() => {
+    if (!negocioId) return;
+    let activo = true;
+    setLoadingMenu(true);
+    setMenuError(null);
+    getMenu(negocioId)
+      .then((data) => {
+        if (activo) setProductos(data);
+      })
+      .catch(() => {
+        if (activo) setMenuError('No se pudo cargar tu menú. Intentá de nuevo.');
+      })
+      .finally(() => {
+        if (activo) setLoadingMenu(false);
+      });
+    return () => {
+      activo = false;
+    };
+  }, [negocioId]);
 
   async function avanzarEstado(pedido: Pedido): Promise<void> {
     if (pedido.estado === 'entregado' || avanzandoId) return;
@@ -182,6 +187,59 @@ export default function NegocioScreen({ navigation }: Props) {
     }
   }
 
+  // Acciones de menú SOLO DISEÑO (memoria local, se pierden al salir).
+  // TODO(back): pausar = updateDoc(productos/{id}, {disponible}), eliminar =
+  // deleteDoc, editar = updateDoc con validación.
+  function togglePausar(productoId: string): void {
+    setPausados((prev) =>
+      prev.includes(productoId)
+        ? prev.filter((id) => id !== productoId)
+        : [...prev, productoId],
+    );
+  }
+
+  function eliminarLocal(productoId: string): void {
+    setEliminados((prev) =>
+      prev.includes(productoId) ? prev : [...prev, productoId],
+    );
+    if (editandoId === productoId) setEditandoId(null);
+  }
+
+  function empezarEdicion(producto: Producto): void {
+    setEditandoId(producto.id);
+    setEditNombre(producto.nombre);
+    setEditPrecio(String(producto.precio));
+  }
+
+  function guardarEdicionLocal(productoId: string): void {
+    const nombreValido: string = editNombre.trim();
+    const precioNumerico: number = Number(editPrecio.replace(',', '.'));
+    if (!nombreValido || !(precioNumerico > 0)) return;
+    setProductos((prev) =>
+      prev.map((p) =>
+        p.id === productoId
+          ? { ...p, nombre: nombreValido, precio: precioNumerico }
+          : p,
+      ),
+    );
+    setEditandoId(null);
+  }
+
+  const menuVisible: Producto[] = productos.filter(
+    (p) => !eliminados.includes(p.id),
+  );
+
+  // Resumen del día (solo visual, derivado de la lista en vivo).
+  const stats: Stats = useMemo(() => {
+    const pendientes: number = pedidos.filter((p) => p.estado === 'pendiente').length;
+    const enCurso: number = pedidos.filter(
+      (p) => p.estado === 'confirmado' || p.estado === 'en_camino',
+    ).length;
+    const entregados: number = pedidos.filter((p) => p.estado === 'entregado').length;
+    const ventas: number = pedidos.reduce((acc, p) => acc + p.total, 0);
+    return { pendientes, enCurso, entregados, ventas };
+  }, [pedidos]);
+
   if (!firebaseReady) {
     return (
       <View style={[styles.container, styles.center, { paddingTop: insets.top + 12 }]}>
@@ -204,10 +262,11 @@ export default function NegocioScreen({ navigation }: Props) {
 
   if (loadingNegocio) {
     return (
-      <View style={[styles.container, styles.center, { paddingTop: insets.top + 12 }]}>
-        <ActivityIndicator size="large" color={colors.primary} />
-        <Text style={styles.subtitle}>Leyendo tu negocio...</Text>
-      </View>
+      <LoadingState
+        mensaje="Leyendo tu negocio..."
+        style={[styles.container, styles.center, { paddingTop: insets.top + 12 }]}
+        textoStyle={styles.subtitle}
+      />
     );
   }
 
@@ -225,185 +284,83 @@ export default function NegocioScreen({ navigation }: Props) {
 
   return (
     <View style={[styles.container, { paddingTop: insets.top + 12 }]}>
-      <Text style={styles.title}>Panel negocio</Text>
-      <Text style={styles.subtitle}>Negocio {negocioId} — pedidos en tiempo real</Text>
-      <TouchableOpacity
-        style={styles.editButton}
-        onPress={() => navigation.navigate('MiLocal')}
-      >
-        <Text style={styles.editText}>Editar mi local</Text>
-      </TouchableOpacity>
+      {/* Hero del negocio (nombre + foto reales) */}
+      <Perfil
+        negocio={negocio}
+        negocioId={negocioId}
+        onEditar={() => navigation.navigate('MiLocal')}
+      />
       {pedidosError ? <Text style={styles.error}>{pedidosError}</Text> : null}
 
-      {loadingPedidos ? (
-        <View style={styles.centerRow}>
-          <ActivityIndicator size="large" color={colors.primary} />
-          <Text style={styles.subtitle}>Cargando pedidos...</Text>
-        </View>
-      ) : pedidos.length === 0 ? (
-        <View style={styles.centerRow}>
-          <Text style={styles.subtitle}>
-            Todavía no hay pedidos para tu negocio.
-          </Text>
-        </View>
+      {/* Menú de secciones: botones circulares del mismo tamaño */}
+      <CircleTabBar
+        seccion={seccion}
+        conteoPedidos={stats.pendientes}
+        conteoMenu={menuVisible.length}
+        onSeleccionar={setSeccion}
+      />
+
+      {seccion === 'pedidos' ? (
+        <Pedidos
+          stats={stats}
+          loadingPedidos={loadingPedidos}
+          pedidos={pedidos}
+          avanzandoId={avanzandoId}
+          onAvanzar={(pedido) => void avanzarEstado(pedido)}
+        />
+      ) : seccion === 'menu' ? (
+        <Menu
+          menuVisible={menuVisible}
+          loadingMenu={loadingMenu}
+          menuError={menuError}
+          pausados={pausados}
+          editandoId={editandoId}
+          editNombre={editNombre}
+          editPrecio={editPrecio}
+          onEditNombreChange={setEditNombre}
+          onEditPrecioChange={setEditPrecio}
+          onVerDetalle={() => navigation.navigate('Detalle', { negocioId })}
+          onEmpezarEdicion={empezarEdicion}
+          onCancelarEdicion={() => setEditandoId(null)}
+          onGuardarEdicion={guardarEdicionLocal}
+          onTogglePausar={togglePausar}
+          onEliminar={eliminarLocal}
+          nombre={nombre}
+          precio={precio}
+          descripcion={descripcion}
+          onNombreChange={setNombre}
+          onPrecioChange={setPrecio}
+          onDescripcionChange={setDescripcion}
+          guardando={guardando}
+          formError={formError}
+          formOk={formOk}
+          onGuardarProducto={() => void guardarProducto()}
+        />
+      ) : seccion === 'ganancias' ? (
+        <Ganancias stats={stats} pedidosCount={pedidos.length} />
+      ) : seccion === 'repartidores' ? (
+        <Repartidores
+          mostrarAviso={proximo === 'repartidores'}
+          onAnadir={() => setProximo('repartidores')}
+        />
       ) : (
-        <FlatList
-          data={pedidos}
-          keyExtractor={(item) => item.id}
-          contentContainerStyle={styles.list}
-          ItemSeparatorComponent={() => <View style={styles.separator} />}
-          renderItem={({ item }: { item: Pedido }) => (
-            <View style={styles.card}>
-              <View style={styles.cardHeader}>
-                <Text style={styles.meta} numberOfLines={1}>
-                  {fechaCorta(item.fecha)} — {item.items.length} items
-                </Text>
-                <View
-                  style={[
-                    styles.badge,
-                    { backgroundColor: ESTADO_COLORS[item.estado] },
-                  ]}
-                >
-                  <Text style={styles.badgeText}>
-                    {item.estado.replace('_', ' ')}
-                  </Text>
-                </View>
-              </View>
-              <Text style={styles.total}>S/{item.total.toFixed(2)}</Text>
-              {item.estado !== 'entregado' ? (
-                <TouchableOpacity
-                  style={[
-                    styles.advanceButton,
-                    avanzandoId === item.id && styles.disabledButton,
-                  ]}
-                  disabled={avanzandoId === item.id}
-                  onPress={() => void avanzarEstado(item)}
-                >
-                  <Text style={styles.advanceText}>
-                    {avanzandoId === item.id
-                      ? 'Actualizando...'
-                      : `Avanzar a ${SIGUIENTE_ESTADO[item.estado].replace('_', ' ')}`}
-                  </Text>
-                </TouchableOpacity>
-              ) : null}
-            </View>
-          )}
+        <Locales
+          negocio={negocio}
+          mostrarAviso={proximo === 'locales'}
+          onAnadir={() => setProximo('locales')}
         />
       )}
-
-      <View style={styles.form}>
-        <Text style={styles.formTitle}>Alta de producto</Text>
-        <TextInput
-          style={styles.input}
-          placeholder="Nombre"
-          value={nombre}
-          onChangeText={setNombre}
-        />
-        <TextInput
-          style={styles.input}
-          placeholder="Precio (ej. 12.50)"
-          value={precio}
-          onChangeText={setPrecio}
-          keyboardType="decimal-pad"
-        />
-        <TextInput
-          style={styles.input}
-          placeholder="Descripción (opcional)"
-          value={descripcion}
-          onChangeText={setDescripcion}
-        />
-        {formError ? <Text style={styles.error}>{formError}</Text> : null}
-        {formOk ? <Text style={styles.ok}>{formOk}</Text> : null}
-        <TouchableOpacity
-          style={[styles.primaryButton, guardando && styles.disabledButton]}
-          disabled={guardando}
-          onPress={() => void guardarProducto()}
-        >
-          <Text style={styles.primaryText}>
-            {guardando ? 'Guardando...' : 'Guardar producto'}
-          </Text>
-        </TouchableOpacity>
-      </View>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
+  // Base
   container: { flex: 1, gap: 12, padding: 16, backgroundColor: colors.background },
   center: { justifyContent: 'center', alignItems: 'center' },
-  centerRow: { alignItems: 'center', gap: 8, paddingVertical: 12 },
-  title: { color: colors.textPrimary, fontSize: 22, fontWeight: '900' },
   subtitle: { color: colors.textMuted, fontSize: 14, textAlign: 'center' },
-  editButton: {
-    paddingVertical: 12,
-    borderRadius: 14,
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: colors.border,
-    backgroundColor: colors.surface,
-  },
-  editText: { color: colors.primary, fontSize: 15, fontWeight: '700' },
   error: { color: colors.error, fontSize: 14, fontWeight: '600' },
-  ok: { color: colors.success, fontSize: 14, fontWeight: '600' },
-  list: { paddingVertical: 4 },
-  separator: { height: 8 },
-  card: {
-    gap: 6,
-    padding: 12,
-    borderWidth: 1,
-    borderColor: colors.border,
-    borderRadius: 16,
-    backgroundColor: colors.surface,
-  },
-  cardHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    gap: 8,
-  },
-  badge: { paddingHorizontal: 10, paddingVertical: 4, borderRadius: 999 },
-  badgeText: {
-    color: '#FFFFFF',
-    fontSize: 12,
-    fontWeight: '700',
-    textTransform: 'capitalize',
-  },
-  meta: { flex: 1, color: colors.textMuted, fontSize: 13 },
-  total: { color: colors.textPrimary, fontSize: 17, fontWeight: '900' },
-  advanceButton: {
-    paddingVertical: 10,
-    paddingHorizontal: 16,
-    borderRadius: 12,
-    alignItems: 'center',
-    backgroundColor: colors.primary,
-  },
-  advanceText: { color: colors.surface, fontSize: 14, fontWeight: '700' },
-  form: {
-    gap: 8,
-    padding: 12,
-    borderWidth: 1,
-    borderColor: colors.border,
-    borderRadius: 16,
-    backgroundColor: colors.surface,
-  },
-  formTitle: { color: colors.textPrimary, fontSize: 16, fontWeight: '800' },
-  input: {
-    borderWidth: 1,
-    borderColor: colors.border,
-    borderRadius: 12,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-    fontSize: 15,
-    color: colors.textPrimary,
-    backgroundColor: colors.background,
-  },
-  primaryButton: {
-    paddingVertical: 14,
-    paddingHorizontal: 24,
-    borderRadius: 14,
-    alignItems: 'center',
-    backgroundColor: colors.primary,
-  },
-  primaryText: { color: colors.surface, fontSize: 15, fontWeight: '700' },
-  disabledButton: { opacity: 0.6 },
+
+  // Hero del negocio
+  title: { color: colors.textPrimary, fontSize: 22, fontWeight: '900' },
 });

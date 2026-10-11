@@ -7,7 +7,7 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { Ionicons } from '@expo/vector-icons';
@@ -17,9 +17,51 @@ import { Producto } from '../types/Producto';
 import { getMenu, getNegocioById } from '../services/api';
 import { useCart } from '../context/CartContext';
 import { useFavorites } from '../context/FavoritesContext';
+import { useAuth } from '../context/AuthContext';
+import { ProductoCard } from '../components/detalle/ProductoCard';
+import { TabBar, Tab } from '../components/detalle/TabBar';
+import { InfoTab } from '../components/detalle/InfoTab';
+import { ReviewsTab } from '../components/detalle/ReviewsTab';
+import {
+  Estrellas,
+  MAX_TEXTO_OPINION,
+  Opinion,
+  esEstrellas,
+} from '../types/Opinion';
 import { colors } from '../styles/colors';
+import { nombreVisible } from '../utils/usuario';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Detalle'>;
+
+const OPINIONES_MOCK: Opinion[] = [
+  {
+    id: 'op-mock-1',
+    negocioId: 'preview',
+    usuarioId: 'u1',
+    nombre: 'María Torres',
+    estrellas: 5,
+    texto: 'El pollo llegó jugoso y a tiempo. El punto de siempre, recomendado.',
+    fecha: new Date(Date.now() - 2 * 86400000).toISOString(),
+  },
+  {
+    id: 'op-mock-2',
+    negocioId: 'preview',
+    usuarioId: 'u2',
+    nombre: 'Carlos Quispe',
+    estrellas: 4,
+    texto: 'Buen sabor y porción generosa. Tardó un poco más de lo estimado.',
+    fecha: new Date(Date.now() - 5 * 86400000).toISOString(),
+  },
+  {
+    id: 'op-mock-3',
+    negocioId: 'preview',
+    usuarioId: 'u3',
+    nombre: 'Lucía Fernández',
+    estrellas: 5,
+    texto: 'Pedimos para toda la familia y todo llegó caliente. Volveremos a pedir.',
+    fecha: new Date(Date.now() - 9 * 86400000).toISOString(),
+  },
+];
 
 export default function DetalleScreen({ navigation, route }: Props) {
   const { negocioId } = route.params;
@@ -27,8 +69,54 @@ export default function DetalleScreen({ navigation, route }: Props) {
   const [negocio, setNegocio] = useState<Negocio | null>(null);
   const [menu, setMenu] = useState<Producto[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
+  const [tab, setTab] = useState<Tab>('menu');
   const { add, setCantidad, cantidadDe, count, total } = useCart();
   const { toggle, esFavorito } = useFavorites();
+  const { user } = useAuth();
+
+  // Opiniones SOLO DISEÑO: viven en memoria, se pierden al salir.
+  // TODO(back): reemplazar por `escucharOpiniones(negocioId)`.
+  const [opiniones, setOpiniones] = useState<Opinion[]>(OPINIONES_MOCK);
+  // Empieza vacío (0 = sin elegir): el usuario debe tocar una estrella.
+  const [estrellas, setEstrellas] = useState<number>(0);
+  const [texto, setTexto] = useState<string>('');
+
+  const promedio: number = useMemo(() => {
+    if (opiniones.length === 0) return 0;
+    const suma: number = opiniones.reduce((acc, o) => acc + o.estrellas, 0);
+    return suma / opiniones.length;
+  }, [opiniones]);
+
+  const distribucion: { nivel: Estrellas; cantidad: number }[] = useMemo(() => {
+    const niveles: Estrellas[] = [5, 4, 3, 2, 1];
+    return niveles.map((nivel) => ({
+      nivel,
+      cantidad: opiniones.filter((o) => o.estrellas === nivel).length,
+    }));
+  }, [opiniones]);
+
+  const puedePublicar: boolean =
+    esEstrellas(estrellas) &&
+    texto.trim().length > 0 &&
+    texto.trim().length <= MAX_TEXTO_OPINION;
+
+  const handlePublicar = useCallback(() => {
+    if (!puedePublicar) return;
+    // TODO(back): reemplazar por `crearOpinion()` y limpiar al confirmar.
+    const nombre: string = nombreVisible(user);
+    const nueva: Opinion = {
+      id: `local-${Date.now()}`,
+      negocioId,
+      usuarioId: user?.uid ?? 'local',
+      nombre,
+      estrellas: estrellas as Estrellas,
+      texto: texto.trim(),
+      fecha: new Date().toISOString(),
+    };
+    setOpiniones((prev) => [nueva, ...prev]);
+    setEstrellas(0);
+    setTexto('');
+  }, [puedePublicar, estrellas, texto, negocioId, user]);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -43,6 +131,7 @@ export default function DetalleScreen({ navigation, route }: Props) {
   }, [load]);
 
   if (loading) {
+    // Area loading
     return (
       <View style={[styles.container, styles.center, { paddingTop: insets.top + 12 }]}>
         <ActivityIndicator size="large" color={colors.primary} />
@@ -52,9 +141,10 @@ export default function DetalleScreen({ navigation, route }: Props) {
   }
 
   if (!negocio) {
+    // Area vacio
     return (
       <View style={[styles.container, styles.center, { paddingTop: insets.top + 12 }]}>
-        <Text style={styles.statusText}>No encontramos ese negocio.</Text>
+        <Text style={styles.statusText}>No encontramos ese restaurante.</Text>
         <TouchableOpacity style={styles.primaryButton} onPress={() => navigation.goBack()}>
           <Text style={styles.primaryText}>Volver</Text>
         </TouchableOpacity>
@@ -65,85 +155,134 @@ export default function DetalleScreen({ navigation, route }: Props) {
   const favorito = esFavorito(negocio.id);
 
   return (
-    <View style={[styles.container, { paddingTop: insets.top + 12 }]}>
-      <View style={styles.header}>
-        <TouchableOpacity onPress={() => navigation.goBack()}>
-          <Ionicons name="arrow-back" size={24} color={colors.textPrimary} />
-        </TouchableOpacity>
+    <View style={[styles.container, { paddingTop: insets.top }]}>
+      {/* Area foto */}
+      {/* Hero full-bleed: la imagen ocupa todo el ancho de su zona */}
+      <View style={styles.hero}>
+        {negocio.portada?.trim() ? (
+          <Image
+            source={{ uri: negocio.portada }}
+            style={styles.heroImage}
+            resizeMode="cover"
+          />
+        ) : (
+          <View style={[styles.heroImage, styles.heroPlaceholder]}>
+            <Ionicons name="storefront-outline" size={52} color={colors.textPlaceholder} />
+          </View>
+        )}
+        <View style={[styles.overlay, { top: 12 }]}>
+          <TouchableOpacity
+            style={styles.circleButton}
+            onPress={() => navigation.goBack()}
+          >
+            <Ionicons name="arrow-back" size={22} color={colors.textPrimary} />
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.circleButton}
+            onPress={() => toggle(negocio.id)}
+          >
+            <Ionicons
+              name={favorito ? 'heart' : 'heart-outline'}
+              size={22}
+              color={favorito ? colors.primary : colors.textPrimary}
+            />
+          </TouchableOpacity>
+        </View>
+      </View>
+
+      {/*Informacion */}
+      <View style={styles.content}>
         <View style={styles.headerInfo}>
           <Text style={styles.name}>{negocio.nombre}</Text>
           <Text style={styles.meta}>
-            ⭐ {negocio.rating} ({negocio.opiniones}) • {negocio.tiempoEstimado} •{' '}
-            {negocio.distancia}
+            ⭐ {negocio.rating} ({negocio.opiniones} reviews) {' '} • {' '} {negocio.tiempoEstimado} {' '} • {' '} {negocio.distancia}
           </Text>
+          {negocio.envioGratis ? (
+            <View style={styles.envioRow}>
+              <Ionicons name="cube-outline" size={14} color={colors.primary} />
+              <Text style={styles.envioGratis}>Envío gratis</Text>
+            </View>
+          ) : negocio.envioMinimo?.trim() ? (
+            <View style={styles.envioRow}>
+              <Ionicons name="cube-outline" size={14} color={colors.primary} />
+              <Text style={styles.envioCondicional}>{negocio.envioMinimo}</Text>
+            </View>
+          ) : null}
+
         </View>
-        <TouchableOpacity onPress={() => toggle(negocio.id)}>
-          <Ionicons
-            name={favorito ? 'heart' : 'heart-outline'}
-            size={26}
-            color={favorito ? colors.primary : colors.textPlaceholder}
-          />
-        </TouchableOpacity>
       </View>
 
-      {/* Portada 16:9 solo si el dueño subió una (S3 apf6-negocio-propio). */}
-      {negocio.portada ? (
-        <Image
-          source={{ uri: negocio.portada }}
-          style={styles.portada}
-          resizeMode="cover"
-        />
-      ) : null}
+      <View style={styles.divider} />
 
-      <Text style={styles.sectionTitle}>Menú</Text>
-      <FlatList
-        data={menu}
-        keyExtractor={(item) => item.id}
-        contentContainerStyle={styles.list}
-        ItemSeparatorComponent={() => <View style={styles.separator} />}
-        ListEmptyComponent={
-          <Text style={styles.statusText}>Este negocio aún no publica su menú.</Text>
-        }
-        renderItem={({ item }) => {
-          const qty = cantidadDe(item.id);
-          return (
-            <View style={styles.card}>
-              <View style={styles.cardInfo}>
-                <Text style={styles.dish}>{item.nombre}</Text>
-                <Text style={styles.desc}>{item.descripcion}</Text>
-                <Text style={styles.price}>S/{item.precio.toFixed(2)}</Text>
-              </View>
-              {qty === 0 ? (
-                <TouchableOpacity style={styles.addButton} onPress={() => add(item)}>
-                  <Text style={styles.addText}>Agregar</Text>
-                </TouchableOpacity>
-              ) : (
-                <View style={styles.qtyRow}>
-                  <TouchableOpacity
-                    style={styles.qtyButton}
-                    onPress={() => setCantidad(item.id, qty - 1)}
-                  >
-                    <Text style={styles.qtyText}>−</Text>
-                  </TouchableOpacity>
-                  <Text style={styles.qty}>{qty}</Text>
-                  <TouchableOpacity
-                    style={styles.qtyButton}
-                    onPress={() => setCantidad(item.id, qty + 1)}
-                  >
-                    <Text style={styles.qtyText}>+</Text>
-                  </TouchableOpacity>
+      {/* Area tabs */}
+      <TabBar tab={tab} onCambiar={setTab} />
+
+      {tab === 'menu' ? (
+          <FlatList
+            data={menu}
+            keyExtractor={(item) => item.id}
+            contentContainerStyle={[styles.list, menu.length === 0 && styles.listEmptyGrow]}
+            ItemSeparatorComponent={() => <View style={styles.separator} />}
+            ListHeaderComponent={
+              <View style={styles.menuHeader}>
+                {/* Area filtros categorias */}
+                <View style={styles.filterCategory}>
+                  <View style={styles.filterItemActive}>
+                    <Text style={styles.filterTextActive}>Todos</Text>
+                  </View>
+                  <View style={styles.filterItem}>
+                    <Text style={styles.filterText}>Pollo</Text>
+                  </View>
+                  <View style={styles.filterItem}>
+                    <Text style={styles.filterText}>Combos</Text>
+                  </View>
+                  <View style={styles.filterItem}>
+                    <Text style={styles.filterText}>Bebidas</Text>
+                  </View>
                 </View>
-              )}
-            </View>
-          );
-        }}
-      />
+
+                <Text style={styles.recomendadosTitle}>Recomendados</Text>
+              </View>
+            }
+            ListEmptyComponent={
+              <Text style={[styles.statusText, styles.emptyMenuText]}>Este restaurante aún no publica su menú.</Text>
+            }
+            renderItem={({ item }) => {
+              const qty = cantidadDe(item.id);
+              return (
+                <ProductoCard
+                  producto={item}
+                  cantidad={qty}
+                  onAgregar={() => add(item)}
+                  onDecrement={() => setCantidad(item.id, qty - 1)}
+                  onIncrement={() => setCantidad(item.id, qty + 1)}
+                />
+              );
+            }}
+          />
+      ) : tab === 'info' ? (
+        <InfoTab negocio={negocio} />
+      ) : (
+        <ReviewsTab
+          opiniones={opiniones}
+          promedio={promedio}
+          distribucion={distribucion}
+          estrellas={estrellas}
+          texto={texto}
+          puedePublicar={puedePublicar}
+          onEstrellasChange={setEstrellas}
+          onTextoChange={setTexto}
+          onPublicar={handlePublicar}
+        />
+      )}
 
       {count > 0 && (
+        // Area carrito
         <TouchableOpacity
-          style={styles.cartBar}
+          style={[styles.cartBar, { bottom: insets.bottom + 16 }]}
           onPress={() => navigation.navigate('Carrito')}
         >
+          <Ionicons name="cart-outline" size={20} color={colors.surface} />
           <Text style={styles.cartText}>
             Ver carrito ({count}) — S/{total.toFixed(2)}
           </Text>
@@ -154,57 +293,104 @@ export default function DetalleScreen({ navigation, route }: Props) {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, padding: 16, backgroundColor: colors.background },
-  center: { justifyContent: 'center', alignItems: 'center', gap: 12 },
+  // Base
+  container: { flex: 1, backgroundColor: colors.background },
+  center: { justifyContent: 'center', alignItems: 'center', gap: 12, padding: 16 },
   statusText: { color: colors.textMuted, fontSize: 14, textAlign: 'center' },
-  header: { flexDirection: 'row', alignItems: 'center', gap: 12 },
-  headerInfo: { flex: 1, gap: 2 },
-  name: { color: colors.textPrimary, fontSize: 20, fontWeight: '900' },
-  meta: { color: colors.textMuted, fontSize: 13 },
-  portada: { width: '100%', height: 180, borderRadius: 16, marginTop: 12 },
-  sectionTitle: { color: colors.textPrimary, fontSize: 18, fontWeight: '800', marginTop: 12 },
-  list: { gap: 4, paddingVertical: 12, paddingBottom: 90 },
-  separator: { height: 8 },
-  card: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
-    padding: 12,
-    borderWidth: 1,
-    borderColor: colors.border,
-    borderRadius: 16,
-    backgroundColor: colors.surface,
+  divider: { height: 1, backgroundColor: colors.border, },
+
+  // Area foto
+  hero: {
+    width: '100%',
+    height: 180,
+    backgroundColor: colors.border,
   },
-  cardInfo: { flex: 1, gap: 2 },
-  dish: { color: colors.textPrimary, fontSize: 15, fontWeight: '700' },
-  desc: { color: colors.textMuted, fontSize: 13 },
-  price: { color: colors.textPrimary, fontSize: 14, fontWeight: '700' },
-  addButton: { paddingHorizontal: 16, paddingVertical: 10, borderRadius: 12, backgroundColor: colors.primary },
-  addText: { color: colors.surface, fontSize: 14, fontWeight: '700' },
-  qtyRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  qtyButton: {
-    width: 32,
-    height: 32,
+  heroImage: { width: '100%', height: '100%' },
+  heroPlaceholder: {
+    backgroundColor: colors.border,
     justifyContent: 'center',
     alignItems: 'center',
-    borderRadius: 10,
-    backgroundColor: colors.background,
-    borderWidth: 1,
-    borderColor: colors.border,
   },
-  qtyText: { fontSize: 18, fontWeight: '700' },
-  qty: { minWidth: 18, textAlign: 'center', fontSize: 15, fontWeight: '700' },
-  cartBar: {
+  overlay: {
     position: 'absolute',
     left: 16,
     right: 16,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  circleButton: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: colors.surface,
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.15,
+    shadowRadius: 4,
+    elevation: 4,
+  },
+
+  // Informacion
+  content: { paddingHorizontal: 16 },
+  headerInfo: { gap: 8, paddingVertical: 16 },
+  name: { color: colors.textPrimary, fontSize: 20, fontWeight: '900' },
+  meta: { color: colors.textMuted, fontSize: 13 },
+  envioRow: { flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: colors.primarySoft, padding: 8, borderRadius: 8, alignSelf: 'flex-start' },
+  envioGratis: { color: colors.primary, fontSize: 13, fontWeight: '800' },
+  envioCondicional: { color: colors.primary, fontSize: 13 },
+
+  //filtros categorias
+  menuHeader: { gap: 4 },
+  filterCategory: {
+    gap: 8, padding: 12, flexDirection: 'row', alignItems: 'center', marginHorizontal: 5
+  },
+  filterItemActive: {
+    paddingHorizontal: 16, paddingVertical: 8, backgroundColor: colors.primary, borderRadius: 20
+  },
+  filterItem: {
+    paddingHorizontal: 16, paddingVertical: 8, backgroundColor: colors.surface, borderRadius: 20, borderWidth: 1, borderColor: colors.border
+  },
+  filterTextActive: {
+    fontWeight: 'bold', color: colors.surface
+  },
+  filterText: {
+    fontWeight: 'bold', color: colors.textPrimary
+  },
+
+  // Area menu
+  sectionTitle: { color: colors.textPrimary, fontSize: 18, fontWeight: '800', marginTop: 8 },
+  recomendadosTitle: {
+    color: colors.textPrimary,
+    fontSize: 18,
+    fontWeight: 'bold',
+    paddingHorizontal: 16,
+    paddingBottom: 10,
+  },
+  list: { gap: 4, paddingVertical: 12, paddingHorizontal: 16, paddingBottom: 130 },
+  listEmptyGrow: { flexGrow: 1 },
+  emptyMenuText: { paddingTop: 24 },
+  separator: { height: 8 },
+
+  // Area carrito
+  cartBar: {
+    position: 'absolute',
+    flexDirection: 'row',
+    alignItems: 'center',      // centra icono-texto en vertical
+    justifyContent: 'center',
+    left: 16,
+    right: 16,
     bottom: 20,
+    gap: 8,
     paddingVertical: 14,
     borderRadius: 14,
-    alignItems: 'center',
     backgroundColor: colors.primary,
   },
   cartText: { color: colors.surface, fontSize: 15, fontWeight: '700' },
+
+  // Area vacio
   primaryButton: { paddingHorizontal: 20, paddingVertical: 10, borderRadius: 12, backgroundColor: colors.primary },
   primaryText: { color: colors.surface, fontSize: 14, fontWeight: '700' },
 });

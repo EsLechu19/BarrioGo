@@ -1,6 +1,6 @@
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useState } from 'react';
-import { StyleSheet, View, Image, Text, TouchableOpacity } from 'react-native'
+import { StyleSheet, View, Image, Text, TouchableOpacity, KeyboardAvoidingView, Platform, ScrollView } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { AuthStackParamList } from '../navigation/AuthStackParamList';
 import { FormField } from '../components/FormField';
@@ -45,74 +45,90 @@ export default function RegisterScreen({ navigation }: Props) {
     };
 
     return (
-        <View style={[styles.container, { paddingTop: insets.top + 35 }]}>
-            {/* Area del logo*/}
-            <View style={styles.logoArea}>
-                <View style={styles.logoFrame}>
-                    <Image source={require('../../assets/img/logo4.png')} style={styles.logo} resizeMode="contain" />
+        // Teclado + scroll: el contenido nunca queda tapado ni cortado
+        <KeyboardAvoidingView
+            style={styles.screen}
+            behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        >
+            <ScrollView
+                contentContainerStyle={styles.scroll}
+                keyboardShouldPersistTaps="handled"
+                showsVerticalScrollIndicator={false}
+            >
+                <View style={[styles.container, { paddingTop: insets.top + 35, paddingBottom: insets.bottom + 24 }]}>
+                    {/* Area del logo*/}
+                    <View style={styles.logoArea}>
+                        <View style={styles.logoFrame}>
+                            <Image source={require('../../assets/img/llamaregister.png')} style={styles.logo} resizeMode="contain" />
+                        </View>
+                        <Text style={styles.brandHeadline}>Crea tu cuenta</Text>
+                        <Text style={styles.brandTagline}>Únete a BarrioGo y pide de tus tiendas favoritas</Text>
+                    </View>
+                    {/* Area del formulario */}
+                    <View style={styles.formArea}>
+                        <FormField
+                            label="Nombre completo"
+                            value={nombre}
+                            onChangeText={setNombre}
+                            placeholder="Tu nombre"
+                            error={error.nombre}
+                            autoCapitalize="words"
+                            keyboardType="default"
+                        />
+                        <FormField
+                            label="Correo electrónico"
+                            value={email}
+                            onChangeText={setEmail}
+                            placeholder="ejemplo@gmail.com"
+                            error={error.email}
+                            autoCapitalize="none"
+                            keyboardType="email-address"
+                        />
+                        <FormField
+                            label="Contraseña"
+                            value={password}
+                            onChangeText={setPassword}
+                            placeholder="Minimo 6 caracteres"
+                            error={error.password}
+                            autoCapitalize="none"
+                            keyboardType="default"
+                            secureTextEntry
+                        />
+                        <FormField
+                            label="Confirmar contraseña"
+                            value={confirmPassword}
+                            onChangeText={setConfirmPassword}
+                            placeholder="Repite tu contraseña"
+                            error={error.confirmPassword}
+                            autoCapitalize="none"
+                            keyboardType="default"
+                            secureTextEntry
+                        />
+                    </View>
+                    {/* Area de boton de registrarse + link de inicia sesion */}
+                    <View style={styles.actionArea}>
+                        {error.auth && <Text style={styles.authError}>{error.auth}</Text>}
+                        <PrimaryButton title={submitting ? 'Creando cuenta...' : 'Registrarme'} onPress={handleRegister} />
+                        <View style={styles.loginRow}>
+                            <Text style={styles.loginText}>¿Ya tienes cuenta? </Text>
+                            <TouchableOpacity onPress={() => navigation.navigate('Login')}>
+                                <Text style={styles.loginLink}>Inicia sesión</Text>
+                            </TouchableOpacity>
+                        </View>
+                    </View>
                 </View>
-                <Text style={styles.brandHeadline}>Crea tu cuenta</Text>
-                <Text style={styles.brandTagline}>Únete a BarrioGo y pide de tus tiendas favoritas</Text>
-            </View>
-            {/* Area del formulario */}
-            <View style={styles.formArea}>
-                <FormField
-                    label="Nombre completo"
-                    value={nombre}
-                    onChangeText={setNombre}
-                    placeholder="Tu nombre"
-                    error={error.nombre}
-                    autoCapitalize="words"
-                    keyboardType="default"
-                />
-                <FormField
-                    label="Correo electrónico"
-                    value={email}
-                    onChangeText={setEmail}
-                    placeholder="ejemplo@gmail.com"
-                    error={error.email}
-                    autoCapitalize="none"
-                    keyboardType="email-address"
-                />
-                <FormField
-                    label="Contraseña"
-                    value={password}
-                    onChangeText={setPassword}
-                    placeholder="Minimo 6 caracteres"
-                    error={error.password}
-                    autoCapitalize="none"
-                    keyboardType="default"
-                    secureTextEntry
-                />
-                <FormField
-                    label="Confirmar contraseña"
-                    value={confirmPassword}
-                    onChangeText={setConfirmPassword}
-                    placeholder="Repite tu contraseña"
-                    error={error.confirmPassword}
-                    autoCapitalize="none"
-                    keyboardType="default"
-                    secureTextEntry
-                />
-            </View>
-            {/* Area de boton de registrarse + link de inicia sesion */}
-            <View style={styles.actionArea}>
-                {error.auth && <Text style={styles.authError}>{error.auth}</Text>}
-                <PrimaryButton title={submitting ? 'Creando cuenta...' : 'Registrarme'} onPress={handleRegister} />
-                <View style={styles.loginRow}>
-                    <Text style={styles.loginText}>¿Ya tienes cuenta? </Text>
-                    <TouchableOpacity onPress={() => navigation.navigate('Login')}>
-                        <Text style={styles.loginLink}>Inicia sesión</Text>
-                    </TouchableOpacity>
-                </View>
-            </View>
-        </View>
+            </ScrollView>
+        </KeyboardAvoidingView>
     );
 }
 
 const styles = StyleSheet.create({
+    // Base para teclado + scroll
+    screen: { flex: 1 },
+    scroll: { flexGrow: 1 },
+
     // Contenedor principal de la pantalla
-    container: { flex: 1, justifyContent: 'flex-start', alignItems: 'center', gap: 24, padding: 24, backgroundColor: colors.background },
+    container: { flexGrow: 1, justifyContent: 'flex-start', alignItems: 'center', gap: 24, padding: 24, backgroundColor: colors.background },
 
     // Area del logo
     logoArea: { width: '100%', justifyContent: 'center', alignItems: 'center', gap: 16 },
@@ -125,7 +141,8 @@ const styles = StyleSheet.create({
     formArea: { width: '100%', alignItems: 'center', gap: 8 },
 
     // Area de boton de registrarse + link de inicia sesion
-    actionArea: { width: '100%', height: 89, paddingTop: 8, gap: 16 },
+    // minHeight (no height): con el error de autentificación el contenido crece sin solaparse.
+    actionArea: { width: '100%', minHeight: 89, paddingTop: 8, gap: 16 },
     authError: { color: colors.google, fontSize: 14, fontWeight: '600', textAlign: 'center' },
     loginRow: { flexDirection: 'row', justifyContent: 'center', alignItems: 'center' },
     loginText: { height: 17, fontSize: 14 },

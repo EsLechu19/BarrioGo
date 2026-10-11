@@ -44,7 +44,12 @@ export function CartProvider({ children }: { children: ReactNode }) {
       }
       return [
         ...prev,
-        { productoId: producto.id, cantidad, precioUnitario: producto.precio },
+        {
+          productoId: producto.id,
+          cantidad,
+          precioUnitario: producto.precio,
+          nombre: producto.nombre,
+        },
       ];
     });
   }, []);
