@@ -30,6 +30,14 @@ export interface AppError {
   code: 'network' | 'server' | 'parse';
 }
 
+export type OrigenNegocios = 'firestore' | 'api-local' | 'fallback-local';
+
+export interface ResultadoNegocios {
+  negocios: Negocio[];
+  origen: OrigenNegocios;
+  advertencia: string | null;
+}
+
 function isNegocio(value: unknown): value is Negocio {
   return (
     typeof value === 'object' &&
@@ -68,21 +76,44 @@ async function getNegociosFromMockServer(): Promise<Negocio[] | null> {
 }
 
 export async function getNegocios(): Promise<Negocio[]> {
+  const resultado: ResultadoNegocios = await getNegociosConOrigen();
+  return resultado.negocios;
+}
+
+export async function getNegociosConOrigen(): Promise<ResultadoNegocios> {
+  let firestoreNoDisponible = false;
+
   // 1. Firestore
   if (firebaseReady) {
     try {
       const snap = await getDocs(collection(getFirestoreDb(), 'negocios'));
       const data: unknown = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
-      if (isNegocioArray(data) && data.length > 0) return data;
+      if (isNegocioArray(data) && data.length > 0) {
+        return { negocios: data, origen: 'firestore', advertencia: null };
+      }
+      firestoreNoDisponible = true;
     } catch {
       // cae al siguiente origen
+      firestoreNoDisponible = true;
     }
   }
   // 2. API local
   const mock = await getNegociosFromMockServer();
-  if (mock) return mock;
+  if (mock) {
+    return {
+      negocios: mock,
+      origen: 'api-local',
+      advertencia: firestoreNoDisponible
+        ? 'Firestore no disponible; usando API local.'
+        : null,
+    };
+  }
   // 3. Fallback local
-  return [...negociosMock];
+  return {
+    negocios: [...negociosMock],
+    origen: 'fallback-local',
+    advertencia: 'Sin conexión al servidor; mostrando datos locales de demostración.',
+  };
 }
 
 export async function getNegocioById(id: string): Promise<Negocio | null> {

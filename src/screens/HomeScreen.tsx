@@ -14,7 +14,7 @@ import { Negocio } from '../types/Negocio';
 import { RestaurantCard } from '../components/RestaurantCard';
 import { LoadingState, ErrorState } from '../components/StateView';
 import { EmptyState } from '../components/EmptyState';
-import { getNegocios } from '../services/api';
+import { getNegociosConOrigen } from '../services/api';
 import { UserCoords, formatDistancia, getUserCoords, haversineKm } from '../services/location';
 import { useFavorites } from '../context/FavoritesContext';
 import { useAuth } from '../context/AuthContext';
@@ -30,6 +30,7 @@ export default function HomeScreen({ navigation }: Props) {
   const [negocios, setNegocios] = useState<Negocio[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
+  const [advertenciaFuente, setAdvertenciaFuente] = useState<string | null>(null);
   const [refreshing, setRefreshing] = useState<boolean>(false);
   const [query, setQuery] = useState<string>('');
   const [userLoc, setUserLoc] = useState<UserCoords | null>(null);
@@ -45,9 +46,11 @@ export default function HomeScreen({ navigation }: Props) {
       setLoading(true);
     }
     setError(null);
+    setAdvertenciaFuente(null);
     try {
-      const data = await getNegocios();
-      setNegocios(data);
+      const resultado = await getNegociosConOrigen();
+      setNegocios(resultado.negocios);
+      setAdvertenciaFuente(resultado.advertencia);
     } catch {
       setError('No se pudo cargar los restaurantes. Revisa tu conexión e intenta de nuevo.');
     } finally {
@@ -199,6 +202,12 @@ export default function HomeScreen({ navigation }: Props) {
                 <Text style={styles.seeAll}>Ver todos</Text>
               </TouchableOpacity>
             </View>
+            {advertenciaFuente ? (
+              <View style={styles.sourceWarning}>
+                <Ionicons name="cloud-offline-outline" size={18} color={colors.textMuted} />
+                <Text style={styles.sourceWarningText}>{advertenciaFuente}</Text>
+              </View>
+            ) : null}
             <Text style={styles.gpsNote}>
               {userLoc
                 ? '📍 Ordenado por tu ubicación real'
@@ -287,6 +296,15 @@ const styles = StyleSheet.create({
   sectionTitle: { color: colors.textPrimary, fontSize: 18, fontWeight: '800' },
   seeAll: { color: colors.primary, fontSize: 14, fontWeight: '700' },
   gpsNote: { color: colors.textMuted, fontSize: 12,paddingBottom:10 },
+  sourceWarning: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    padding: 10,
+    borderRadius: 10,
+    backgroundColor: colors.primarySoft,
+  },
+  sourceWarningText: { flex: 1, color: colors.textMuted, fontSize: 13 },
 
   // Area lista de restaurante
   listContent: { paddingBottom: 110 },
