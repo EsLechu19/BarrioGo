@@ -9,14 +9,9 @@ import { useAuth } from '../context/AuthContext';
 import { crearPedido } from '../services/api';
 import { confirm } from '../utils/confirm';
 import { productosMock } from '../data/productosMock';
-import { negociosMock } from '../data/negociosMock';
 import { ScreenHeader } from '../components/ScreenHeader';
 import { CantidadStepper } from '../components/CantidadStepper';
 import { colors } from '../styles/colors';
-
-// Tarifa demo cuando el negocio no ofrece envío gratis (Fase 3: real por
-// negocio/zona). Se suma al total del pedido.
-const TARIFA_ENVIO: number = 5.0;
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Carrito'>;
 
@@ -91,17 +86,8 @@ export default function CarritoScreen({ navigation }: Props) {
       ? negocioIds[0]
       : null;
 
-  // Subtotal = suma de productos. Envío según el negocio (gratis o tarifa
-  // demo). Total final = lo que se cobra y se guarda en el pedido.
-  const subtotal: number = total;
-  const negocio = negocioId
-    ? negociosMock.find((n) => n.id === negocioId) ?? null
-    : null;
-  const costoEnvio: number | null =
-    negocio === null ? null : negocio.envioGratis ? 0 : TARIFA_ENVIO;
-  const totalFinal: number =
-    costoEnvio === null ? subtotal : subtotal + costoEnvio;
-
+  // Lógica APF2 intacta: el pedido guarda el total de productos, sin
+  // cargos extra (unión apf2-ui: solo cambió el diseño).
   const handleConfirmar = async (): Promise<void> => {
     setErrorMsg(null);
     if (!user) {
@@ -120,7 +106,7 @@ export default function CarritoScreen({ navigation }: Props) {
       setErrorMsg('No se pudo determinar el restaurante del pedido.');
       return;
     }
-    if (!(totalFinal > 0)) {
+    if (!(total > 0)) {
       setErrorMsg('El total del pedido no es válido.');
       return;
     }
@@ -130,7 +116,7 @@ export default function CarritoScreen({ navigation }: Props) {
         usuarioId: user.uid,
         negocioId,
         items,
-        total: totalFinal,
+        total,
       });
       clear();
       navigation.navigate('Tabs', { screen: 'PedidosTab' });
@@ -267,29 +253,12 @@ export default function CarritoScreen({ navigation }: Props) {
           </View>
         )}
       />
-      {/* Area total */}
+      {/* Area total: solo productos, como en APF2 (sin cargo de envío). */}
       <View style={styles.footer}>
-        {/* Fila subtotal */}
-        <View style={styles.totalRow}>
-          <Text style={styles.totalLabel}>Subtotal</Text>
-          <Text style={styles.subValue}>S/{subtotal.toFixed(2)}</Text>
-        </View>
-        {/* Fila envio */}
-        <View style={styles.totalRow}>
-          <Text style={styles.totalLabel}>Envío</Text>
-          {costoEnvio === null ? (
-            <Text style={styles.subValue}>—</Text>
-          ) : costoEnvio === 0 ? (
-            <Text style={styles.freeValue}>Gratis</Text>
-          ) : (
-            <Text style={styles.freeValue}>S/{costoEnvio.toFixed(2)}</Text>
-          )}
-        </View>
-        <View style={styles.divider} />
         {/* Fila total */}
         <View style={styles.totalRow}>
           <Text style={styles.totalLabel}>Total</Text>
-          <Text style={styles.totalValue}>S/{totalFinal.toFixed(2)}</Text>
+          <Text style={styles.totalValue}>S/{total.toFixed(2)}</Text>
         </View>
         {errorMsg ? <Text style={styles.error}>{errorMsg}</Text> : null}
         <TouchableOpacity
