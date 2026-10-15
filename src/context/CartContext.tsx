@@ -33,14 +33,18 @@ export function CartProvider({ children }: { children: ReactNode }) {
         const migrados: ItemPedido[] = saved.map((item) => {
           if (item.negocioId) return item;
           const producto = productosMock.find((p) => p.id === item.productoId);
-          return producto
-            ? {
-                ...item,
-                negocioId: producto.negocioId,
-                descripcion: item.descripcion ?? producto.descripcion,
-                imagen: item.imagen ?? producto.imagen,
-              }
-            : item;
+          if (!producto) return item;
+          const base: ItemPedido = { ...item, negocioId: producto.negocioId };
+          const descripcionMigrada: string =
+            item.descripcion?.trim() || producto.descripcion?.trim() || '';
+          const imagenMigrada: string =
+            item.imagen?.trim() || producto.imagen?.trim() || '';
+          // Firestore rechaza undefined: solo dejamos la clave si hay valor.
+          if (descripcionMigrada) base.descripcion = descripcionMigrada;
+          else delete base.descripcion;
+          if (imagenMigrada) base.imagen = imagenMigrada;
+          else delete base.imagen;
+          return base;
         });
         setItems(migrados);
       }
@@ -79,8 +83,12 @@ export function CartProvider({ children }: { children: ReactNode }) {
           precioUnitario: producto.precio,
           negocioId: producto.negocioId,
           nombre: producto.nombre,
-          descripcion: producto.descripcion,
-          imagen: producto.imagen,
+          // Firestore rechaza undefined: solo agregamos la clave si hay valor
+          // (producto sin foto/descripción no debe arrastrar el campo vacío).
+          ...(producto.descripcion?.trim()
+            ? { descripcion: producto.descripcion }
+            : {}),
+          ...(producto.imagen?.trim() ? { imagen: producto.imagen } : {}),
         },
       ];
     });
@@ -95,8 +103,10 @@ export function CartProvider({ children }: { children: ReactNode }) {
         precioUnitario: producto.precio,
         negocioId: producto.negocioId,
         nombre: producto.nombre,
-        descripcion: producto.descripcion,
-        imagen: producto.imagen,
+        ...(producto.descripcion?.trim()
+          ? { descripcion: producto.descripcion }
+          : {}),
+        ...(producto.imagen?.trim() ? { imagen: producto.imagen } : {}),
       },
     ]);
   }, []);

@@ -82,7 +82,7 @@ export function Pedidos({
             <SeccionCard
               key={item.id}
               titulo={`${fechaCorta(item.fecha)} — ${item.items.length} ${
-                item.items.length === 1 ? 'item' : 'items'
+                item.items.length === 1 ? 'producto' : 'productos'
               }`}
               subtitulo={`S/${item.total.toFixed(2)}`}
               icono={
@@ -109,9 +109,9 @@ export function Pedidos({
                  )) : <Text style={styles.detailMuted}>Sin detalle de productos disponible.</Text>}
                  <Text style={styles.detailLine}>Total: S/{item.total.toFixed(2)}</Text>
                  <Text style={styles.detailMuted}>Fecha: {fechaLarga(item.fecha)}</Text>
-                 <Text style={styles.detailMuted}>
-                   Cuenta del cliente: {identificadorCliente(item.usuarioId)}
-                 </Text>
+                  <Text style={styles.detailMuted}>
+                    Cliente: {item.clienteNombre?.trim() || identificadorCliente(item.usuarioId)}
+                  </Text>
                  {item.direccion ? (
                    <Text style={styles.detailMuted}>
                      Entrega: {item.direccion.alias} — {item.direccion.detalle}
@@ -123,7 +123,7 @@ export function Pedidos({
                    </Text>
                  ) : null}
                </View>
-               accionInferior={
+               {
                  item.estado !== 'entregado' && item.estado !== 'cancelado' ? (
                    <View style={styles.actions}>
                    <TouchableOpacity
