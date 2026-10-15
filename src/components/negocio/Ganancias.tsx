@@ -2,79 +2,112 @@ import { useMemo } from 'react';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useColors } from '../../context/ThemeContext';
 import type { Colors } from '../../styles/colors';
+import type { Pedido } from '../../types/Pedido';
 import type { Stats } from './Pedidos';
-
-// Sección Ganancias: resumen y gráfico semanal (mock visual).
-const GANANCIAS_SEMANA: { dia: string; monto: number }[] = [
-  { dia: 'L', monto: 120 },
-  { dia: 'M', monto: 200 },
-  { dia: 'X', monto: 150 },
-  { dia: 'J', monto: 260 },
-  { dia: 'V', monto: 310 },
-  { dia: 'S', monto: 420 },
-  { dia: 'D', monto: 280 },
-];
 
 type Props = {
   stats: Stats;
-  pedidosCount: number;
+  pedidos: Pedido[];
 };
 
-export function Ganancias({ stats, pedidosCount }: Props) {
+export function Ganancias({ stats, pedidos }: Props) {
   const colors = useColors();
   const styles = useMemo(() => makeStyles(colors), [colors]);
+  const chartData = useMemo(() => getLastSevenDays(pedidos), [pedidos]);
+  const hasDeliveredSales: boolean = chartData.some((day) => day.monto > 0);
   return (
     <ScrollView contentContainerStyle={styles.sectionScroll} showsVerticalScrollIndicator={false}>
       <View style={styles.sectionRow}>
-        <Text style={styles.sectionTitle}>Ganancias</Text>
+        <Text style={styles.sectionTitle}>Resumen de ventas</Text>
       </View>
       <View style={styles.statsRow}>
         <View style={styles.statCard}>
           <Text style={[styles.statNum, { color: colors.primary }]}>
             S/{stats.ventas.toFixed(0)}
           </Text>
-          <Text style={styles.statLabel}>Ventas</Text>
+          <Text style={styles.statLabel}>Ventas brutas</Text>
         </View>
         <View style={styles.statCard}>
           <Text style={[styles.statNum, { color: colors.textPrimary }]}>
-            S/{pedidosCount > 0 ? (stats.ventas / pedidosCount).toFixed(2) : '0.00'}
+            S/{stats.entregados > 0 ? (stats.ventas / stats.entregados).toFixed(2) : '0.00'}
           </Text>
-          <Text style={styles.statLabel}>Ticket prom.</Text>
+          <Text style={styles.statLabel}>Ticket entregado</Text>
         </View>
         <View style={styles.statCard}>
           <Text style={[styles.statNum, { color: colors.textPrimary }]}>
-            {pedidosCount}
+            {stats.entregados}
           </Text>
-          <Text style={styles.statLabel}>Pedidos</Text>
+          <Text style={styles.statLabel}>Entregados</Text>
+        </View>
+        <View style={styles.statCard}>
+          <Text style={[styles.statNum, { color: colors.error }]}>
+            {stats.cancelados}
+          </Text>
+          <Text style={styles.statLabel}>Cancelados</Text>
         </View>
       </View>
       <View style={styles.chartCard}>
-        <Text style={styles.formTitle}>Esta semana (muestra)</Text>
-        <View style={styles.chartRow}>
-          {GANANCIAS_SEMANA.map((d) => {
-            const max: number = Math.max(...GANANCIAS_SEMANA.map((x) => x.monto));
-            return (
-              <View key={d.dia} style={styles.chartCol}>
-                <Text style={styles.chartValue}>{d.monto}</Text>
-                <View style={styles.chartTrack}>
-                  <View
-                    style={[
-                      styles.chartFill,
-                      { height: Math.max(10, (d.monto / max) * 110) },
-                    ]}
-                  />
+        <Text style={styles.formTitle}>Últimos 7 días</Text>
+        {hasDeliveredSales ? (
+          <View style={styles.chartRow}>
+            {chartData.map((d) => {
+              const max: number = Math.max(...chartData.map((x) => x.monto), 1);
+              return (
+                <View key={d.clave} style={styles.chartCol}>
+                  <Text style={styles.chartValue}>{d.monto.toFixed(0)}</Text>
+                  <View style={styles.chartTrack}>
+                    <View
+                      style={[
+                        styles.chartFill,
+                        { height: d.monto > 0 ? Math.max(10, (d.monto / max) * 110) : 0 },
+                      ]}
+                    />
+                  </View>
+                  <Text style={styles.chartDay}>{d.dia}</Text>
                 </View>
-                <Text style={styles.chartDay}>{d.dia}</Text>
-              </View>
-            );
-          })}
-        </View>
-        <Text style={styles.chartNote}>
-          Diseño: el gráfico real saldrá de tus pedidos por día.
-        </Text>
+              );
+            })}
+          </View>
+        ) : (
+          <Text style={styles.chartNote}>
+            Todavía no hay ventas entregadas en los últimos 7 días.
+          </Text>
+        )}
       </View>
     </ScrollView>
   );
+}
+
+type ChartDay = { clave: string; dia: string; monto: number };
+
+const ISO_FECHA = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?(?:Z|[+-]\d{2}:\d{2})$/;
+const DIAS_CORTOS = ['D', 'L', 'M', 'X', 'J', 'V', 'S'];
+
+function getLastSevenDays(pedidos: Pedido[]): ChartDay[] {
+  const hoy = new Date();
+  const dias: ChartDay[] = Array.from({ length: 7 }, (_, index) => {
+    const fecha = new Date(hoy.getFullYear(), hoy.getMonth(), hoy.getDate() - 6 + index);
+    return {
+      clave: toLocalKey(fecha),
+      dia: DIAS_CORTOS[fecha.getDay()],
+      monto: 0,
+    };
+  });
+  const montos = new Map<string, number>(dias.map((dia) => [dia.clave, 0]));
+
+  pedidos.forEach((pedido) => {
+    if (pedido.estado !== 'entregado' || !ISO_FECHA.test(pedido.fecha)) return;
+    const fecha = new Date(pedido.fecha);
+    if (Number.isNaN(fecha.getTime())) return;
+    const clave = toLocalKey(fecha);
+    if (montos.has(clave)) montos.set(clave, (montos.get(clave) ?? 0) + pedido.total);
+  });
+
+  return dias.map((dia) => ({ ...dia, monto: montos.get(dia.clave) ?? 0 }));
+}
+
+function toLocalKey(fecha: Date): string {
+  return `${fecha.getFullYear()}-${fecha.getMonth()}-${fecha.getDate()}`;
 }
 
 function makeStyles(c: Colors) {

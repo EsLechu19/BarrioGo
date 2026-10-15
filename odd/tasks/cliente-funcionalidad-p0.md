@@ -45,6 +45,7 @@ Completar el flujo del cliente sin alterar el diseño visual de `origin/feature/
 - Commit: pendiente (no se realizó commit por instrucción).
 - Panel negocio P0.14: el negocio ve únicamente los datos presentes en el pedido; los pedidos antiguos pueden no tener nombres de producto, dirección o método de pago. En ese caso se muestra la ausencia de datos y un identificador truncado de la cuenta cliente, sin inventar nombres.
 - Panel negocio P0.14: el flujo conserva los estados lineales existentes; no se implementa repartidor, asignación, GPS ni un modelo de entrega nuevo. La acción de rechazo requiere confirmación y registra `canceladoPor`/`canceladoFecha`; su validación final depende de reglas publicadas y Firebase autenticado.
+- Resumen de ventas: muestra únicamente ventas brutas de pedidos entregados. Todavía no contempla costos, comisiones, reembolsos, utilidad neta ni filtro por rango de fechas.
 - Perfil: nombre, correo y año mostrado siguen siendo de solo lectura; solo se persiste el teléfono que ya tenía input. El cambio de contraseña usa Firebase Auth y puede requerir una sesión reciente.
 - Ubicación y ofertas: sus preferencias quedan persistidas, pero no se fuerza el GPS ni existe un canal remoto de ofertas en este work unit.
 - Checkout: dirección y método de pago son datos demo locales; no se procesa precio en servidor ni se integra una pasarela de pagos.
