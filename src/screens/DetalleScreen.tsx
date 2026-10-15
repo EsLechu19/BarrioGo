@@ -14,7 +14,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { RootStackParamList } from '../navigation/RootStackParamList';
 import { Negocio } from '../types/Negocio';
 import { Producto } from '../types/Producto';
-import { getMenu, getNegocioById } from '../services/api';
+import { crearOpinion, escucharOpiniones, getMenu, getNegocioById } from '../services/api';
 import { useCart } from '../context/CartContext';
 import { useFavorites } from '../context/FavoritesContext';
 import { useAuth } from '../context/AuthContext';
@@ -33,36 +33,6 @@ import { nombreVisible } from '../utils/usuario';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Detalle'>;
 
-const OPINIONES_MOCK: Opinion[] = [
-  {
-    id: 'op-mock-1',
-    negocioId: 'preview',
-    usuarioId: 'u1',
-    nombre: 'María Torres',
-    estrellas: 5,
-    texto: 'El pollo llegó jugoso y a tiempo. El punto de siempre, recomendado.',
-    fecha: new Date(Date.now() - 2 * 86400000).toISOString(),
-  },
-  {
-    id: 'op-mock-2',
-    negocioId: 'preview',
-    usuarioId: 'u2',
-    nombre: 'Carlos Quispe',
-    estrellas: 4,
-    texto: 'Buen sabor y porción generosa. Tardó un poco más de lo estimado.',
-    fecha: new Date(Date.now() - 5 * 86400000).toISOString(),
-  },
-  {
-    id: 'op-mock-3',
-    negocioId: 'preview',
-    usuarioId: 'u3',
-    nombre: 'Lucía Fernández',
-    estrellas: 5,
-    texto: 'Pedimos para toda la familia y todo llegó caliente. Volveremos a pedir.',
-    fecha: new Date(Date.now() - 9 * 86400000).toISOString(),
-  },
-];
-
 export default function DetalleScreen({ navigation, route }: Props) {
   const { negocioId } = route.params;
   const insets = useSafeAreaInsets();
@@ -74,9 +44,13 @@ export default function DetalleScreen({ navigation, route }: Props) {
   const { toggle, esFavorito } = useFavorites();
   const { user } = useAuth();
 
-  // Opiniones SOLO DISEÑO: viven en memoria, se pierden al salir.
-  // TODO(back): reemplazar por `escucharOpiniones(negocioId)`.
-  const [opiniones, setOpiniones] = useState<Opinion[]>(OPINIONES_MOCK);
+  const [opiniones, setOpiniones] = useState<Opinion[]>([]);
+  const [opinionesLoading, setOpinionesLoading] = useState<boolean>(true);
+  const [opinionesError, setOpinionesError] = useState<string | null>(null);
+  const [opinionesOrigen, setOpinionesOrigen] = useState<'firestore' | 'fallback-local'>('firestore');
+  const [publicando, setPublicando] = useState<boolean>(false);
+  const [publicacionError, setPublicacionError] = useState<string | null>(null);
+  const [publicacionExitosa, setPublicacionExitosa] = useState<boolean>(false);
   // Empieza vacío (0 = sin elegir): el usuario debe tocar una estrella.
   const [estrellas, setEstrellas] = useState<number>(0);
   const [texto, setTexto] = useState<string>('');
@@ -100,23 +74,27 @@ export default function DetalleScreen({ navigation, route }: Props) {
     texto.trim().length > 0 &&
     texto.trim().length <= MAX_TEXTO_OPINION;
 
-  const handlePublicar = useCallback(() => {
-    if (!puedePublicar) return;
-    // TODO(back): reemplazar por `crearOpinion()` y limpiar al confirmar.
+  const handlePublicar = useCallback(async () => {
+    if (!puedePublicar || publicando) return;
+    if (!user) {
+      setPublicacionError('Iniciá sesión para publicar una opinión.');
+      return;
+    }
     const nombre: string = nombreVisible(user);
-    const nueva: Opinion = {
-      id: `local-${Date.now()}`,
-      negocioId,
-      usuarioId: user?.uid ?? 'local',
-      nombre,
-      estrellas: estrellas as Estrellas,
-      texto: texto.trim(),
-      fecha: new Date().toISOString(),
-    };
-    setOpiniones((prev) => [nueva, ...prev]);
-    setEstrellas(0);
-    setTexto('');
-  }, [puedePublicar, estrellas, texto, negocioId, user]);
+    setPublicando(true);
+    setPublicacionError(null);
+    setPublicacionExitosa(false);
+    try {
+      await crearOpinion({ negocioId, usuarioId: user.uid, nombre, estrellas: estrellas as Estrellas, texto });
+      setEstrellas(0);
+      setTexto('');
+      setPublicacionExitosa(true);
+    } catch (e) {
+      setPublicacionError(e instanceof Error ? e.message : 'No se pudo publicar la opinión.');
+    } finally {
+      setPublicando(false);
+    }
+  }, [puedePublicar, publicando, user, negocioId, estrellas, texto]);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -129,6 +107,24 @@ export default function DetalleScreen({ navigation, route }: Props) {
   useEffect(() => {
     load();
   }, [load]);
+
+  useEffect(() => {
+    setOpinionesLoading(true);
+    setOpinionesError(null);
+    const unsubscribe = escucharOpiniones(
+      negocioId,
+      (resultado) => {
+        setOpiniones(resultado.opiniones);
+        setOpinionesOrigen(resultado.origen);
+        setOpinionesLoading(false);
+      },
+      (error) => {
+        setOpinionesError(error.message);
+        setOpinionesLoading(false);
+      },
+    );
+    return unsubscribe;
+  }, [negocioId]);
 
   if (loading) {
     // Area loading
@@ -265,6 +261,9 @@ export default function DetalleScreen({ navigation, route }: Props) {
       ) : (
         <ReviewsTab
           opiniones={opiniones}
+          opinionesLoading={opinionesLoading}
+          opinionesError={opinionesError}
+          opinionesOrigen={opinionesOrigen}
           promedio={promedio}
           distribucion={distribucion}
           estrellas={estrellas}
@@ -273,6 +272,10 @@ export default function DetalleScreen({ navigation, route }: Props) {
           onEstrellasChange={setEstrellas}
           onTextoChange={setTexto}
           onPublicar={handlePublicar}
+          publicando={publicando}
+          publicacionError={publicacionError}
+          publicacionExitosa={publicacionExitosa}
+          usuarioAutenticado={Boolean(user)}
         />
       )}
 

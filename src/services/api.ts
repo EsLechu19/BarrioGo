@@ -1,6 +1,12 @@
 import { Negocio } from '../types/Negocio';
 import { Producto } from '../types/Producto';
 import { EstadoPedido, ItemPedido, Pedido } from '../types/Pedido';
+import {
+  Estrellas,
+  esEstrellas,
+  MAX_TEXTO_OPINION,
+  Opinion,
+} from '../types/Opinion';
 import type { DireccionEntrega, MetodoPago } from '../types/Checkout';
 import {
   addDoc,
@@ -26,6 +32,12 @@ import { negociosMock } from '../data/negociosMock';
 import { productosMock } from '../data/productosMock';
 
 const MOCK_API_URL = 'http://localhost:3000/negocios';
+
+const OPINIONES_DEMO: Omit<Opinion, 'negocioId'>[] = [
+  { id: 'op-demo-1', usuarioId: 'demo-user-1', nombre: 'María Torres', estrellas: 5, texto: 'El pollo llegó jugoso y a tiempo. El punto de siempre, recomendado.', fecha: new Date(Date.now() - 2 * 86400000).toISOString() },
+  { id: 'op-demo-2', usuarioId: 'demo-user-2', nombre: 'Carlos Quispe', estrellas: 4, texto: 'Buen sabor y porción generosa. Tardó un poco más de lo estimado.', fecha: new Date(Date.now() - 5 * 86400000).toISOString() },
+  { id: 'op-demo-3', usuarioId: 'demo-user-3', nombre: 'Lucía Fernández', estrellas: 5, texto: 'Pedimos para toda la familia y todo llegó caliente. Volveremos a pedir.', fecha: new Date(Date.now() - 9 * 86400000).toISOString() },
+];
 
 export interface AppError {
   message: string;
@@ -167,6 +179,132 @@ export async function getMenu(
     await new Promise((resolve) => setTimeout(resolve, 500));
   }
   return visible(productosMock.filter((p) => p.negocioId === negocioId));
+}
+
+// ---------- Opiniones ----------
+
+export type OrigenOpiniones = 'firestore' | 'fallback-local';
+
+export interface ResultadoOpiniones {
+  opiniones: Opinion[];
+  origen: OrigenOpiniones;
+}
+
+export interface CrearOpinionInput {
+  negocioId: string;
+  usuarioId: string;
+  nombre: string;
+  estrellas: Estrellas;
+  texto: string;
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null;
+}
+
+function fechaOpinion(value: unknown): string | null {
+  if (typeof value === 'string' && !Number.isNaN(Date.parse(value))) return value;
+  if (value instanceof Date && !Number.isNaN(value.getTime())) return value.toISOString();
+  if (isRecord(value) && typeof value.toDate === 'function') {
+    try {
+      const date: unknown = value.toDate();
+      return date instanceof Date && !Number.isNaN(date.getTime()) ? date.toISOString() : null;
+    } catch {
+      return null;
+    }
+  }
+  return null;
+}
+
+function opinionDesdeFirestore(id: string, value: unknown): Opinion | null {
+  if (!isRecord(value)) return null;
+  const fecha: string | null = fechaOpinion(value.fecha);
+  const texto: unknown = value.texto;
+  const nombre: unknown = value.nombre;
+  const usuarioId: unknown = value.usuarioId;
+  const negocioId: unknown = value.negocioId;
+  return typeof negocioId === 'string' && negocioId.trim() !== '' &&
+    typeof usuarioId === 'string' && usuarioId.trim() !== '' &&
+    typeof nombre === 'string' && nombre.trim() !== '' &&
+    typeof texto === 'string' && texto.trim() !== '' &&
+    texto.length <= MAX_TEXTO_OPINION && esEstrellas(value.estrellas) && fecha !== null
+    ? { id, negocioId, usuarioId, nombre, estrellas: value.estrellas, texto, fecha }
+    : null;
+}
+
+function opinionesDemoPara(negocioId: string): Opinion[] {
+  return OPINIONES_DEMO.map((opinion) => ({ ...opinion, negocioId }));
+}
+
+export async function getOpiniones(negocioId: string): Promise<ResultadoOpiniones> {
+  if (!negocioId.trim()) throw new Error('Falta el negocio de las opiniones.');
+  if (!firebaseReady) return { opiniones: opinionesDemoPara(negocioId), origen: 'fallback-local' };
+  try {
+    const snap = await getDocs(query(collection(getFirestoreDb(), 'opiniones'), where('negocioId', '==', negocioId)));
+    const opiniones: Opinion[] = snap.docs
+      .map((item) => opinionDesdeFirestore(item.id, item.data()))
+      .filter((item): item is Opinion => item !== null)
+      .sort((a, b) => (a.fecha < b.fecha ? 1 : -1));
+    return { opiniones, origen: 'firestore' };
+  } catch (e) {
+    throw new Error(e instanceof Error ? `No se pudieron leer las opiniones: ${e.message}` : 'No se pudieron leer las opiniones.');
+  }
+}
+
+export function escucharOpiniones(
+  negocioId: string,
+  cb: (resultado: ResultadoOpiniones) => void,
+  onError?: (e: Error) => void,
+): Unsubscribe {
+  if (!negocioId.trim()) {
+    onError?.(new Error('Falta el negocio de las opiniones.'));
+    return () => {};
+  }
+  if (!firebaseReady) {
+    cb({ opiniones: opinionesDemoPara(negocioId), origen: 'fallback-local' });
+    return () => {};
+  }
+  try {
+    const opinionsQuery = query(collection(getFirestoreDb(), 'opiniones'), where('negocioId', '==', negocioId));
+    return onSnapshot(
+      opinionsQuery,
+      (snap) => {
+        const opiniones: Opinion[] = snap.docs
+          .map((item) => opinionDesdeFirestore(item.id, item.data()))
+          .filter((item): item is Opinion => item !== null)
+          .sort((a, b) => (a.fecha < b.fecha ? 1 : -1));
+        cb({ opiniones, origen: 'firestore' });
+      },
+      (e: Error) => onError?.(new Error(`No se pudieron escuchar las opiniones: ${e.message}`)),
+    );
+  } catch (e) {
+    onError?.(e instanceof Error ? e : new Error('No se pudo escuchar las opiniones.'));
+    return () => {};
+  }
+}
+
+export async function crearOpinion(input: CrearOpinionInput): Promise<string> {
+  if (!firebaseReady) throw new Error(FIREBASE_NO_CONFIG_MSG);
+  if (!input.negocioId.trim()) throw new Error('Falta el negocio de la opinión.');
+  if (!input.usuarioId.trim()) throw new Error('Iniciá sesión para publicar una opinión.');
+  if (!input.nombre.trim()) throw new Error('Falta el nombre del autor.');
+  if (!esEstrellas(input.estrellas)) throw new Error('Elegí entre 1 y 5 estrellas.');
+  const texto: string = input.texto.trim();
+  if (!texto) throw new Error('Escribí una opinión antes de publicar.');
+  if (texto.length > MAX_TEXTO_OPINION) throw new Error(`La opinión no puede superar los ${MAX_TEXTO_OPINION} caracteres.`);
+  try {
+    const ref = await addDoc(collection(getFirestoreDb(), 'opiniones'), {
+      negocioId: input.negocioId,
+      usuarioId: input.usuarioId,
+      nombre: input.nombre.trim(),
+      estrellas: input.estrellas,
+      texto,
+      fecha: new Date().toISOString(),
+    });
+    return ref.id;
+  } catch (e) {
+    throw new Error(e instanceof Error ? `No se pudo publicar la opinión: ${e.message}` : 'No se pudo publicar la opinión.');
+  }
 }
 
 // ---------- F3 Pedidos con tracking ----------

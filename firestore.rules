@@ -38,5 +38,19 @@ service cloud.firestore {
         && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['estado']);
       allow delete: if false;
     }
+    match /opiniones/{id} {
+      allow read: if true;
+      allow create: if request.auth != null
+        && request.resource.data.usuarioId == request.auth.uid
+        && request.resource.data.negocioId is string
+        && request.resource.data.negocioId.size() > 0
+        && request.resource.data.nombre is string
+        && request.resource.data.nombre.size() > 0
+        && request.resource.data.texto is string
+        && request.resource.data.texto.size() > 0
+        && request.resource.data.texto.size() <= 280
+        && request.resource.data.estrellas in [1, 2, 3, 4, 5];
+      allow update, delete: if false;
+    }
   }
 }
