@@ -6,6 +6,7 @@ import {
 } from '../types/Pedido';
 import type { Notificacion } from '../types/Notificacion';
 import type { PerfilUsuario, PreferenciasUsuario } from '../types/Usuario';
+import type { DireccionUsuario } from '../types/Direccion';
 
 // Persistencia local tipada. REGLA: jamás confiar en JSON.parse a ciegas —
 // todo lo leído se valida con un chequeo de forma antes de usarse.
@@ -36,6 +37,10 @@ function checkoutAddressKey(usuarioId: string): string {
 
 function checkoutPaymentKey(usuarioId: string): string {
   return `barriogo:checkout-payment:v1:${encodeURIComponent(usuarioId)}`;
+}
+
+function addressesKey(usuarioId: string): string {
+  return `barriogo:addresses:v1:${encodeURIComponent(usuarioId)}`;
 }
 
 export interface Session {
@@ -126,6 +131,24 @@ function isMetodoPagoPedido(value: unknown): value is MetodoPagoPedido {
     typeof (value as MetodoPagoPedido).nombre === 'string' &&
     (value as MetodoPagoPedido).nombre.trim().length > 0
   );
+}
+
+function isDireccionUsuario(value: unknown): value is DireccionUsuario {
+  return (
+    typeof value === 'object' &&
+    value !== null &&
+    typeof (value as DireccionUsuario).id === 'string' &&
+    (value as DireccionUsuario).id.trim().length > 0 &&
+    typeof (value as DireccionUsuario).alias === 'string' &&
+    (value as DireccionUsuario).alias.trim().length > 0 &&
+    typeof (value as DireccionUsuario).detalle === 'string' &&
+    (value as DireccionUsuario).detalle.trim().length > 0 &&
+    typeof (value as DireccionUsuario).esPrincipal === 'boolean'
+  );
+}
+
+function isDireccionUsuarioArray(value: unknown): value is DireccionUsuario[] {
+  return Array.isArray(value) && value.every(isDireccionUsuario);
 }
 
 const notificationWrites = new Map<string, Promise<void>>();
@@ -238,6 +261,19 @@ export const storage = {
   ): Promise<void> =>
     usuarioId.trim() && isMetodoPagoPedido(payment)
       ? write(checkoutPaymentKey(usuarioId), payment)
+      : Promise.resolve(),
+  // null = nunca se guardó (la pantalla de direcciones siembra el diseño la
+  // primera vez); [] = lista guardada vacía.
+  loadAddresses: (usuarioId: string): Promise<DireccionUsuario[] | null> =>
+    usuarioId.trim()
+      ? read(addressesKey(usuarioId), isDireccionUsuarioArray)
+      : Promise.resolve(null),
+  saveAddresses: (
+    usuarioId: string,
+    direcciones: DireccionUsuario[],
+  ): Promise<void> =>
+    usuarioId.trim() && isDireccionUsuarioArray(direcciones)
+      ? write(addressesKey(usuarioId), direcciones)
       : Promise.resolve(),
   loadNotifications: (usuarioId: string): Promise<Notificacion[]> => {
     if (!usuarioId.trim()) return Promise.resolve([]);

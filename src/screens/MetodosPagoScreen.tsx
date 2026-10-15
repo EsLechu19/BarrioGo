@@ -36,7 +36,7 @@ const METODOS_MOCK: MetodoMock[] = [
 
 export default function MetodosPagoScreen({ navigation }: Props) {
   const insets = useSafeAreaInsets();
-  const [seleccionado, setSeleccionado] = useState<string>('m1');
+  const [seleccionado, setSeleccionado] = useState<string>('');
   const [aviso, setAviso] = useState<boolean>(false);
   const { user } = useAuth();
   const colors = useColors();
@@ -49,13 +49,14 @@ export default function MetodosPagoScreen({ navigation }: Props) {
     void storage.loadCheckoutPayment(usuarioId).then((metodo) => {
       if (!activa) return;
       if (!metodo) {
-        setSeleccionado('m1');
+        // Selección honesta: nada activo si no hay método guardado.
+        setSeleccionado('');
         return;
       }
       const encontrado: MetodoMock | undefined = METODOS_MOCK.find(
         (item) => item.id === metodo.tipo && item.nombre === metodo.nombre,
       );
-      setSeleccionado(encontrado?.id ?? 'm1');
+      setSeleccionado(encontrado?.id ?? '');
     });
     return () => {
       activa = false;

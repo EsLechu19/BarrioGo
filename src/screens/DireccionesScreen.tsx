@@ -17,29 +17,21 @@ import { FormField } from '../components/FormField';
 import { useColors } from '../context/ThemeContext';
 import { useAuth } from '../context/AuthContext';
 import { storage } from '../services/storage';
+import { confirm } from '../utils/confirm';
+import {
+  aDireccionPedido,
+  cargarDirecciones,
+  direccionSeleccionadaId,
+} from '../utils/direcciones';
+import type { DireccionUsuario } from '../types/Direccion';
 import type { Colors } from '../styles/colors';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Direcciones'>;
 
-interface DireccionMock {
-  id: string;
-  alias: string;
-  detalle: string;
-  esPrincipal: boolean;
-}
-
-// TODO(back): colección `users/{uid}/direcciones` en Firestore.
-// Las direcciones que se añaden hoy solo viven en memoria (solo diseño):
-// se pierden al salir de la pantalla.
-const DIRECCIONES_MOCK: DireccionMock[] = [
-  { id: 'd1', alias: 'Casa', detalle: 'Av. Mi casa 123, Lima', esPrincipal: true },
-  { id: 'd2', alias: 'Trabajo', detalle: 'Av. Arequipa 2450, Lima', esPrincipal: false },
-];
-
 export default function DireccionesScreen({ navigation }: Props) {
   const insets = useSafeAreaInsets();
-  const [direcciones, setDirecciones] = useState<DireccionMock[]>(DIRECCIONES_MOCK);
-  const [seleccionada, setSeleccionada] = useState<string>('d1');
+  const [direcciones, setDirecciones] = useState<DireccionUsuario[]>([]);
+  const [seleccionada, setSeleccionada] = useState<string>('');
   const [modalVisible, setModalVisible] = useState<boolean>(false);
   const [alias, setAlias] = useState<string>('');
   const [detalle, setDetalle] = useState<string>('');
@@ -53,21 +45,34 @@ export default function DireccionesScreen({ navigation }: Props) {
     const usuarioId: string | undefined = user?.uid;
     if (!usuarioId) return;
     let activa = true;
-    void storage.loadCheckoutAddress(usuarioId).then((direccion) => {
+    void Promise.all([
+      cargarDirecciones(usuarioId),
+      storage.loadCheckoutAddress(usuarioId),
+    ]).then(([lista, direccion]) => {
       if (!activa) return;
-      if (!direccion) {
-        setSeleccionada('d1');
-        return;
-      }
-      const encontrada: DireccionMock | undefined = DIRECCIONES_MOCK.find(
-        (item) => item.alias === direccion.alias && item.detalle === direccion.detalle,
-      );
-      setSeleccionada(encontrada?.id ?? 'd1');
+      setDirecciones(lista);
+      // Selección honesta: nada activo si no hay dirección guardada.
+      setSeleccionada(direccionSeleccionadaId(lista, direccion) ?? '');
     });
     return () => {
       activa = false;
     };
   }, [user?.uid]);
+
+  const elegirDireccion = (d: DireccionUsuario): Promise<void> => {
+    if (d.id === seleccionada) return Promise.resolve();
+    return confirm({
+      title: '¿Cambiar dirección de entrega?',
+      message: `Tu pedido se enviará a "${d.alias}" (${d.detalle}).`,
+      confirmText: 'Cambiar',
+    }).then((acepta) => {
+      if (!acepta) return;
+      setSeleccionada(d.id);
+      if (user) {
+        void storage.saveCheckoutAddress(user.uid, aDireccionPedido(d));
+      }
+    });
+  };
 
   const abrirModal = (): void => {
     setAlias('');
@@ -98,17 +103,19 @@ export default function DireccionesScreen({ navigation }: Props) {
     setDetalleError(errorDetalle);
     if (errorAlias || errorDetalle) return;
     const nuevaId: string = `d${Date.now()}`;
-    setDirecciones((prev: DireccionMock[]) => [
-      ...prev,
+    const lista: DireccionUsuario[] = [
+      ...direcciones,
       {
         id: nuevaId,
         alias: aliasLimpio,
         detalle: detalleLimpio,
-        esPrincipal: false,
+        esPrincipal: direcciones.length === 0,
       },
-    ]);
+    ];
+    setDirecciones(lista);
     setSeleccionada(nuevaId);
     if (user) {
+      void storage.saveAddresses(user.uid, lista);
       void storage.saveCheckoutAddress(user.uid, {
         alias: aliasLimpio,
         detalle: detalleLimpio,
@@ -147,15 +154,7 @@ export default function DireccionesScreen({ navigation }: Props) {
               key={d.id}
               activo={activa}
               icono="location-outline"
-              onPress={() => {
-                setSeleccionada(d.id);
-                if (user) {
-                  void storage.saveCheckoutAddress(user.uid, {
-                    alias: d.alias,
-                    detalle: d.detalle,
-                  });
-                }
-              }}
+              onPress={() => void elegirDireccion(d)}
               accessibilityLabel={`Usar dirección ${d.alias}`}
             >
               <View style={styles.aliasRow}>

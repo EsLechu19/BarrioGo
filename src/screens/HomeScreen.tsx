@@ -8,7 +8,7 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Negocio } from '../types/Negocio';
 import { RestaurantCard } from '../components/RestaurantCard';
@@ -23,6 +23,14 @@ import { TabScreenProps } from '../navigation/TabScreenProps';
 import { useColors } from '../context/ThemeContext';
 import type { Colors } from '../styles/colors';
 import { nombreVisible } from '../utils/usuario';
+import { UbicacionModal } from '../components/UbicacionModal';
+import { storage } from '../services/storage';
+import {
+  aDireccionPedido,
+  cargarDirecciones,
+  direccionSeleccionadaId,
+} from '../utils/direcciones';
+import type { DireccionUsuario } from '../types/Direccion';
 
 type Props = TabScreenProps<'InicioTab'>;
 
@@ -38,9 +46,48 @@ export default function HomeScreen({ navigation }: Props) {
   const { toggle, esFavorito } = useFavorites();
   const { user } = useAuth();
   const { count: cartCount } = useCart();
+  const [direcciones, setDirecciones] = useState<DireccionUsuario[]>([]);
+  const [direccionActual, setDireccionActual] = useState<DireccionUsuario | null>(null);
+  const [modalUbicacion, setModalUbicacion] = useState<boolean>(false);
   const nombre: string = nombreVisible(user);
   const colors = useColors();
   const styles = useMemo(() => makeStyles(colors), [colors]);
+
+  // Dirección de entrega real (AsyncStorage). autoAbrir: cuenta nueva sin
+  // dirección → se abre el modal de ubicación al entrar al inicio.
+  const refrescarUbicacion = useCallback(
+    async (autoAbrir: boolean): Promise<void> => {
+      if (!user) {
+        setDireccionActual(null);
+        return;
+      }
+      const [lista, activa] = await Promise.all([
+        cargarDirecciones(user.uid),
+        storage.loadCheckoutAddress(user.uid),
+      ]);
+      setDirecciones(lista);
+      const idSeleccionada = direccionSeleccionadaId(lista, activa);
+      const elegida = idSeleccionada
+        ? (lista.find((d) => d.id === idSeleccionada) ?? null)
+        : null;
+      setDireccionActual(elegida);
+      if (autoAbrir && !elegida) setModalUbicacion(true);
+    },
+    [user],
+  );
+
+  // Carga la dirección al entrar al inicio y al volver de Direcciones.
+  // El modal solo se autoabre una vez por sesión (cuenta nueva sin dirección);
+  // después se abre únicamente con el chevron del header.
+  const modalAutoabierto = useRef<boolean>(false);
+
+  useEffect(() => {
+    const offFoco = navigation.addListener('focus', () => {
+      void refrescarUbicacion(!modalAutoabierto.current);
+      modalAutoabierto.current = true;
+    });
+    return offFoco;
+  }, [navigation, refrescarUbicacion]);
 
   const load = useCallback(async (isRefresh = false) => {
     if (isRefresh) {
@@ -68,8 +115,26 @@ export default function HomeScreen({ navigation }: Props) {
   }, [load]);
 
   const handleMore = () => {
-    console.log('Más direcciones');
+    setModalUbicacion(true);
   };
+
+  const elegirDireccion = (direccion: DireccionUsuario): void => {
+    setDireccionActual(direccion);
+    setModalUbicacion(false);
+    if (user) void storage.saveCheckoutAddress(user.uid, aDireccionPedido(direccion));
+  };
+
+  const guardarDireccionNueva = (nueva: DireccionUsuario): void => {
+    const lista: DireccionUsuario[] = [...direcciones, nueva];
+    setDirecciones(lista);
+    setDireccionActual(nueva);
+    setModalUbicacion(false);
+    if (user) {
+      void storage.saveAddresses(user.uid, lista);
+      void storage.saveCheckoutAddress(user.uid, aDireccionPedido(nueva));
+    }
+  };
+
   const handleSeeAll = () => {
     navigation.navigate('Restaurants');
   };
@@ -129,8 +194,19 @@ export default function HomeScreen({ navigation }: Props) {
           <View style={styles.locationTextBlock}>
             <Text style={styles.locationLabel}>Direccion de entrega</Text>
             <View style={styles.locationRow}>
-              <Text style={styles.locationAddress}>Av. Mi casa</Text>
-              <TouchableOpacity onPress={handleMore}>
+              <Text style={styles.locationAddress} numberOfLines={1}>
+                {direccionActual ? direccionActual.detalle : 'Añadir ubicación'}
+              </Text>
+              <TouchableOpacity
+                onPress={handleMore}
+                hitSlop={8}
+                accessibilityRole="button"
+                accessibilityLabel={
+                  direccionActual
+                    ? `Cambiar dirección de entrega, actual: ${direccionActual.detalle}`
+                    : 'Añadir ubicación'
+                }
+              >
                 <Ionicons name="chevron-down" size={18} color={colors.textSecondary}/>
               </TouchableOpacity>
             </View>
@@ -230,6 +306,15 @@ export default function HomeScreen({ navigation }: Props) {
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={() => load(true)} />
         }
+      />
+
+      <UbicacionModal
+        visible={modalUbicacion}
+        direcciones={direcciones}
+        seleccionadaId={direccionActual?.id ?? null}
+        onCerrar={() => setModalUbicacion(false)}
+        onElegir={elegirDireccion}
+        onGuardar={guardarDireccionNueva}
       />
     </View>
   );

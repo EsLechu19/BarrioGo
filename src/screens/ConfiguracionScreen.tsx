@@ -216,7 +216,7 @@ export default function ConfiguracionScreen({ navigation }: Props) {
           <SettingRow
             icono="information-circle-outline"
             titulo="Acerca de BarrioGo"
-            subtitulo="Versión 1.0.0"
+            subtitulo="Versión 1.1.2"
           />
         </View>
       </ScrollView>

@@ -43,7 +43,11 @@ function Root() {
 
   return (
     <NavigationContainer theme={tema}>
-      <StatusBar barStyle={barStyle} />
+      <StatusBar
+        barStyle={isDark ? 'light-content' : 'dark-content'}
+        backgroundColor={colors.background}
+        translucent={false}
+      />
       <CustomerNotificationBridge />
       {user ? <AppNavigator /> : <AuthNavigator />}
     </NavigationContainer>
