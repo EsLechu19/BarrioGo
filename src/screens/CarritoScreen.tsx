@@ -116,10 +116,12 @@ export default function CarritoScreen({ navigation }: Props) {
     ]);
     if (!direccion) {
       setErrorMsg('Seleccioná una dirección antes de confirmar tu pedido.');
+      navigation.navigate('Direcciones');
       return;
     }
     if (!metodoPago) {
       setErrorMsg('Seleccioná un método de pago antes de confirmar tu pedido.');
+      navigation.navigate('MetodosPago');
       return;
     }
     setEnviando(true);
