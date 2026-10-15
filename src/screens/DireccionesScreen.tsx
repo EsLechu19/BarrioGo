@@ -51,15 +51,18 @@ export default function DireccionesScreen({ navigation }: Props) {
 
   useEffect(() => {
     const usuarioId: string | undefined = user?.uid;
-    setSeleccionada('d1');
     if (!usuarioId) return;
     let activa = true;
     void storage.loadCheckoutAddress(usuarioId).then((direccion) => {
-      if (!activa || !direccion) return;
+      if (!activa) return;
+      if (!direccion) {
+        setSeleccionada('d1');
+        return;
+      }
       const encontrada: DireccionMock | undefined = DIRECCIONES_MOCK.find(
         (item) => item.alias === direccion.alias && item.detalle === direccion.detalle,
       );
-      if (encontrada) setSeleccionada(encontrada.id);
+      setSeleccionada(encontrada?.id ?? 'd1');
     });
     return () => {
       activa = false;

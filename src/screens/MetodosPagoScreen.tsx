@@ -44,15 +44,18 @@ export default function MetodosPagoScreen({ navigation }: Props) {
 
   useEffect(() => {
     const usuarioId: string | undefined = user?.uid;
-    setSeleccionado('m1');
     if (!usuarioId) return;
     let activa = true;
     void storage.loadCheckoutPayment(usuarioId).then((metodo) => {
-      if (!activa || !metodo) return;
+      if (!activa) return;
+      if (!metodo) {
+        setSeleccionado('m1');
+        return;
+      }
       const encontrado: MetodoMock | undefined = METODOS_MOCK.find(
         (item) => item.id === metodo.tipo && item.nombre === metodo.nombre,
       );
-      if (encontrado) setSeleccionado(encontrado.id);
+      setSeleccionado(encontrado?.id ?? 'm1');
     });
     return () => {
       activa = false;
