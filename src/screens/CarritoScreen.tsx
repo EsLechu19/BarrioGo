@@ -12,7 +12,6 @@ import { productosMock } from '../data/productosMock';
 import { ScreenHeader } from '../components/ScreenHeader';
 import { CantidadStepper } from '../components/CantidadStepper';
 import { colors } from '../styles/colors';
-import { useCheckout } from '../context/CheckoutContext';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Carrito'>;
 
@@ -20,7 +19,6 @@ export default function CarritoScreen({ navigation }: Props) {
   const insets = useSafeAreaInsets();
   const { items, total, setCantidad, clear } = useCart();
   const { user } = useAuth();
-  const { selectedAddress, selectedPaymentMethod } = useCheckout();
   const [enviando, setEnviando] = useState<boolean>(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
@@ -71,17 +69,13 @@ export default function CarritoScreen({ navigation }: Props) {
     [items],
   );
 
-  // El carrito guarda negocioId como snapshot. Si hay mezcla de negocios, no
-  // se puede crear un único pedido. Los ítems antiguos usan el catálogo local
-  // como compatibilidad para carritos persistidos antes de la integración
-  // Firebase.
+  // El carrito no guarda negocioId: se infiere del catálogo. Si hay mezcla
+  // de negocios, no se puede crear un único pedido.
   const negocioIds: string[] = useMemo(() => {
     const ids = new Set<string>();
     for (const item of items) {
-      const negocioId = item.negocioId ?? productosMock.find(
-        (p) => p.id === item.productoId,
-      )?.negocioId;
-      if (negocioId) ids.add(negocioId);
+      const prod = productosMock.find((p) => p.id === item.productoId);
+      if (prod) ids.add(prod.negocioId);
     }
     return Array.from(ids);
   }, [items]);
@@ -116,10 +110,6 @@ export default function CarritoScreen({ navigation }: Props) {
       setErrorMsg('El total del pedido no es válido.');
       return;
     }
-    if (!selectedAddress || !selectedPaymentMethod) {
-      setErrorMsg('Elegí una dirección de entrega y un método de pago antes de confirmar.');
-      return;
-    }
     setEnviando(true);
     try {
       await crearPedido({
@@ -127,8 +117,6 @@ export default function CarritoScreen({ navigation }: Props) {
         negocioId,
         items,
         total,
-        direccionEntrega: selectedAddress,
-        metodoPago: selectedPaymentMethod,
       });
       clear();
       navigation.navigate('Tabs', { screen: 'PedidosTab' });
@@ -267,24 +255,6 @@ export default function CarritoScreen({ navigation }: Props) {
       />
       {/* Area total: solo productos, como en APF2 (sin cargo de envío). */}
       <View style={styles.footer}>
-        <TouchableOpacity style={styles.selectionRow} onPress={() => navigation.navigate('Direcciones')}>
-          <View style={styles.selectionInfo}>
-            <Text style={styles.selectionLabel}>Dirección de entrega</Text>
-            <Text style={styles.selectionValue}>
-              {selectedAddress ? `${selectedAddress.alias}: ${selectedAddress.detalle}` : 'Sin seleccionar'}
-            </Text>
-          </View>
-          <Ionicons name="chevron-forward" size={20} color={colors.textPlaceholder} />
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.selectionRow} onPress={() => navigation.navigate('MetodosPago')}>
-          <View style={styles.selectionInfo}>
-            <Text style={styles.selectionLabel}>Método de pago</Text>
-            <Text style={styles.selectionValue}>
-              {selectedPaymentMethod ? selectedPaymentMethod.nombre : 'Sin seleccionar'}
-            </Text>
-          </View>
-          <Ionicons name="chevron-forward" size={20} color={colors.textPlaceholder} />
-        </TouchableOpacity>
         {/* Fila total */}
         <View style={styles.totalRow}>
           <Text style={styles.totalLabel}>Total</Text>
@@ -375,20 +345,6 @@ const styles = StyleSheet.create({
 
   // Area total
   footer: { gap: 10, paddingTop: 8 },
-  selectionRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    gap: 10,
-    padding: 12,
-    borderWidth: 1,
-    borderColor: colors.border,
-    borderRadius: 14,
-    backgroundColor: colors.surface,
-  },
-  selectionInfo: { flex: 1, gap: 3 },
-  selectionLabel: { color: colors.textMuted, fontSize: 12 },
-  selectionValue: { color: colors.textPrimary, fontSize: 14, fontWeight: '700' },
   // Fila total
   totalRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   totalLabel: { fontSize: 15, fontWeight: '600', color: colors.textSecondary },

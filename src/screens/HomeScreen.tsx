@@ -22,7 +22,6 @@ import { useCart } from '../context/CartContext';
 import { TabScreenProps } from '../navigation/TabScreenProps';
 import { colors } from '../styles/colors';
 import { nombreVisible } from '../utils/usuario';
-import { useCheckout } from '../context/CheckoutContext';
 
 type Props = TabScreenProps<'InicioTab'>;
 
@@ -38,7 +37,6 @@ export default function HomeScreen({ navigation }: Props) {
   const { toggle, esFavorito } = useFavorites();
   const { user } = useAuth();
   const { count: cartCount } = useCart();
-  const { selectedAddress } = useCheckout();
   const nombre: string = nombreVisible(user);
 
   const load = useCallback(async (isRefresh = false) => {
@@ -66,7 +64,9 @@ export default function HomeScreen({ navigation }: Props) {
     getUserCoords().then(setUserLoc);
   }, [load]);
 
-  const handleMore = () => navigation.navigate('Direcciones');
+  const handleMore = () => {
+    console.log('Más direcciones');
+  };
   const handleSeeAll = () => {
     navigation.navigate('Restaurants');
   };
@@ -126,9 +126,7 @@ export default function HomeScreen({ navigation }: Props) {
           <View style={styles.locationTextBlock}>
             <Text style={styles.locationLabel}>Direccion de entrega</Text>
             <View style={styles.locationRow}>
-              <Text style={styles.locationAddress} numberOfLines={1}>
-                {selectedAddress?.detalle ?? 'Elegí una dirección'}
-              </Text>
+              <Text style={styles.locationAddress}>Av. Mi casa</Text>
               <TouchableOpacity onPress={handleMore}>
                 <Ionicons name="chevron-down" size={18} color={colors.textSecondary}/>
               </TouchableOpacity>

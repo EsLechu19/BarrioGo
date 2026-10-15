@@ -12,17 +12,13 @@ import { Producto } from '../../types/Producto';
 import { SeccionCard } from '../SeccionCard';
 import { colors } from '../../styles/colors';
 
-// Sección Mi menú: lista de productos con acciones persistidas en Firestore
-// + alta real de producto.
+// Sección Mi menú: lista de productos con acciones (pausar/editar/quitar,
+// solo diseño en memoria) + alta real de producto.
 type Props = {
   menuVisible: Producto[];
   loadingMenu: boolean;
   menuError: string | null;
   pausados: string[];
-  menuActionId: string | null;
-  menuActionError: string | null;
-  menuActionOk: string | null;
-  onRefreshMenu: () => void;
   editandoId: string | null;
   editNombre: string;
   editPrecio: string;
@@ -52,10 +48,6 @@ export function Menu({
   loadingMenu,
   menuError,
   pausados,
-  menuActionId,
-  menuActionError,
-  menuActionOk,
-  onRefreshMenu,
   editandoId,
   editNombre,
   editPrecio,
@@ -82,23 +74,11 @@ export function Menu({
     <ScrollView contentContainerStyle={styles.sectionScroll} showsVerticalScrollIndicator={false}>
       <View style={styles.sectionRow}>
         <Text style={styles.sectionTitle}>Mi menú ({menuVisible.length})</Text>
-        <TouchableOpacity
-          style={styles.refreshButton}
-          onPress={onRefreshMenu}
-          disabled={loadingMenu || menuActionId !== null}
-          accessibilityRole="button"
-          accessibilityLabel="Actualizar menú"
-        >
-          {loadingMenu ? (
-            <ActivityIndicator size="small" color={colors.primary} />
-          ) : (
-            <Ionicons name="refresh-outline" size={18} color={colors.primary} />
-          )}
-        </TouchableOpacity>
+        {loadingMenu ? (
+          <ActivityIndicator size="small" color={colors.primary} />
+        ) : null}
       </View>
       {menuError ? <Text style={styles.error}>{menuError}</Text> : null}
-      {menuActionError ? <Text style={styles.error}>{menuActionError}</Text> : null}
-      {menuActionOk ? <Text style={styles.ok}>{menuActionOk}</Text> : null}
       {loadingMenu ? (
         <View style={styles.centerRow}>
           <ActivityIndicator size="large" color={colors.primary} />
@@ -146,14 +126,12 @@ export function Menu({
                     <TouchableOpacity
                       style={styles.ghostButton}
                       onPress={onCancelarEdicion}
-                      disabled={menuActionId !== null}
                     >
                       <Text style={styles.ghostText}>Cancelar</Text>
                     </TouchableOpacity>
                     <TouchableOpacity
-                      style={[styles.smallPrimaryButton, menuActionId !== null && styles.disabledButton]}
+                      style={styles.smallPrimaryButton}
                       onPress={() => onGuardarEdicion(item.id)}
-                      disabled={menuActionId !== null}
                     >
                       <Text style={styles.primaryText}>Guardar</Text>
                     </TouchableOpacity>
@@ -164,7 +142,6 @@ export function Menu({
                 <TouchableOpacity
                   style={styles.menuAction}
                   onPress={onVerDetalle}
-                  disabled={menuActionId !== null}
                   accessibilityRole="button"
                   accessibilityLabel={`Ver ${item.nombre} en Detalle`}
                 >
@@ -176,9 +153,8 @@ export function Menu({
                   onPress={() =>
                     editando ? onCancelarEdicion() : onEmpezarEdicion(item)
                   }
-                  disabled={menuActionId !== null}
                   accessibilityRole="button"
-                  accessibilityLabel={`Modificar ${item.nombre}`}
+                  accessibilityLabel={`Modificar ${item.nombre} (diseño)`}
                 >
                   <Ionicons name="create-outline" size={16} color={colors.primary} />
                   <Text style={styles.menuActionText}>
@@ -188,9 +164,8 @@ export function Menu({
                 <TouchableOpacity
                   style={styles.menuAction}
                   onPress={() => onTogglePausar(item.id)}
-                  disabled={menuActionId !== null}
                   accessibilityRole="button"
-                  accessibilityLabel={`${pausado ? 'Activar' : 'Pausar'} ${item.nombre}`}
+                  accessibilityLabel={`${pausado ? 'Activar' : 'Pausar'} ${item.nombre} (diseño)`}
                 >
                   <Ionicons
                     name={pausado ? 'play-outline' : 'pause-outline'}
@@ -204,9 +179,8 @@ export function Menu({
                 <TouchableOpacity
                   style={styles.menuAction}
                   onPress={() => onEliminar(item.id)}
-                  disabled={menuActionId !== null}
                   accessibilityRole="button"
-                  accessibilityLabel={`Eliminar ${item.nombre}`}
+                  accessibilityLabel={`Eliminar ${item.nombre} (diseño)`}
                 >
                   <Ionicons name="trash-outline" size={16} color={colors.error} />
                   <Text style={[styles.menuActionText, { color: colors.error }]}>
@@ -300,7 +274,6 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
   },
   sectionTitle: { color: colors.textPrimary, fontSize: 18, fontWeight: '800' },
-  refreshButton: { padding: 6, borderRadius: 10, backgroundColor: colors.primarySoft },
   subtitle: { color: colors.textMuted, fontSize: 14, textAlign: 'center' },
   error: { color: colors.error, fontSize: 14, fontWeight: '600' },
   ok: { color: colors.success, fontSize: 14, fontWeight: '600' },

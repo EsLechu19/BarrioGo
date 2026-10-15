@@ -16,7 +16,7 @@ Conservar el diseño visual, navegación y componentes de `feature/apf2-ui-unido
 
 - [x] T1. Consolidar servicios Firebase, API, ubicación, notificaciones, reglas y scripts de APF3 sin perder el fallback y los indicadores de origen de APF2.
 - [x] T2. Consolidar contextos, tipos y Hooks manteniendo el diseño de datos requerido por la UI APF2.
-- [x] T3. Integrar la lógica de autenticación, catálogo, detalle, carrito, favoritos, pedidos y panel negocio en las pantallas visuales APF2.
+- [ ] T3. Integrar la lógica de autenticación, catálogo, detalle, carrito, favoritos, pedidos y panel negocio en las pantallas visuales APF2 sin alterar su diseño.
 - [ ] T4. Verificar navegación, tipos, compilación y flujos funcionales en Expo.
 - [x] T4a. Conectar opiniones del detalle a lectura en tiempo real y creación autenticada en Firestore, conservando el fallback demo seguro.
 - [x] P0-1. Conectar selección de dirección y método de pago al checkout, con persistencia local y payload de pedidos compatible.
@@ -41,6 +41,7 @@ Conservar el diseño visual, navegación y componentes de `feature/apf2-ui-unido
 - P0-1 implementado sin cambiar el diseño APF2: Dirección y Método de pago usan estado compartido, AsyncStorage validado y snapshot en nuevos pedidos; pedidos antiguos siguen siendo legibles.
 - Menú de negocio conectado a Firestore: editar, pausar/activar, eliminar y actualizar recargan el menú; las acciones validan dueño, muestran feedback y bloquean duplicados.
 - `getMenu` filtra productos con `disponible:false` para clientes, mientras el panel negocio carga también pausados para poder reactivarlos.
+- Por decisión del usuario, las pantallas visuales se restauraron exactamente desde `feature/apf2-ui-unido`; la funcionalidad APF3 queda disponible en servicios y tipos, pero su cableado a la UI se mantiene pendiente para no alterar el diseño.
 
 ## Verificación
 
@@ -56,4 +57,4 @@ Conservar el diseño visual, navegación y componentes de `feature/apf2-ui-unido
 
 ## Próximo paso
 
-Revisar visualmente los flujos en Expo con un `.env` configurado y validar Auth, Firestore, permisos GPS/notificaciones y Cloudinary en dispositivo o emulador.
+ Conectar progresivamente la lógica APF3 a las pantallas APF2 mediante cambios de comportamiento que no modifiquen su árbol visual, estilos ni distribución; después validar Auth, Firestore, permisos GPS/notificaciones y Cloudinary en dispositivo o emulador.

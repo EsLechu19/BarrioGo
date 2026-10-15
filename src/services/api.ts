@@ -317,8 +317,8 @@ export interface CrearPedidoInput {
   negocioId: string;
   items: ItemPedido[];
   total: number;
-  direccionEntrega: DireccionEntrega;
-  metodoPago: MetodoPago;
+  direccionEntrega?: DireccionEntrega;
+  metodoPago?: MetodoPago;
 }
 
 const ESTADOS_PEDIDO: readonly EstadoPedido[] = [
@@ -384,22 +384,25 @@ export async function crearPedido(input: CrearPedidoInput): Promise<string> {
   if (!input.negocioId.trim()) throw new Error('Falta el negocio del pedido.');
   if (input.items.length === 0) throw new Error('El pedido no tiene productos.');
   if (!(input.total > 0)) throw new Error('El total del pedido no es válido.');
-  if (!isDireccionEntrega(input.direccionEntrega)) {
-    throw new Error('Falta una dirección de entrega válida.');
+  if (input.direccionEntrega !== undefined && !isDireccionEntrega(input.direccionEntrega)) {
+    throw new Error('La dirección de entrega no es válida.');
   }
-  if (!isMetodoPago(input.metodoPago)) {
-    throw new Error('Falta un método de pago válido.');
+  if (input.metodoPago !== undefined && !isMetodoPago(input.metodoPago)) {
+    throw new Error('El método de pago no es válido.');
   }
   try {
-    const ref = await addDoc(collection(getFirestoreDb(), 'pedidos'), {
+    const pedido: Record<string, unknown> = {
       usuarioId: input.usuarioId,
       negocioId: input.negocioId,
       items: input.items,
       total: input.total,
-      direccionEntrega: input.direccionEntrega,
-      metodoPago: input.metodoPago,
       estado: 'pendiente',
       fecha: new Date().toISOString(),
+    };
+    if (input.direccionEntrega) pedido['direccionEntrega'] = input.direccionEntrega;
+    if (input.metodoPago) pedido['metodoPago'] = input.metodoPago;
+    const ref = await addDoc(collection(getFirestoreDb(), 'pedidos'), {
+      ...pedido,
     });
     return ref.id;
   } catch (e) {

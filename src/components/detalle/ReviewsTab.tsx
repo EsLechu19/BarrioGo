@@ -1,5 +1,4 @@
 import {
-  ActivityIndicator,
   ScrollView,
   StyleSheet,
   Text,
@@ -28,9 +27,6 @@ const ETIQUETA_ESTRELLAS: Record<number, string> = {
 // Pestaña Opiniones: resumen de rating, lista de opiniones y formulario visual.
 type Props = {
   opiniones: Opinion[];
-  opinionesLoading: boolean;
-  opinionesError: string | null;
-  opinionesOrigen: 'firestore' | 'fallback-local';
   promedio: number;
   distribucion: { nivel: Estrellas; cantidad: number }[];
   estrellas: number;
@@ -39,17 +35,10 @@ type Props = {
   onEstrellasChange: (n: number) => void;
   onTextoChange: (t: string) => void;
   onPublicar: () => void;
-  publicando: boolean;
-  publicacionError: string | null;
-  publicacionExitosa: boolean;
-  usuarioAutenticado: boolean;
 };
 
 export function ReviewsTab({
   opiniones,
-  opinionesLoading,
-  opinionesError,
-  opinionesOrigen,
   promedio,
   distribucion,
   estrellas,
@@ -58,14 +47,10 @@ export function ReviewsTab({
   onEstrellasChange,
   onTextoChange,
   onPublicar,
-  publicando,
-  publicacionError,
-  publicacionExitosa,
-  usuarioAutenticado,
 }: Props) {
   return (
     <ScrollView contentContainerStyle={styles.tabContent}>
-      {/* Resumen calculado con la lista cargada; no muta Negocio.rating. */}
+      {/* Resumen rating (promedio local del mock) */}
       <View style={styles.reviewSummary}>
         <Text style={styles.ratingBig}>
           {opiniones.length > 0 ? `⭐ ${promedio.toFixed(1)}` : '⭐ —'}
@@ -93,11 +78,6 @@ export function ReviewsTab({
             })}
           </View>
         ) : null}
-        {opinionesOrigen === 'fallback-local' ? (
-          <Text style={styles.demoText}>Datos de demostración sin Firebase</Text>
-        ) : null}
-        {opinionesLoading ? <ActivityIndicator color={colors.primary} /> : null}
-        {opinionesError ? <Text style={styles.errorText}>{opinionesError}</Text> : null}
       </View>
       {/* Lista de opiniones o vacío */}
       {opiniones.length === 0 ? (
@@ -115,7 +95,7 @@ export function ReviewsTab({
           <OpinionCard key={opinion.id} opinion={opinion} />
         ))
       )}
-      {/* Formulario conservando el diseño APF2; publica en Firestore. */}
+      {/* Formulario visual (solo diseño, no persiste) */}
       <View style={styles.formCard}>
         <Text style={styles.formTitle}>Dejá tu opinión</Text>
         <View style={styles.starsBox}>
@@ -158,16 +138,13 @@ export function ReviewsTab({
           <TouchableOpacity
             style={[styles.publishButton, !puedePublicar && styles.publishButtonDisabled]}
             onPress={onPublicar}
-            disabled={!puedePublicar || publicando}
+            disabled={!puedePublicar}
             accessibilityRole="button"
             accessibilityLabel="Publicar opinión"
           >
-            {publicando ? <ActivityIndicator color={colors.surface} /> : <Text style={styles.publishText}>Publicar</Text>}
+            <Text style={styles.publishText}>Publicar</Text>
           </TouchableOpacity>
         </View>
-        {!usuarioAutenticado ? <Text style={styles.statusText}>Iniciá sesión para publicar.</Text> : null}
-        {publicacionError ? <Text style={styles.errorText}>{publicacionError}</Text> : null}
-        {publicacionExitosa ? <Text style={styles.successText}>Tu opinión se publicó correctamente.</Text> : null}
       </View>
     </ScrollView>
   );
@@ -176,9 +153,6 @@ export function ReviewsTab({
 const styles = StyleSheet.create({
   tabContent: { paddingHorizontal: 16, paddingTop: 12, paddingBottom: 20, gap: 12 },
   statusText: { color: colors.textMuted, fontSize: 14, textAlign: 'center' },
-  demoText: { color: colors.textMuted, fontSize: 12, fontStyle: 'italic' },
-  errorText: { color: colors.error, fontSize: 13, textAlign: 'center' },
-  successText: { color: colors.primary, fontSize: 13, textAlign: 'center' },
   meta: { color: colors.textMuted, fontSize: 13 },
   ratingBig: { color: colors.textPrimary, fontSize: 22, fontWeight: '900' },
   reviewSummary: {

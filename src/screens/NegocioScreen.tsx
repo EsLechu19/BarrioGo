@@ -6,10 +6,7 @@ import { TabScreenProps } from '../navigation/TabScreenProps';
 import { firebaseReady } from '../services/firebase';
 import {
   cambiarEstadoPedido,
-  cambiarDisponibilidadProducto,
   crearProducto,
-  actualizarProducto,
-  eliminarProducto,
   escucharPedidosNegocio,
   getMenu,
   getNegocioById,
@@ -28,7 +25,6 @@ import { Locales } from '../components/negocio/Locales';
 import { useNegocioId } from '../hooks/useNegocioId';
 import { colors } from '../styles/colors';
 import { SIGUIENTE_ESTADO } from '../utils/estadosPedido';
-import { confirm } from '../utils/confirm';
 
 const GUIA_HABILITACION =
   "Pedí al equipo que en Firestore users/{uid} te ponga rol:'negocio' y negocioId:'1'";
@@ -62,14 +58,14 @@ export default function NegocioScreen({ navigation }: Props) {
   // Secciones del panel (botones circulares, Mi menú primero).
   const [seccion, setSeccion] = useState<Seccion>('menu');
 
-  // Mi menú: productos reales del negocio (getMenu), incluidos los pausados
-  // para que el dueño pueda volver a activarlos.
+  // Mi menú: productos reales del negocio (getMenu). Pausar/eliminar/editar
+  // son SOLO DISEÑO en memoria.
+  // TODO(back): `disponible` en Firestore + updateDoc/deleteDoc reales.
   const [productos, setProductos] = useState<Producto[]>([]);
   const [loadingMenu, setLoadingMenu] = useState<boolean>(false);
   const [menuError, setMenuError] = useState<string | null>(null);
-  const [menuActionId, setMenuActionId] = useState<string | null>(null);
-  const [menuActionError, setMenuActionError] = useState<string | null>(null);
-  const [menuActionOk, setMenuActionOk] = useState<string | null>(null);
+  const [pausados, setPausados] = useState<string[]>([]);
+  const [eliminados, setEliminados] = useState<string[]>([]);
   const [editandoId, setEditandoId] = useState<string | null>(null);
   const [editNombre, setEditNombre] = useState<string>('');
   const [editPrecio, setEditPrecio] = useState<string>('');
@@ -116,23 +112,24 @@ export default function NegocioScreen({ navigation }: Props) {
     };
   }, [negocioId]);
 
-  async function cargarMenu(): Promise<void> {
-    if (!negocioId) return;
-    setLoadingMenu(true);
-    setMenuError(null);
-    try {
-      const data: Producto[] = await getMenu(negocioId, { incluirNoDisponibles: true });
-      setProductos(data);
-    } catch {
-      setMenuError('No se pudo cargar tu menú. Intentá de nuevo.');
-    } finally {
-      setLoadingMenu(false);
-    }
-  }
-
   useEffect(() => {
     if (!negocioId) return;
-    void cargarMenu();
+    let activo = true;
+    setLoadingMenu(true);
+    setMenuError(null);
+    getMenu(negocioId)
+      .then((data) => {
+        if (activo) setProductos(data);
+      })
+      .catch(() => {
+        if (activo) setMenuError('No se pudo cargar tu menú. Intentá de nuevo.');
+      })
+      .finally(() => {
+        if (activo) setLoadingMenu(false);
+      });
+    return () => {
+      activo = false;
+    };
   }, [negocioId]);
 
   async function avanzarEstado(pedido: Pedido): Promise<void> {
@@ -163,7 +160,7 @@ export default function NegocioScreen({ navigation }: Props) {
       setFormError('El producto necesita un nombre.');
       return;
     }
-    if (!(precioNumerico > 0) || !Number.isFinite(precioNumerico)) {
+    if (!(precioNumerico > 0)) {
       setFormError('El precio debe ser mayor a 0.');
       return;
     }
@@ -179,7 +176,6 @@ export default function NegocioScreen({ navigation }: Props) {
       setNombre('');
       setPrecio('');
       setDescripcion('');
-      await cargarMenu();
     } catch (e) {
       setFormError(
         e instanceof Error
@@ -191,57 +187,22 @@ export default function NegocioScreen({ navigation }: Props) {
     }
   }
 
-  async function togglePausar(productoId: string): Promise<void> {
-    if (menuActionId || !negocioId || !uid) return;
-    setMenuActionId(productoId);
-    setMenuActionError(null);
-    setMenuActionOk(null);
-    try {
-      const disponible: boolean = await cambiarDisponibilidadProducto({
-        productoId,
-        negocioId,
-        usuarioId: uid,
-      });
-      await cargarMenu();
-      setMenuActionOk(disponible ? 'Producto activado.' : 'Producto pausado.');
-    } catch (e) {
-      setMenuActionError(
-        e instanceof Error ? e.message : 'No se pudo cambiar la disponibilidad.',
-      );
-    } finally {
-      setMenuActionId(null);
-    }
+  // Acciones de menú SOLO DISEÑO (memoria local, se pierden al salir).
+  // TODO(back): pausar = updateDoc(productos/{id}, {disponible}), eliminar =
+  // deleteDoc, editar = updateDoc con validación.
+  function togglePausar(productoId: string): void {
+    setPausados((prev) =>
+      prev.includes(productoId)
+        ? prev.filter((id) => id !== productoId)
+        : [...prev, productoId],
+    );
   }
 
   function eliminarLocal(productoId: string): void {
-    if (menuActionId || !negocioId || !uid) return;
-    setMenuActionId(productoId);
-    setMenuActionError(null);
-    setMenuActionOk(null);
-    void (async () => {
-      const confirmado: boolean = await confirm({
-        title: 'Quitar producto',
-        message: 'Esta acción eliminará el producto del menú.',
-        confirmText: 'Quitar',
-        destructive: true,
-      });
-      if (!confirmado) {
-        setMenuActionId(null);
-        return;
-      }
-      try {
-        await eliminarProducto({ productoId, negocioId, usuarioId: uid });
-        await cargarMenu();
-        if (editandoId === productoId) setEditandoId(null);
-        setMenuActionOk('Producto eliminado.');
-      } catch (e) {
-        setMenuActionError(
-          e instanceof Error ? e.message : 'No se pudo eliminar el producto.',
-        );
-      } finally {
-        setMenuActionId(null);
-      }
-    })();
+    setEliminados((prev) =>
+      prev.includes(productoId) ? prev : [...prev, productoId],
+    );
+    if (editandoId === productoId) setEditandoId(null);
   }
 
   function empezarEdicion(producto: Producto): void {
@@ -250,47 +211,23 @@ export default function NegocioScreen({ navigation }: Props) {
     setEditPrecio(String(producto.precio));
   }
 
-  function guardarEdicion(productoId: string): void {
+  function guardarEdicionLocal(productoId: string): void {
     const nombreValido: string = editNombre.trim();
     const precioNumerico: number = Number(editPrecio.replace(',', '.'));
-    if (!nombreValido) {
-      setMenuActionError('El producto necesita un nombre.');
-      return;
-    }
-    if (!(precioNumerico > 0) || !Number.isFinite(precioNumerico)) {
-      setMenuActionError('El precio debe ser mayor a 0.');
-      return;
-    }
-    if (menuActionId || !negocioId || !uid) return;
-    setMenuActionId(productoId);
-    setMenuActionError(null);
-    setMenuActionOk(null);
-    void (async () => {
-      try {
-        await actualizarProducto({
-          productoId,
-          negocioId,
-          usuarioId: uid,
-          nombre: nombreValido,
-          precio: precioNumerico,
-        });
-        await cargarMenu();
-        setEditandoId(null);
-        setMenuActionOk('Producto actualizado.');
-      } catch (e) {
-        setMenuActionError(
-          e instanceof Error ? e.message : 'No se pudo actualizar el producto.',
-        );
-      } finally {
-        setMenuActionId(null);
-      }
-    })();
+    if (!nombreValido || !(precioNumerico > 0)) return;
+    setProductos((prev) =>
+      prev.map((p) =>
+        p.id === productoId
+          ? { ...p, nombre: nombreValido, precio: precioNumerico }
+          : p,
+      ),
+    );
+    setEditandoId(null);
   }
 
-  const menuVisible: Producto[] = productos;
-  const pausados: string[] = productos
-    .filter((producto) => producto.disponible === false)
-    .map((producto) => producto.id);
+  const menuVisible: Producto[] = productos.filter(
+    (p) => !eliminados.includes(p.id),
+  );
 
   // Resumen del día (solo visual, derivado de la lista en vivo).
   const stats: Stats = useMemo(() => {
@@ -377,10 +314,6 @@ export default function NegocioScreen({ navigation }: Props) {
           loadingMenu={loadingMenu}
           menuError={menuError}
           pausados={pausados}
-          menuActionId={menuActionId}
-          menuActionError={menuActionError}
-          menuActionOk={menuActionOk}
-          onRefreshMenu={() => void cargarMenu()}
           editandoId={editandoId}
           editNombre={editNombre}
           editPrecio={editPrecio}
@@ -389,7 +322,7 @@ export default function NegocioScreen({ navigation }: Props) {
           onVerDetalle={() => navigation.navigate('Detalle', { negocioId })}
           onEmpezarEdicion={empezarEdicion}
           onCancelarEdicion={() => setEditandoId(null)}
-          onGuardarEdicion={guardarEdicion}
+          onGuardarEdicion={guardarEdicionLocal}
           onTogglePausar={togglePausar}
           onEliminar={eliminarLocal}
           nombre={nombre}
