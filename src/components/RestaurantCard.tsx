@@ -17,8 +17,8 @@ export function RestaurantCard({ negocio, esFavorito, onToggleFavorito, onPress 
     const styles = useMemo(() => makeStyles(colors), [colors]);
     // uri vacía ('') rompe <Image>: solo se renderiza con URL real.
     const foto: string | null =
-        negocio.portada?.trim() ? negocio.portada
-        : negocio.imagen?.trim() ? negocio.imagen
+        negocio.imagen?.trim() ? negocio.imagen
+        : negocio.portada?.trim() ? negocio.portada
         : null;
     return (
         // contenedor de la card
@@ -32,7 +32,7 @@ export function RestaurantCard({ negocio, esFavorito, onToggleFavorito, onPress 
                 accessibilityLabel={`Ver ${negocio.nombre}`}
             >
                 {/* Foto */}
-                {/* Portada si existe, con fallback al icono (S3 apf6-negocio-propio). */}
+                {/* Icono (perfil) si existe, con fallback a la portada. */}
                 {foto ? (
                     <Image source={{ uri: foto }} style={styles.restaurantImage} resizeMode="cover" />
                 ) : (

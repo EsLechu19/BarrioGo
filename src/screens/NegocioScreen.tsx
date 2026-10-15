@@ -108,23 +108,30 @@ export default function NegocioScreen({ navigation }: Props) {
     return unsubscribe;
   }, [rol, negocioId]);
 
+  // Relee el negocio en cada foco: al volver de "Mi local" el hero del panel
+  // muestra las fotos/nuevos datos al instante (antes quedaba viejo).
   useEffect(() => {
     if (!negocioId) {
       setNegocio(null);
       return;
     }
     let activo = true;
-    getNegocioById(negocioId)
-      .then((n) => {
-        if (activo) setNegocio(n);
-      })
-      .catch(() => {
-        if (activo) setNegocio(null);
-      });
+    const cargar = (): void => {
+      getNegocioById(negocioId)
+        .then((n) => {
+          if (activo) setNegocio(n);
+        })
+        .catch(() => {
+          if (activo) setNegocio(null);
+        });
+    };
+    cargar();
+    const unsubscribe = navigation.addListener('focus', cargar);
     return () => {
       activo = false;
+      unsubscribe();
     };
-  }, [negocioId]);
+  }, [negocioId, navigation]);
 
   useEffect(() => {
     if (!negocioId) return;
