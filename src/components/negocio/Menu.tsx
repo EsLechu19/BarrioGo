@@ -15,8 +15,7 @@ import { SeccionCard } from '../SeccionCard';
 import { useColors } from '../../context/ThemeContext';
 import type { Colors } from '../../styles/colors';
 
-// Sección Mi menú: lista de productos con acciones (pausar/editar/quitar,
-// solo diseño en memoria) + alta real de producto.
+// Sección Mi menú: lista de productos con acciones + alta real de producto.
 type Props = {
   menuVisible: Producto[];
   loadingMenu: boolean;
@@ -27,6 +26,7 @@ type Props = {
   editPrecio: string;
   editFoto: string | null;
   editFotoError: string | null;
+  editGuardando: boolean;
   onEditNombreChange: (texto: string) => void;
   onEditPrecioChange: (texto: string) => void;
   onSubirFotoEdicion: () => void;
@@ -47,6 +47,10 @@ type Props = {
   formError: string | null;
   formOk: string | null;
   onGuardarProducto: () => void;
+  fotoUri: string | null;
+  fotoError: string | null;
+  onElegirFoto: () => void;
+  onTomarFoto: () => void;
 };
 
 export function Menu({
@@ -59,6 +63,7 @@ export function Menu({
   editPrecio,
   editFoto,
   editFotoError,
+  editGuardando,
   onEditNombreChange,
   onEditPrecioChange,
   onSubirFotoEdicion,
@@ -78,6 +83,10 @@ export function Menu({
   formError,
   formOk,
   onGuardarProducto,
+  fotoUri,
+  fotoError,
+  onElegirFoto,
+  onTomarFoto,
 }: Props) {
   const colors = useColors();
   const styles = useMemo(() => makeStyles(colors), [colors]);
@@ -133,7 +142,7 @@ export function Menu({
                     onChangeText={onEditPrecioChange}
                     keyboardType="decimal-pad"
                   />
-                  {/* Foto del producto en edición: preview local (solo diseño) */}
+                  {/* Foto del producto en edición */}
                   <View style={styles.fotoRow}>
                     {editFoto?.trim() ? (
                       <Image source={{ uri: editFoto }} style={styles.fotoPreview} />
@@ -169,6 +178,7 @@ export function Menu({
                     </TouchableOpacity>
                     <TouchableOpacity
                       style={styles.smallPrimaryButton}
+                      disabled={editGuardando}
                       onPress={() => onGuardarEdicion(item.id)}
                     >
                       <Text style={styles.primaryText}>Guardar</Text>
@@ -270,23 +280,28 @@ export function Menu({
           onChangeText={onDescripcionChange}
           multiline
         />
-        {/* Foto del producto (plantilla, solo diseño) */}
+        {/* Foto del producto */}
         <View style={styles.fotoRow}>
-          <View style={[styles.fotoPreview, styles.fotoPlaceholder]}>
-            <Text style={styles.fotoPlaceholderText}>Sin foto</Text>
-          </View>
+          {fotoUri ? (
+            <Image source={{ uri: fotoUri }} style={styles.fotoPreview} />
+          ) : (
+            <View style={[styles.fotoPreview, styles.fotoPlaceholder]}>
+              <Text style={styles.fotoPlaceholderText}>Sin foto</Text>
+            </View>
+          )}
           <View style={styles.fotoInfo}>
             <Text style={styles.fotoLabel}>Foto del producto</Text>
             <View style={styles.fotoAcciones}>
-              <TouchableOpacity style={styles.fotoButton} disabled>
+              <TouchableOpacity style={styles.fotoButton} onPress={onElegirFoto}>
                 <Text style={styles.fotoButtonText}>Galería</Text>
               </TouchableOpacity>
-              <TouchableOpacity style={styles.fotoButton} disabled>
+              <TouchableOpacity style={styles.fotoButton} onPress={onTomarFoto}>
                 <Text style={styles.fotoButtonText}>Cámara</Text>
               </TouchableOpacity>
             </View>
           </View>
         </View>
+        {fotoError ? <Text style={styles.error}>{fotoError}</Text> : null}
         {formError ? <Text style={styles.error}>{formError}</Text> : null}
         {formOk ? <Text style={styles.ok}>{formOk}</Text> : null}
         <TouchableOpacity
@@ -420,7 +435,7 @@ function makeStyles(c: Colors) {
       borderWidth: 1,
       borderColor: c.border,
       backgroundColor: c.surface,
-      opacity: 0.7,
+      opacity: 1,
     },
     fotoButtonText: { color: c.textMuted, fontSize: 13, fontWeight: '700' },
     fotoButtonRow: { flexDirection: 'row', alignItems: 'center', gap: 6, alignSelf: 'flex-start' },

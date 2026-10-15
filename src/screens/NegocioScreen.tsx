@@ -8,9 +8,11 @@ import { firebaseReady } from '../services/firebase';
 import {
   cambiarEstadoPedido,
   crearProducto,
+  actualizarProducto,
   escucharPedidosNegocio,
   getMenu,
   getNegocioById,
+  subirFotoProducto,
 } from '../services/api';
 import { EstadoPedido, Pedido } from '../types/Pedido';
 import { Negocio } from '../types/Negocio';
@@ -58,13 +60,15 @@ export default function NegocioScreen({ navigation }: Props) {
   const [guardando, setGuardando] = useState<boolean>(false);
   const [formError, setFormError] = useState<string | null>(null);
   const [formOk, setFormOk] = useState<string | null>(null);
+  const [fotoUri, setFotoUri] = useState<string | null>(null);
+  const [fotoError, setFotoError] = useState<string | null>(null);
 
   // Secciones del panel (botones circulares, Mi menú primero).
   const [seccion, setSeccion] = useState<Seccion>('menu');
 
-  // Mi menú: productos reales del negocio (getMenu). Pausar/eliminar/editar
-  // son SOLO DISEÑO en memoria.
-  // TODO(back): `disponible` en Firestore + updateDoc/deleteDoc reales.
+  // Mi menú: productos reales del negocio (getMenu). Pausar/eliminar siguen
+  // siendo acciones locales; la edición de datos persiste en Firestore.
+  // TODO(back): `disponible` en Firestore + deleteDoc real.
   const [productos, setProductos] = useState<Producto[]>([]);
   const [loadingMenu, setLoadingMenu] = useState<boolean>(false);
   const [menuError, setMenuError] = useState<string | null>(null);
@@ -73,9 +77,11 @@ export default function NegocioScreen({ navigation }: Props) {
   const [editandoId, setEditandoId] = useState<string | null>(null);
   const [editNombre, setEditNombre] = useState<string>('');
   const [editPrecio, setEditPrecio] = useState<string>('');
-  // Foto en edición: solo vista previa local (solo diseño, sin subir a nadie).
+  // Foto en edición: la URI nueva se distingue de la URL ya persistida.
   const [editFotoUri, setEditFotoUri] = useState<string | null>(null);
+  const [editFotoNuevaUri, setEditFotoNuevaUri] = useState<string | null>(null);
   const [editFotoError, setEditFotoError] = useState<string | null>(null);
+  const [editGuardando, setEditGuardando] = useState<boolean>(false);
 
   // Aviso para acciones futuras (invitar repartidor, añadir local).
   const [proximo, setProximo] = useState<string | null>(null);
@@ -161,6 +167,7 @@ export default function NegocioScreen({ navigation }: Props) {
     if (guardando || !negocioId) return;
     setFormError(null);
     setFormOk(null);
+    setFotoError(null);
     const nombreValido: string = nombre.trim();
     const precioNumerico: number = Number(precio.replace(',', '.'));
     if (!nombreValido) {
@@ -175,14 +182,19 @@ export default function NegocioScreen({ navigation }: Props) {
     try {
       const id: string = await crearProducto({
         negocioId,
+        usuarioId: uid ?? '',
         nombre: nombreValido,
         precio: precioNumerico,
         descripcion: descripcion.trim(),
+        imagenUrl: fotoUri ? await subirFotoProducto(negocioId, uid ?? '', fotoUri) : '',
       });
       setFormOk(`Producto creado (id ${id.slice(0, 6)}…). Ya figura en Detalle.`);
       setNombre('');
       setPrecio('');
       setDescripcion('');
+      setFotoUri(null);
+      const menuActualizado: Producto[] = await getMenu(negocioId);
+      setProductos(menuActualizado);
     } catch (e) {
       setFormError(
         e instanceof Error
@@ -194,9 +206,9 @@ export default function NegocioScreen({ navigation }: Props) {
     }
   }
 
-  // Acciones de menú SOLO DISEÑO (memoria local, se pierden al salir).
+  // Acciones pendientes de persistencia (memoria local, se pierden al salir).
   // TODO(back): pausar = updateDoc(productos/{id}, {disponible}), eliminar =
-  // deleteDoc, editar = updateDoc con validación.
+  // deleteDoc.
   function togglePausar(productoId: string): void {
     setPausados((prev) =>
       prev.includes(productoId)
@@ -217,16 +229,18 @@ export default function NegocioScreen({ navigation }: Props) {
     setEditNombre(producto.nombre);
     setEditPrecio(String(producto.precio));
     setEditFotoUri(producto.imagen?.trim() ? producto.imagen : null);
+    setEditFotoNuevaUri(null);
     setEditFotoError(null);
   }
 
   function cancelarEdicion(): void {
     setEditandoId(null);
     setEditFotoUri(null);
+    setEditFotoNuevaUri(null);
     setEditFotoError(null);
   }
 
-  // Galería → preview local. No sube a Cloudinary ni toca Firestore.
+  // Galería → preview local; la subida ocurre al guardar la edición.
   async function subirFotoEdicion(): Promise<void> {
     setEditFotoError(null);
     try {
@@ -242,30 +256,70 @@ export default function NegocioScreen({ navigation }: Props) {
       const asset = resultado.assets[0];
       if (!asset) return;
       setEditFotoUri(asset.uri);
+      setEditFotoNuevaUri(asset.uri);
     } catch {
       setEditFotoError('No se pudo elegir la foto. Intentá de nuevo.');
     }
   }
 
-  function guardarEdicionLocal(productoId: string): void {
+  async function seleccionarFotoNueva(modo: 'galeria' | 'camara'): Promise<void> {
+    setFotoError(null);
+    try {
+      if (modo === 'camara') {
+        const permiso = await ImagePicker.requestCameraPermissionsAsync();
+        if (!permiso.granted) {
+          setFotoError('Se necesita permiso para usar la cámara.');
+          return;
+        }
+      }
+      const opciones: ImagePicker.ImagePickerOptions = {
+        mediaTypes: ['images'],
+        allowsEditing: true,
+        aspect: [1, 1],
+        quality: 0.7,
+      };
+      const resultado = modo === 'camara'
+        ? await ImagePicker.launchCameraAsync(opciones)
+        : await ImagePicker.launchImageLibraryAsync(opciones);
+      if (!resultado.canceled && resultado.assets[0]) setFotoUri(resultado.assets[0].uri);
+    } catch {
+      setFotoError('No se pudo elegir la foto. Intentá de nuevo.');
+    }
+  }
+
+  async function guardarEdicion(productoId: string): Promise<void> {
     const nombreValido: string = editNombre.trim();
     const precioNumerico: number = Number(editPrecio.replace(',', '.'));
     if (!nombreValido || !(precioNumerico > 0)) return;
-    setProductos((prev) =>
-      prev.map((p) =>
-        p.id === productoId
-          ? {
-              ...p,
-              nombre: nombreValido,
-              precio: precioNumerico,
-              ...(editFotoUri !== null ? { imagen: editFotoUri } : {}),
-            }
-          : p,
-      ),
-    );
-    setEditandoId(null);
-    setEditFotoUri(null);
+    const producto: Producto | undefined = productos.find((p) => p.id === productoId);
+    if (!producto || !negocioId || !uid || editGuardando) return;
+    setEditGuardando(true);
     setEditFotoError(null);
+    try {
+      const imagenUrl: string = editFotoNuevaUri
+        ? await subirFotoProducto(negocioId, uid, editFotoNuevaUri)
+        : producto.imagen ?? '';
+      await actualizarProducto({
+        productoId,
+        negocioId,
+        usuarioId: uid,
+        nombre: nombreValido,
+        precio: precioNumerico,
+        imagenUrl,
+      });
+      setProductos((prev) =>
+        prev.map((p) =>
+          p.id === productoId ? { ...p, nombre: nombreValido, precio: precioNumerico, ...(imagenUrl ? { imagen: imagenUrl } : {}) } : p,
+        ),
+      );
+      setEditandoId(null);
+      setEditFotoUri(null);
+      setEditFotoNuevaUri(null);
+    } catch (e) {
+      setEditFotoError(e instanceof Error ? e.message : 'No se pudo guardar el producto.');
+    } finally {
+      setEditGuardando(false);
+    }
   }
 
   const menuVisible: Producto[] = productos.filter(
@@ -362,13 +416,14 @@ export default function NegocioScreen({ navigation }: Props) {
           editPrecio={editPrecio}
           editFoto={editFotoUri}
           editFotoError={editFotoError}
+          editGuardando={editGuardando}
           onEditNombreChange={setEditNombre}
           onEditPrecioChange={setEditPrecio}
           onSubirFotoEdicion={() => void subirFotoEdicion()}
           onVerDetalle={() => navigation.navigate('Detalle', { negocioId })}
           onEmpezarEdicion={empezarEdicion}
           onCancelarEdicion={cancelarEdicion}
-          onGuardarEdicion={guardarEdicionLocal}
+          onGuardarEdicion={guardarEdicion}
           onTogglePausar={togglePausar}
           onEliminar={eliminarLocal}
           nombre={nombre}
@@ -381,6 +436,10 @@ export default function NegocioScreen({ navigation }: Props) {
           formError={formError}
           formOk={formOk}
           onGuardarProducto={() => void guardarProducto()}
+          fotoUri={fotoUri}
+          fotoError={fotoError}
+          onElegirFoto={() => void seleccionarFotoNueva('galeria')}
+          onTomarFoto={() => void seleccionarFotoNueva('camara')}
         />
       ) : seccion === 'ganancias' ? (
         <Ganancias stats={stats} pedidosCount={pedidos.length} />

@@ -25,6 +25,7 @@ Completar el flujo del cliente sin alterar el diseño visual de `origin/feature/
 - [x] P0.8 Persistir teléfono de perfil y preferencias del cliente por `uid`, sin alterar la UI APF2. El permiso de notificaciones se solicita solo al activar la preferencia; no se implementa push remoto.
 - [x] P0.9 Persistir por `uid` las selecciones demo de checkout y bloquear confirmaciones sin dirección o método de pago.
 - [x] P0.12 Desacoplar el historial/aviso local de cambios de estado del montaje de `PedidosScreen` y recargarlo al enfocar la pantalla.
+- [x] P0.13 Fotos de productos: selección segura desde galería/cámara, preview y subida unsigned a Cloudinary antes de crear o editar; la URL queda persistida en `productos.imagenUrl`.
 
 ## Restricciones
 
@@ -44,3 +45,4 @@ Completar el flujo del cliente sin alterar el diseño visual de `origin/feature/
 - Perfil: nombre, correo y año mostrado siguen siendo de solo lectura; solo se persiste el teléfono que ya tenía input. El cambio de contraseña usa Firebase Auth y puede requerir una sesión reciente.
 - Ubicación y ofertas: sus preferencias quedan persistidas, pero no se fuerza el GPS ni existe un canal remoto de ofertas en este work unit.
 - Checkout: dirección y método de pago son datos demo locales; no se procesa precio en servidor ni se integra una pasarela de pagos.
+- Fotos de productos: requieren `EXPO_PUBLIC_CLOUDINARY_CLOUD` y `EXPO_PUBLIC_CLOUDINARY_PRESET` en runtime. La subida es unsigned y usa XHR + data URL porque el FormData RN `{uri,type,name}` falla en este repositorio; no se implementó borrado/reemplazo de assets en Cloudinary. La validación final de dueño depende también de las reglas publicadas y de una sesión Firebase autenticada.

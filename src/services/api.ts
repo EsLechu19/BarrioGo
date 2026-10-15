@@ -21,7 +21,7 @@ import {
   where,
 } from 'firebase/firestore';
 import type { Unsubscribe } from 'firebase/firestore';
-import { firebaseReady, getFirestoreDb } from './firebase';
+import { firebaseReady, getFirebaseAuth, getFirestoreDb } from './firebase';
 // Toda lectura de datos pasa por acá. Ninguna pantalla usa fetch ni
 // Firestore directo. Cadena de orígenes (el primero que responde gana):
 //   1. Firestore (datos reales, necesita reglas publicadas + seed)
@@ -244,7 +244,9 @@ export async function getMenu(negocioId: string): Promise<Producto[]> {
         where('negocioId', '==', negocioId),
       );
       const snap = await getDocs(q);
-      const data: unknown = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+      const data: unknown = snap.docs.map((d) =>
+        mapProductoSnapshot(d.id, d.data() as Record<string, unknown>),
+      );
       if (isProductoArray(data) && data.length > 0) return data;
     } catch {
       // cae al fallback local
@@ -295,6 +297,18 @@ function isItemPedido(value: unknown): value is ItemPedido {
     Number.isFinite((value as ItemPedido).precioUnitario) &&
     (value as ItemPedido).precioUnitario >= 0
   );
+}
+
+function mapProductoSnapshot(id: string, data: Record<string, unknown>): Producto {
+  const imagenUrl: unknown = data.imagenUrl;
+  return {
+    id,
+    negocioId: String(data.negocioId ?? ''),
+    nombre: String(data.nombre ?? ''),
+    precio: typeof data.precio === 'number' ? data.precio : Number(data.precio ?? 0),
+    descripcion: typeof data.descripcion === 'string' ? data.descripcion : '',
+    ...(typeof imagenUrl === 'string' && imagenUrl.trim() ? { imagen: imagenUrl } : {}),
+  };
 }
 
 function isDireccionPedido(value: unknown): value is DireccionPedido {
@@ -581,34 +595,114 @@ export async function cancelarPedido(
 
 export interface CrearProductoInput {
   negocioId: string;
+  usuarioId: string;
   nombre: string;
   precio: number;
   descripcion?: string;
+  imagenUrl?: string;
+}
+
+async function verificarDuenoNegocio(
+  negocioId: string,
+  usuarioId: string,
+): Promise<void> {
+  if (!usuarioId.trim()) throw new Error('Falta el usuario del negocio.');
+  const usuarioAutenticado: string | undefined = getFirebaseAuth().currentUser?.uid;
+  if (!usuarioAutenticado || usuarioAutenticado !== usuarioId) {
+    throw new Error('La sesión del negocio no es válida.');
+  }
+  const snap = await getDoc(doc(getFirestoreDb(), 'negocios', negocioId));
+  if (!snap.exists()) throw new Error('El negocio no existe.');
+  const data: unknown = snap.data();
+  const duenoId: unknown =
+    typeof data === 'object' && data !== null
+      ? (data as { duenioId?: unknown }).duenioId
+      : undefined;
+  if (typeof duenoId !== 'string' || duenoId !== usuarioId) {
+    throw new Error('Solo el dueño puede modificar los productos de este negocio.');
+  }
 }
 
 export async function crearProducto(input: CrearProductoInput): Promise<string> {
   if (!firebaseReady) throw new Error(FIREBASE_NO_CONFIG_MSG);
   if (!input.negocioId.trim()) throw new Error('Falta el negocio del producto.');
+  if (!input.usuarioId.trim()) throw new Error('Falta el usuario del negocio.');
   if (!input.nombre.trim()) throw new Error('El producto necesita un nombre.');
   if (!(input.precio > 0)) throw new Error('El precio debe ser mayor a 0.');
   try {
+    await verificarDuenoNegocio(input.negocioId, input.usuarioId);
     const ref = await addDoc(collection(getFirestoreDb(), 'productos'), {
       negocioId: input.negocioId,
       nombre: input.nombre.trim(),
       precio: input.precio,
       descripcion: input.descripcion?.trim() ?? '',
-      imagenUrl: '',
+      imagenUrl: input.imagenUrl?.trim() ?? '',
       disponible: true,
     });
     return ref.id;
-    } catch (e) {
-      throw new Error(
-        e instanceof Error
-          ? `No se pudo crear el producto: ${e.message}`
-          : 'No se pudo crear el producto. Intentá de nuevo.',
-      );
+  } catch (e) {
+    if (
+      e instanceof Error &&
+      (e.message === 'El negocio no existe.' ||
+        e.message === 'Solo el dueño puede modificar los productos de este negocio.' ||
+        e.message === 'La sesión del negocio no es válida.')
+    ) {
+      throw e;
     }
+    throw new Error(
+      e instanceof Error
+        ? `No se pudo crear el producto: ${e.message}`
+        : 'No se pudo crear el producto. Intentá de nuevo.',
+    );
   }
+}
+
+export interface ActualizarProductoInput {
+  productoId: string;
+  negocioId: string;
+  usuarioId: string;
+  nombre: string;
+  precio: number;
+  imagenUrl: string;
+}
+
+export async function actualizarProducto(input: ActualizarProductoInput): Promise<void> {
+  if (!firebaseReady) throw new Error(FIREBASE_NO_CONFIG_MSG);
+  if (!input.productoId.trim()) throw new Error('Falta el producto a editar.');
+  if (!input.negocioId.trim()) throw new Error('Falta el negocio del producto.');
+  if (!input.nombre.trim()) throw new Error('El producto necesita un nombre.');
+  if (!(input.precio > 0)) throw new Error('El precio debe ser mayor a 0.');
+  try {
+    await verificarDuenoNegocio(input.negocioId, input.usuarioId);
+    const ref = doc(getFirestoreDb(), 'productos', input.productoId);
+    const snap = await getDoc(ref);
+    if (!snap.exists()) throw new Error('El producto no existe.');
+    if (snap.data().negocioId !== input.negocioId) {
+      throw new Error('El producto no pertenece a este negocio.');
+    }
+    await updateDoc(ref, {
+      nombre: input.nombre.trim(),
+      precio: input.precio,
+      imagenUrl: input.imagenUrl.trim(),
+    });
+  } catch (e) {
+    if (
+      e instanceof Error &&
+      (e.message === 'El negocio no existe.' ||
+        e.message === 'El producto no existe.' ||
+        e.message === 'El producto no pertenece a este negocio.' ||
+        e.message === 'Solo el dueño puede modificar los productos de este negocio.' ||
+        e.message === 'La sesión del negocio no es válida.')
+    ) {
+      throw e;
+    }
+    throw new Error(
+      e instanceof Error
+        ? `No se pudo actualizar el producto: ${e.message}`
+        : 'No se pudo actualizar el producto. Intentá de nuevo.',
+    );
+  }
+}
 
 // ---------- F6 Negocio propio por cuenta (S1 Registro + vínculo / S2 Mi local) ----------
 
@@ -767,81 +861,7 @@ export async function subirFotoNegocio(
     if (typeof duenoId !== 'string' || duenoId !== usuarioId) {
       throw new Error('Solo el dueño puede cambiar las fotos de este negocio.');
     }
-    // Subida a Cloudinary con preset sin firma (plan Free, sin tarjeta).
-    // Por qué no Firebase Storage: exige plan Blaze con tarjeta y además el
-    // transporte del SDK fallaba en este dispositivo (storage/unknown).
-    const cloud: string = process.env.EXPO_PUBLIC_CLOUDINARY_CLOUD?.trim() ?? '';
-    const preset: string =
-      process.env.EXPO_PUBLIC_CLOUDINARY_PRESET?.trim() ?? '';
-    if (!cloud || !preset) {
-      throw new Error(
-        'Falta configurar Cloudinary: poné EXPO_PUBLIC_CLOUDINARY_CLOUD y EXPO_PUBLIC_CLOUDINARY_PRESET en tu .env (ver .env.example).',
-      );
-    }
-    // El fetch de este runtime rechaza el objeto {uri,type,name} como parte
-    // del form ("Unsupported FormDataPart"). Vía segura: Blob por XHR y de
-    // ahí data-URL en base64 (texto plano, siempre aceptado por FormData y
-    // por Cloudinary como parámetro `file`).
-    const blob = await new Promise<Blob>((resolve, reject) => {
-      const xhr = new XMLHttpRequest();
-      xhr.onload = () => resolve(xhr.response as Blob);
-      xhr.onerror = () =>
-        reject(new Error('No se pudo leer la foto elegida.'));
-      xhr.responseType = 'blob';
-      xhr.open('GET', uriLocal, true);
-      xhr.send(null);
-    }).catch(() => {
-      throw new Error('No se pudo leer la foto elegida. Probá con otra imagen.');
-    });
-    const dataUrl: string = await new Promise<string>((resolve, reject) => {
-      const lector = new FileReader();
-      lector.onload = () => resolve(String(lector.result));
-      lector.onerror = () => reject(new Error('No se pudo procesar la foto.'));
-      lector.readAsDataURL(blob);
-    }).catch(() => {
-      throw new Error('No se pudo procesar la foto. Probá con otra imagen.');
-    });
-    const form = new FormData();
-    form.append('file', dataUrl);
-    form.append('upload_preset', preset);
-    form.append('folder', `barriogo/${negocioId}`);
-    let url: string;
-    try {
-      const subida = await fetch(
-        `https://api.cloudinary.com/v1_1/${cloud}/image/upload`,
-        { method: 'POST', body: form },
-      );
-      if (!subida.ok) {
-        const cuerpo: string = await subida.text().catch(() => '');
-        throw new Error(
-          `Cloudinary HTTP ${subida.status}: ${cuerpo.slice(0, 200) || 'sin detalle'}`,
-        );
-      }
-      const json: unknown = await subida.json();
-      const segura: unknown =
-        typeof json === 'object' && json !== null
-          ? (json as { secure_url?: unknown }).secure_url
-          : undefined;
-      if (typeof segura !== 'string' || !segura) {
-        throw new Error('Cloudinary no devolvió la URL de la foto.');
-      }
-      url = segura;
-    } catch (e) {
-      if (
-        e instanceof Error &&
-        (e.message.startsWith('Cloudinary HTTP') ||
-          e.message === 'Cloudinary no devolvió la URL de la foto.')
-      ) {
-        throw e;
-      }
-      const causa: string =
-        e instanceof Error && e.message
-          ? ` Causa: ${e.message.slice(0, 200)}`
-          : '';
-      throw new Error(
-        `No se pudo subir la foto a Cloudinary. Revisá tu conexión.${causa}`,
-      );
-    }
+    const url: string = await subirImagenCloudinary(uriLocal, negocioId);
     await updateDoc(refDoc, tipo === 'icono' ? { imagen: url } : { portada: url });
     return url;
   } catch (e) {
@@ -856,4 +876,79 @@ export async function subirFotoNegocio(
     if (e instanceof Error) throw e;
     throw new Error('No se pudo subir la foto. Intentá de nuevo.');
   }
+}
+
+async function subirImagenCloudinary(uriLocal: string, folder: string): Promise<string> {
+  const cloud: string = process.env.EXPO_PUBLIC_CLOUDINARY_CLOUD?.trim() ?? '';
+  const preset: string = process.env.EXPO_PUBLIC_CLOUDINARY_PRESET?.trim() ?? '';
+  if (!cloud || !preset) {
+    throw new Error(
+      'Falta configurar Cloudinary: poné EXPO_PUBLIC_CLOUDINARY_CLOUD y EXPO_PUBLIC_CLOUDINARY_PRESET en tu .env (ver .env.example).',
+    );
+  }
+  // RN FormData no acepta de forma estable {uri,type,name} en este runtime;
+  // XHR + data URL sí funciona con el preset unsigned existente.
+  const blob = await new Promise<Blob>((resolve, reject) => {
+    const xhr = new XMLHttpRequest();
+    xhr.onload = () => resolve(xhr.response as Blob);
+    xhr.onerror = () => reject(new Error('No se pudo leer la foto elegida.'));
+    xhr.responseType = 'blob';
+    xhr.open('GET', uriLocal, true);
+    xhr.send(null);
+  }).catch(() => {
+    throw new Error('No se pudo leer la foto elegida. Probá con otra imagen.');
+  });
+  const dataUrl: string = await new Promise<string>((resolve, reject) => {
+    const lector = new FileReader();
+    lector.onload = () => resolve(String(lector.result));
+    lector.onerror = () => reject(new Error('No se pudo procesar la foto.'));
+    lector.readAsDataURL(blob);
+  }).catch(() => {
+    throw new Error('No se pudo procesar la foto. Probá con otra imagen.');
+  });
+  const form = new FormData();
+  form.append('file', dataUrl);
+  form.append('upload_preset', preset);
+  form.append('folder', `barriogo/${folder}`);
+  try {
+    const subida = await fetch(`https://api.cloudinary.com/v1_1/${cloud}/image/upload`, {
+      method: 'POST',
+      body: form,
+    });
+    if (!subida.ok) {
+      const cuerpo: string = await subida.text().catch(() => '');
+      throw new Error(`Cloudinary HTTP ${subida.status}: ${cuerpo.slice(0, 200) || 'sin detalle'}`);
+    }
+    const json: unknown = await subida.json();
+    const segura: unknown =
+      typeof json === 'object' && json !== null
+        ? (json as { secure_url?: unknown }).secure_url
+        : undefined;
+    if (typeof segura !== 'string' || !segura) {
+      throw new Error('Cloudinary no devolvió la URL de la foto.');
+    }
+    return segura;
+  } catch (e) {
+    if (
+      e instanceof Error &&
+      (e.message.startsWith('Cloudinary HTTP') ||
+        e.message === 'Cloudinary no devolvió la URL de la foto.')
+    ) {
+      throw e;
+    }
+    const causa: string = e instanceof Error && e.message ? ` Causa: ${e.message.slice(0, 200)}` : '';
+    throw new Error(`No se pudo subir la foto a Cloudinary. Revisá tu conexión.${causa}`);
+  }
+}
+
+export async function subirFotoProducto(
+  negocioId: string,
+  usuarioId: string,
+  uriLocal: string,
+): Promise<string> {
+  if (!firebaseReady) throw new Error(FIREBASE_NO_CONFIG_MSG);
+  if (!negocioId.trim()) throw new Error('Falta el negocio de la foto.');
+  if (!uriLocal.trim()) throw new Error('Falta la foto a subir.');
+  await verificarDuenoNegocio(negocioId, usuarioId);
+  return subirImagenCloudinary(uriLocal, `productos/${negocioId}`);
 }

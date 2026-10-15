@@ -19,7 +19,9 @@ service cloud.firestore {
     match /productos/{id} {
       allow read: if true;
       allow create: if esDuenoNegocio(request.resource.data.negocioId);
-      allow update, delete: if esDuenoNegocio(resource.data.negocioId);
+      allow update: if esDuenoNegocio(resource.data.negocioId)
+        && request.resource.data.negocioId == resource.data.negocioId;
+      allow delete: if esDuenoNegocio(resource.data.negocioId);
     }
     match /users/{uid} {
       allow read: if request.auth != null && request.auth.uid == uid;
