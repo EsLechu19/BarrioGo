@@ -3,12 +3,15 @@ import type { ReactNode } from 'react';
 import { ItemPedido } from '../types/Pedido';
 import { Producto } from '../types/Producto';
 import { storage } from '../services/storage';
+import { productosMock } from '../data/productosMock';
 
 interface CartContextValue {
   items: ItemPedido[];
   count: number;
   total: number;
-  add: (producto: Producto, cantidad?: number) => void;
+  add: (producto: Producto, cantidad?: number) => boolean;
+  replaceWith: (producto: Producto, cantidad?: number) => void;
+  hasDifferentRestaurant: (producto: Producto) => boolean;
   remove: (productoId: string) => void;
   setCantidad: (productoId: string, cantidad: number) => void;
   clear: () => void;
@@ -23,7 +26,24 @@ export function CartProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     storage.loadCart().then((saved) => {
-      if (saved) setItems(saved);
+      if (saved) {
+        // Migra lo que se pueda de carritos APF2. Los productos creados en
+        // Firestore no están en el mock y quedan legibles, pero sin negocioId
+        // no se permite confirmar hasta volver a agregarlos desde su menú.
+        const migrados: ItemPedido[] = saved.map((item) => {
+          if (item.negocioId) return item;
+          const producto = productosMock.find((p) => p.id === item.productoId);
+          return producto
+            ? {
+                ...item,
+                negocioId: producto.negocioId,
+                descripcion: item.descripcion ?? producto.descripcion,
+                imagen: item.imagen ?? producto.imagen,
+              }
+            : item;
+        });
+        setItems(migrados);
+      }
       setHydrated(true);
     });
   }, []);
@@ -32,7 +52,16 @@ export function CartProvider({ children }: { children: ReactNode }) {
     if (hydrated) storage.saveCart(items);
   }, [items, hydrated]);
 
-  const add = useCallback((producto: Producto, cantidad = 1) => {
+  const hasDifferentRestaurant = useCallback(
+    (producto: Producto): boolean =>
+      items.some(
+        (item) => item.negocioId !== undefined && item.negocioId !== producto.negocioId,
+      ),
+    [items],
+  );
+
+  const add = useCallback((producto: Producto, cantidad = 1): boolean => {
+    if (hasDifferentRestaurant(producto)) return false;
     setItems((prev) => {
       const found = prev.find((i) => i.productoId === producto.id);
       if (found) {
@@ -48,10 +77,28 @@ export function CartProvider({ children }: { children: ReactNode }) {
           productoId: producto.id,
           cantidad,
           precioUnitario: producto.precio,
+          negocioId: producto.negocioId,
           nombre: producto.nombre,
+          descripcion: producto.descripcion,
+          imagen: producto.imagen,
         },
       ];
     });
+    return true;
+  }, [hasDifferentRestaurant]);
+
+  const replaceWith = useCallback((producto: Producto, cantidad = 1): void => {
+    setItems([
+      {
+        productoId: producto.id,
+        cantidad,
+        precioUnitario: producto.precio,
+        negocioId: producto.negocioId,
+        nombre: producto.nombre,
+        descripcion: producto.descripcion,
+        imagen: producto.imagen,
+      },
+    ]);
   }, []);
 
   const remove = useCallback((productoId: string) => {
@@ -87,8 +134,19 @@ export function CartProvider({ children }: { children: ReactNode }) {
   }, [items]);
 
   const value = useMemo(
-    () => ({ items, count, total, add, remove, setCantidad, clear, cantidadDe }),
-    [items, count, total, add, remove, setCantidad, clear, cantidadDe],
+    () => ({
+      items,
+      count,
+      total,
+      add,
+      replaceWith,
+      hasDifferentRestaurant,
+      remove,
+      setCantidad,
+      clear,
+      cantidadDe,
+    }),
+    [items, count, total, add, replaceWith, hasDifferentRestaurant, remove, setCantidad, clear, cantidadDe],
   );
 
   return <CartContext.Provider value={value}>{children}</CartContext.Provider>;

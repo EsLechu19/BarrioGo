@@ -8,7 +8,6 @@ import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
 import { crearPedido } from '../services/api';
 import { confirm } from '../utils/confirm';
-import { productosMock } from '../data/productosMock';
 import { ScreenHeader } from '../components/ScreenHeader';
 import { CantidadStepper } from '../components/CantidadStepper';
 import { useColors } from '../context/ThemeContext';
@@ -64,21 +63,14 @@ export default function CarritoScreen({ navigation }: Props) {
   }, [navigation, items, clear]);
 
   const detallado = useMemo(
-    () =>
-      items.map((item) => ({
-        ...item,
-        producto: productosMock.find((p) => p.id === item.productoId),
-      })),
+    () => items,
     [items],
   );
 
-  // El carrito no guarda negocioId: se infiere del catálogo. Si hay mezcla
-  // de negocios, no se puede crear un único pedido.
   const negocioIds: string[] = useMemo(() => {
     const ids = new Set<string>();
     for (const item of items) {
-      const prod = productosMock.find((p) => p.id === item.productoId);
-      if (prod) ids.add(prod.negocioId);
+      if (item.negocioId?.trim()) ids.add(item.negocioId);
     }
     return Array.from(ids);
   }, [items]);
@@ -103,6 +95,10 @@ export default function CarritoScreen({ navigation }: Props) {
     }
     if (carritoMezclado) {
       setErrorMsg('El carrito solo admite un restaurante por pedido.');
+      return;
+    }
+    if (items.some((item) => !item.negocioId?.trim())) {
+      setErrorMsg('Hay un producto antiguo sin restaurante. Volvé a agregarlo desde su menú.');
       return;
     }
     if (!negocioId) {
@@ -206,9 +202,9 @@ export default function CarritoScreen({ navigation }: Props) {
           // Card producto
           <View style={styles.row}>
             {/* Foto a la izquierda */}
-            {item.producto?.imagen?.trim() ? (
+            {item.imagen?.trim() ? (
               <Image
-                source={{ uri: item.producto.imagen }}
+                source={{ uri: item.imagen }}
                 style={styles.thumb}
                 resizeMode="cover"
               />
@@ -220,15 +216,11 @@ export default function CarritoScreen({ navigation }: Props) {
             {/*Informacion */}
             <View style={styles.info}>
               <Text style={styles.name}>
-                {item.nombre?.trim()
-                  ? item.nombre
-                  : item.producto?.nombre?.trim()
-                    ? item.producto.nombre
-                    : 'Producto'}
+                {item.nombre?.trim() ? item.nombre : 'Producto'}
               </Text>
-              {item.producto?.descripcion?.trim() ? (
+              {item.descripcion?.trim() ? (
                 <Text style={styles.desc} numberOfLines={2}>
-                  {item.producto.descripcion}
+                  {item.descripcion}
                 </Text>
               ) : null}
               <Text style={styles.unit}>
@@ -253,7 +245,7 @@ export default function CarritoScreen({ navigation }: Props) {
                 <TouchableOpacity
                   style={styles.trashButton}
                   onPress={() => remove(item.productoId)}
-                  accessibilityLabel={`Eliminar ${item.nombre ?? item.producto?.nombre ?? 'producto'} del carrito`}
+                  accessibilityLabel={`Eliminar ${item.nombre ?? 'producto'} del carrito`}
                   accessibilityRole="button"
                   hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
                 >

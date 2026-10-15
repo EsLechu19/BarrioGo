@@ -1,6 +1,12 @@
 import { Negocio } from '../types/Negocio';
 import { Producto } from '../types/Producto';
-import { EstadoPedido, ItemPedido, Pedido } from '../types/Pedido';
+import {
+  DireccionPedido,
+  EstadoPedido,
+  ItemPedido,
+  MetodoPagoPedido,
+  Pedido,
+} from '../types/Pedido';
 import {
   addDoc,
   collection,
@@ -162,6 +168,8 @@ export interface CrearPedidoInput {
   negocioId: string;
   items: ItemPedido[];
   total: number;
+  direccion?: DireccionPedido;
+  metodoPago?: MetodoPagoPedido;
 }
 
 const ESTADOS_PEDIDO: readonly EstadoPedido[] = [
@@ -183,8 +191,32 @@ function isItemPedido(value: unknown): value is ItemPedido {
     typeof value === 'object' &&
     value !== null &&
     typeof (value as ItemPedido).productoId === 'string' &&
-    typeof (value as ItemPedido).cantidad === 'number' &&
-    typeof (value as ItemPedido).precioUnitario === 'number'
+    Number.isFinite((value as ItemPedido).cantidad) &&
+    (value as ItemPedido).cantidad > 0 &&
+    Number.isFinite((value as ItemPedido).precioUnitario) &&
+    (value as ItemPedido).precioUnitario >= 0
+  );
+}
+
+function isDireccionPedido(value: unknown): value is DireccionPedido {
+  return (
+    typeof value === 'object' &&
+    value !== null &&
+    typeof (value as DireccionPedido).alias === 'string' &&
+    (value as DireccionPedido).alias.trim().length > 0 &&
+    typeof (value as DireccionPedido).detalle === 'string' &&
+    (value as DireccionPedido).detalle.trim().length > 0
+  );
+}
+
+function isMetodoPagoPedido(value: unknown): value is MetodoPagoPedido {
+  return (
+    typeof value === 'object' &&
+    value !== null &&
+    typeof (value as MetodoPagoPedido).tipo === 'string' &&
+    (value as MetodoPagoPedido).tipo.trim().length > 0 &&
+    typeof (value as MetodoPagoPedido).nombre === 'string' &&
+    (value as MetodoPagoPedido).nombre.trim().length > 0
   );
 }
 
@@ -199,7 +231,9 @@ function isPedido(value: unknown): value is Pedido {
     p.items.every(isItemPedido) &&
     typeof p.total === 'number' &&
     isEstadoPedido(p.estado) &&
-    typeof p.fecha === 'string'
+    typeof p.fecha === 'string' &&
+    (p.direccion === undefined || isDireccionPedido(p.direccion)) &&
+    (p.metodoPago === undefined || isMetodoPagoPedido(p.metodoPago))
   );
 }
 
@@ -209,12 +243,20 @@ export async function crearPedido(input: CrearPedidoInput): Promise<string> {
   if (!input.negocioId.trim()) throw new Error('Falta el negocio del pedido.');
   if (input.items.length === 0) throw new Error('El pedido no tiene productos.');
   if (!(input.total > 0)) throw new Error('El total del pedido no es válido.');
+  if (input.direccion !== undefined && !isDireccionPedido(input.direccion)) {
+    throw new Error('La dirección de entrega no es válida.');
+  }
+  if (input.metodoPago !== undefined && !isMetodoPagoPedido(input.metodoPago)) {
+    throw new Error('El método de pago no es válido.');
+  }
   try {
     const ref = await addDoc(collection(getFirestoreDb(), 'pedidos'), {
       usuarioId: input.usuarioId,
       negocioId: input.negocioId,
       items: input.items,
       total: input.total,
+      ...(input.direccion ? { direccion: input.direccion } : {}),
+      ...(input.metodoPago ? { metodoPago: input.metodoPago } : {}),
       estado: 'pendiente',
       fecha: new Date().toISOString(),
     });

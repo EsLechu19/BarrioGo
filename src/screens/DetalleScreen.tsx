@@ -31,6 +31,7 @@ import {
 import { useColors } from '../context/ThemeContext';
 import type { Colors } from '../styles/colors';
 import { nombreVisible } from '../utils/usuario';
+import { confirm } from '../utils/confirm';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Detalle'>;
 
@@ -71,7 +72,15 @@ export default function DetalleScreen({ navigation, route }: Props) {
   const [menu, setMenu] = useState<Producto[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [tab, setTab] = useState<Tab>('menu');
-  const { add, setCantidad, cantidadDe, count, total } = useCart();
+  const {
+    add,
+    replaceWith,
+    hasDifferentRestaurant,
+    setCantidad,
+    cantidadDe,
+    count,
+    total,
+  } = useCart();
   const { toggle, esFavorito } = useFavorites();
   const { user } = useAuth();
   const [opiniones, setOpiniones] = useState<Opinion[]>(OPINIONES_MOCK);
@@ -116,6 +125,21 @@ export default function DetalleScreen({ navigation, route }: Props) {
     setEstrellas(0);
     setTexto('');
   }, [puedePublicar, estrellas, texto, negocioId, user]);
+
+  const agregarProducto = useCallback(async (producto: Producto): Promise<void> => {
+    if (!hasDifferentRestaurant(producto)) {
+      add(producto);
+      return;
+    }
+    const reemplazar: boolean = await confirm({
+      title: '¿Cambiar de restaurante?',
+      message: 'Tu carrito tiene productos de otro restaurante. ¿Querés reemplazarlo?',
+      confirmText: 'Reemplazar',
+      cancelText: 'Cancelar',
+      destructive: true,
+    });
+    if (reemplazar) replaceWith(producto);
+  }, [add, hasDifferentRestaurant, replaceWith]);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -252,7 +276,7 @@ export default function DetalleScreen({ navigation, route }: Props) {
                 <ProductoCard
                   producto={item}
                   cantidad={qty}
-                  onAgregar={() => add(item)}
+                  onAgregar={() => void agregarProducto(item)}
                   onDecrement={() => setCantidad(item.id, qty - 1)}
                   onIncrement={() => setCantidad(item.id, qty + 1)}
                 />

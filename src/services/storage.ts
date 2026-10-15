@@ -20,14 +20,19 @@ export interface Session {
 function isItemPedidoArray(value: unknown): value is ItemPedido[] {
   return (
     Array.isArray(value) &&
-    value.every(
-      (i) =>
-        typeof i === 'object' &&
-        i !== null &&
-        typeof (i as ItemPedido).productoId === 'string' &&
-        typeof (i as ItemPedido).cantidad === 'number' &&
-        typeof (i as ItemPedido).precioUnitario === 'number',
-    )
+    value.every((i) => {
+      if (typeof i !== 'object' || i === null) return false;
+      const item = i as ItemPedido;
+      return (
+        typeof item.productoId === 'string' &&
+        Number.isFinite(item.cantidad) &&
+        item.cantidad > 0 &&
+        Number.isFinite(item.precioUnitario) &&
+        item.precioUnitario >= 0 &&
+        (item.negocioId === undefined ||
+          (typeof item.negocioId === 'string' && item.negocioId.trim().length > 0))
+      );
+    })
   );
 }
 
