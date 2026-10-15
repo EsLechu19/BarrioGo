@@ -44,4 +44,10 @@ export interface Pedido {
   canceladoFecha?: string;
   direccion?: DireccionPedido;
   metodoPago?: MetodoPagoPedido;
+  // Snapshot del nombre del cliente al momento de confirmar el pedido.
+  // Los pedidos viejos no lo tienen: el negocio muestra el UID recortado.
+  clienteNombre?: string;
+  // Snapshot del nombre del negocio al confirmar, para que la lista de
+  // pedidos del cliente lo muestre aunque el negocio no esté en el mock.
+  negocioNombre?: string;
 }

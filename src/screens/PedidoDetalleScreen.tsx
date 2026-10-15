@@ -205,6 +205,14 @@ export default function PedidoDetalleScreen({ navigation, route }: Props) {
                   {pedido.items.length === 1 ? 'producto' : 'productos'}
                 </Text>
               </View>
+              {pedido.metodoPago ? (
+                <View style={styles.infoRow}>
+                  <Ionicons name="card-outline" size={16} color={colors.textMuted} />
+                  <Text style={styles.meta}>
+                    {pedido.metodoPago.nombre.trim() || pedido.metodoPago.tipo}
+                  </Text>
+                </View>
+              ) : null}
             </View>
 
             <Text style={styles.sectionTitle}>Productos</Text>

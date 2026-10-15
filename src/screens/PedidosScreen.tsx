@@ -155,7 +155,9 @@ export default function PedidosScreen({ navigation }: Props) {
               style={styles.card}
               onPress={() => navigation.navigate('PedidoDetalle', { pedidoId: item.id })}
               accessibilityRole="button"
-              accessibilityLabel={`Ver detalle del pedido de ${nombreRestaurante(item.negocioId)}`}
+              accessibilityLabel={`Ver detalle del pedido de ${
+                item.negocioNombre?.trim() || nombreRestaurante(item.negocioId)
+              }`}
             >
               {/* Icono estado */}
               <View style={[styles.estadoIcon, { backgroundColor: `${colorEstado}1A` }]}>
@@ -168,7 +170,7 @@ export default function PedidosScreen({ navigation }: Props) {
               {/* Informacion */}
               <View style={styles.cardInfo}>
                 <Text style={styles.negocio} numberOfLines={1}>
-                  {nombreRestaurante(item.negocioId)}
+                  {item.negocioNombre?.trim() || nombreRestaurante(item.negocioId)}
                 </Text>
                 <View style={styles.metaRow}>
                   <Ionicons name="calendar-outline" size={13} color={colors.textMuted} />

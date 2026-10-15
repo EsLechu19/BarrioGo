@@ -6,7 +6,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { RootStackParamList } from '../navigation/RootStackParamList';
 import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
-import { crearPedido } from '../services/api';
+import { crearPedido, getNegocioById, getNombreUsuario } from '../services/api';
 import { storage } from '../services/storage';
 import { confirm } from '../utils/confirm';
 import { ScreenHeader } from '../components/ScreenHeader';
@@ -110,9 +110,11 @@ export default function CarritoScreen({ navigation }: Props) {
       setErrorMsg('El total del pedido no es válido.');
       return;
     }
-    const [direccion, metodoPago] = await Promise.all([
+    const [direccion, metodoPago, clienteNombre, negocio] = await Promise.all([
       storage.loadCheckoutAddress(user.uid),
       storage.loadCheckoutPayment(user.uid),
+      getNombreUsuario(user.uid),
+      getNegocioById(negocioId),
     ]);
     if (!direccion) {
       setErrorMsg('Seleccioná una dirección antes de confirmar tu pedido.');
@@ -133,6 +135,8 @@ export default function CarritoScreen({ navigation }: Props) {
         total,
         direccion,
         metodoPago,
+        ...(clienteNombre ? { clienteNombre } : {}),
+        ...(negocio?.nombre?.trim() ? { negocioNombre: negocio.nombre.trim() } : {}),
       });
       clear();
       navigation.navigate('Tabs', { screen: 'PedidosTab' });

@@ -73,6 +73,21 @@ export async function getPerfilUsuario(usuarioId: string): Promise<PerfilUsuario
   return local ?? { telefono: '' };
 }
 
+// Nombre del usuario en `users/{uid}.nombre` (lo escribe el registro). null
+// si no hay Firebase configurado o el documento no lo tiene: el negocio
+// muestra el UID recortado como fallback.
+export async function getNombreUsuario(usuarioId: string): Promise<string | null> {
+  validateUsuarioId(usuarioId);
+  if (!firebaseReady) return null;
+  try {
+    const snap = await getDoc(doc(getFirestoreDb(), 'users', usuarioId));
+    const nombre: unknown = snap.data()?.nombre;
+    return typeof nombre === 'string' && nombre.trim() ? nombre.trim() : null;
+  } catch {
+    return null;
+  }
+}
+
 export async function actualizarPerfilUsuario(
   usuarioId: string,
   profile: PerfilUsuario,
@@ -270,6 +285,12 @@ export interface CrearPedidoInput {
   total: number;
   direccion?: DireccionPedido;
   metodoPago?: MetodoPagoPedido;
+  // Snapshot del nombre del cliente al confirmar, para que el negocio lo vea
+  // en sus pedidos sin tener que leer el perfil de cada usuario.
+  clienteNombre?: string;
+  // Snapshot del nombre del negocio al confirmar: la lista de pedidos del
+  // cliente lo muestra aunque el negocio no exista en el catálogo local.
+  negocioNombre?: string;
 }
 
 const ESTADOS_PEDIDO: readonly EstadoPedido[] = [
@@ -296,6 +317,15 @@ function isItemPedido(value: unknown): value is ItemPedido {
     (value as ItemPedido).cantidad > 0 &&
     Number.isFinite((value as ItemPedido).precioUnitario) &&
     (value as ItemPedido).precioUnitario >= 0
+  );
+}
+
+// Firestore rechaza `undefined` como valor de campo ("Function addDoc() called
+// with invalid parameters"). Quita las claves undefined de un item antes de
+// escribirlo, por si el carrito viejo o el llamador las traen.
+function limpiarCamposUndefined(item: ItemPedido): Record<string, unknown> {
+  return Object.fromEntries(
+    Object.entries(item).filter(([, valor]) => valor !== undefined),
   );
 }
 
@@ -348,7 +378,9 @@ function isPedido(value: unknown): value is Pedido {
     (p.canceladoPor === undefined || typeof p.canceladoPor === 'string') &&
     (p.canceladoFecha === undefined || typeof p.canceladoFecha === 'string') &&
     (p.direccion === undefined || isDireccionPedido(p.direccion)) &&
-    (p.metodoPago === undefined || isMetodoPagoPedido(p.metodoPago))
+    (p.metodoPago === undefined || isMetodoPagoPedido(p.metodoPago)) &&
+    (p.clienteNombre === undefined || typeof p.clienteNombre === 'string') &&
+    (p.negocioNombre === undefined || typeof p.negocioNombre === 'string')
   );
 }
 
@@ -390,10 +422,16 @@ export async function crearPedido(input: CrearPedidoInput): Promise<string> {
     const ref = await addDoc(collection(getFirestoreDb(), 'pedidos'), {
       usuarioId: input.usuarioId,
       negocioId: input.negocioId,
-      items: input.items,
+      items: input.items.map(limpiarCamposUndefined),
       total: input.total,
       ...(input.direccion ? { direccion: input.direccion } : {}),
       ...(input.metodoPago ? { metodoPago: input.metodoPago } : {}),
+      ...(input.clienteNombre?.trim()
+        ? { clienteNombre: input.clienteNombre.trim() }
+        : {}),
+      ...(input.negocioNombre?.trim()
+        ? { negocioNombre: input.negocioNombre.trim() }
+        : {}),
       estado: 'pendiente',
       fecha: new Date().toISOString(),
     });
