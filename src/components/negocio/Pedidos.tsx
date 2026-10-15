@@ -13,6 +13,7 @@ export type Stats = {
   pendientes: number;
   enCurso: number;
   entregados: number;
+  cancelados: number;
   ventas: number;
 };
 
