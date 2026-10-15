@@ -18,7 +18,7 @@ type IconoSeccion =
 export const SECCIONES: { id: Seccion; titulo: string; icono: IconoSeccion }[] = [
   { id: 'menu', titulo: 'Mi menú', icono: 'fast-food-outline' },
   { id: 'pedidos', titulo: 'Pedidos', icono: 'receipt-outline' },
-  { id: 'ganancias', titulo: 'Ventas', icono: 'cash-outline' },
+  { id: 'ganancias', titulo: 'Ganancias', icono: 'cash-outline' },
   { id: 'repartidores', titulo: 'Repartidores', icono: 'bicycle-outline' },
   { id: 'locales', titulo: 'Locales', icono: 'storefront-outline' },
 ];

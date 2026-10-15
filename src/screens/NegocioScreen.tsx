@@ -367,11 +367,10 @@ export default function NegocioScreen({ navigation }: Props) {
       (p) => p.estado === 'confirmado' || p.estado === 'en_camino',
     ).length;
     const entregados: number = pedidos.filter((p) => p.estado === 'entregado').length;
-    const cancelados: number = pedidos.filter((p) => p.estado === 'cancelado').length;
-    const ventas: number = pedidos
-      .filter((p) => p.estado === 'entregado')
-      .reduce((acc, p) => acc + p.total, 0);
-    return { pendientes, enCurso, entregados, cancelados, ventas };
+     const ventas: number = pedidos
+       .filter((p) => p.estado === 'entregado')
+       .reduce((acc, p) => acc + p.total, 0);
+    return { pendientes, enCurso, entregados, ventas };
   }, [pedidos]);
 
   if (!firebaseReady) {
@@ -480,7 +479,7 @@ export default function NegocioScreen({ navigation }: Props) {
           onTomarFoto={() => void seleccionarFotoNueva('camara')}
         />
       ) : seccion === 'ganancias' ? (
-        <Ganancias stats={stats} pedidos={pedidos} />
+        <Ganancias stats={stats} pedidosCount={pedidos.length} />
       ) : seccion === 'repartidores' ? (
         <Repartidores
           mostrarAviso={proximo === 'repartidores'}
