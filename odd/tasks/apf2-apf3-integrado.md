@@ -37,6 +37,8 @@ Conservar el diseño visual, navegación y componentes de `feature/apf2-ui-unido
 - Verificación estática completada; la ejecución visual de Expo queda pendiente por no iniciar un runtime interactivo en esta sesión.
 - El carrito conserva `nombre`, persiste con AsyncStorage y ahora guarda también `negocioId` para pedidos con productos de Firestore; los carritos antiguos mantienen compatibilidad con el catálogo local.
 - P0-1 implementado sin cambiar el diseño APF2: Dirección y Método de pago usan estado compartido, AsyncStorage validado y snapshot en nuevos pedidos; pedidos antiguos siguen siendo legibles.
+- Menú de negocio conectado a Firestore: editar, pausar/activar, eliminar y actualizar recargan el menú; las acciones validan dueño, muestran feedback y bloquean duplicados.
+- `getMenu` filtra productos con `disponible:false` para clientes, mientras el panel negocio carga también pausados para poder reactivarlos.
 
 ## Verificación
 
@@ -46,6 +48,7 @@ Conservar el diseño visual, navegación y componentes de `feature/apf2-ui-unido
 - Ejecución Expo: no ejecutada en esta verificación acotada.
 - Firebase runtime: no verificado; depende del `.env` local y no se leyeron ni documentaron secretos.
 - P0-1: verificación de Firebase/device pendiente; el flujo requiere un runtime Expo y una configuración Firebase válida para confirmar la escritura real del pedido.
+- Menú negocio: verificación estática completada; la persistencia real requiere Firebase configurado, reglas S4 publicadas, un negocio con `duenioId` coincidente y runtime Expo/dispositivo.
 
 ## Próximo paso
 

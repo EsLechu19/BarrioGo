@@ -5,6 +5,7 @@ import type { DireccionEntrega, MetodoPago } from '../types/Checkout';
 import {
   addDoc,
   collection,
+  deleteDoc,
   doc,
   getDoc,
   getDocs,
@@ -60,7 +61,9 @@ function isProductoArray(value: unknown): value is Producto[] {
         typeof item === 'object' &&
         item !== null &&
         typeof (item as Producto).id === 'string' &&
-        typeof (item as Producto).negocioId === 'string',
+        typeof (item as Producto).negocioId === 'string' &&
+        ((item as Producto).disponible === undefined ||
+          typeof (item as Producto).disponible === 'boolean'),
     )
   );
 }
@@ -133,7 +136,20 @@ export async function getNegocioById(id: string): Promise<Negocio | null> {
   return negocios.find((n) => n.id === id) ?? null;
 }
 
-export async function getMenu(negocioId: string): Promise<Producto[]> {
+export interface GetMenuOptions {
+  incluirNoDisponibles?: boolean;
+}
+
+export async function getMenu(
+  negocioId: string,
+  options: GetMenuOptions = {},
+): Promise<Producto[]> {
+  if (!negocioId.trim()) throw new Error('Falta el negocio del menú.');
+  const visible = (productos: Producto[]): Producto[] =>
+    options.incluirNoDisponibles
+      ? productos
+      : productos.filter((producto) => producto.disponible !== false);
+
   if (firebaseReady) {
     try {
       const q = query(
@@ -142,7 +158,7 @@ export async function getMenu(negocioId: string): Promise<Producto[]> {
       );
       const snap = await getDocs(q);
       const data: unknown = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
-      if (isProductoArray(data) && data.length > 0) return data;
+      if (isProductoArray(data) && data.length > 0) return visible(data);
     } catch {
       // cae al fallback local
     }
@@ -150,7 +166,7 @@ export async function getMenu(negocioId: string): Promise<Producto[]> {
     // Sin Firebase, delay para evidenciar loading en Detalle.
     await new Promise((resolve) => setTimeout(resolve, 500));
   }
-  return productosMock.filter((p) => p.negocioId === negocioId);
+  return visible(productosMock.filter((p) => p.negocioId === negocioId));
 }
 
 // ---------- F3 Pedidos con tracking ----------
@@ -392,7 +408,9 @@ export async function crearProducto(input: CrearProductoInput): Promise<string> 
   if (!firebaseReady) throw new Error(FIREBASE_NO_CONFIG_MSG);
   if (!input.negocioId.trim()) throw new Error('Falta el negocio del producto.');
   if (!input.nombre.trim()) throw new Error('El producto necesita un nombre.');
-  if (!(input.precio > 0)) throw new Error('El precio debe ser mayor a 0.');
+  if (!(input.precio > 0) || !Number.isFinite(input.precio)) {
+    throw new Error('El precio debe ser mayor a 0.');
+  }
   try {
     const ref = await addDoc(collection(getFirestoreDb(), 'productos'), {
       negocioId: input.negocioId,
@@ -411,6 +429,113 @@ export async function crearProducto(input: CrearProductoInput): Promise<string> 
       );
     }
   }
+
+export interface ActualizarProductoInput {
+  productoId: string;
+  negocioId: string;
+  usuarioId: string;
+  nombre: string;
+  precio: number;
+  descripcion?: string;
+}
+
+export interface ProductoOwnerInput {
+  productoId: string;
+  negocioId: string;
+  usuarioId: string;
+}
+
+async function verificarDueñoProducto(input: ProductoOwnerInput): Promise<void> {
+  if (!input.productoId.trim()) throw new Error('Falta el id del producto.');
+  if (!input.negocioId.trim()) throw new Error('Falta el negocio del producto.');
+  if (!input.usuarioId.trim()) throw new Error('Falta el usuario del negocio.');
+
+  const productoSnap = await getDoc(doc(getFirestoreDb(), 'productos', input.productoId));
+  if (!productoSnap.exists()) throw new Error('El producto no existe.');
+  const productoData: unknown = productoSnap.data();
+  const productoNegocioId: unknown =
+    typeof productoData === 'object' && productoData !== null
+      ? (productoData as { negocioId?: unknown }).negocioId
+      : undefined;
+  if (productoNegocioId !== input.negocioId) {
+    throw new Error('El producto no pertenece a este negocio.');
+  }
+
+  const negocioSnap = await getDoc(doc(getFirestoreDb(), 'negocios', input.negocioId));
+  const negocioData: unknown = negocioSnap.exists() ? negocioSnap.data() : null;
+  const dueñoId: unknown =
+    typeof negocioData === 'object' && negocioData !== null
+      ? (negocioData as { duenioId?: unknown }).duenioId
+      : undefined;
+  if (typeof dueñoId !== 'string' || dueñoId !== input.usuarioId) {
+    throw new Error('Solo el dueño puede modificar este producto.');
+  }
+}
+
+export async function actualizarProducto(input: ActualizarProductoInput): Promise<void> {
+  if (!firebaseReady) throw new Error(FIREBASE_NO_CONFIG_MSG);
+  if (!input.nombre.trim()) throw new Error('El producto necesita un nombre.');
+  if (!(input.precio > 0) || !Number.isFinite(input.precio)) {
+    throw new Error('El precio debe ser mayor a 0.');
+  }
+  try {
+    await verificarDueñoProducto(input);
+    await updateDoc(doc(getFirestoreDb(), 'productos', input.productoId), {
+      nombre: input.nombre.trim(),
+      precio: input.precio,
+      descripcion: input.descripcion?.trim() ?? '',
+    });
+  } catch (e) {
+    if (e instanceof Error && e.message.startsWith('Solo el dueño')) throw e;
+    throw new Error(
+      e instanceof Error
+        ? `No se pudo actualizar el producto: ${e.message}`
+        : 'No se pudo actualizar el producto. Intentá de nuevo.',
+    );
+  }
+}
+
+export async function cambiarDisponibilidadProducto(
+  input: ProductoOwnerInput,
+): Promise<boolean> {
+  if (!firebaseReady) throw new Error(FIREBASE_NO_CONFIG_MSG);
+  try {
+    await verificarDueñoProducto(input);
+    const productoSnap = await getDoc(doc(getFirestoreDb(), 'productos', input.productoId));
+    const productoData: unknown = productoSnap.exists() ? productoSnap.data() : null;
+    const disponibleActual: unknown =
+      typeof productoData === 'object' && productoData !== null
+        ? (productoData as { disponible?: unknown }).disponible
+        : undefined;
+    const disponible: boolean = disponibleActual !== false;
+    await updateDoc(doc(getFirestoreDb(), 'productos', input.productoId), {
+      disponible: !disponible,
+    });
+    return !disponible;
+  } catch (e) {
+    if (e instanceof Error && e.message.startsWith('Solo el dueño')) throw e;
+    throw new Error(
+      e instanceof Error
+        ? `No se pudo cambiar la disponibilidad: ${e.message}`
+        : 'No se pudo cambiar la disponibilidad. Intentá de nuevo.',
+    );
+  }
+}
+
+export async function eliminarProducto(input: ProductoOwnerInput): Promise<void> {
+  if (!firebaseReady) throw new Error(FIREBASE_NO_CONFIG_MSG);
+  try {
+    await verificarDueñoProducto(input);
+    await deleteDoc(doc(getFirestoreDb(), 'productos', input.productoId));
+  } catch (e) {
+    if (e instanceof Error && e.message.startsWith('Solo el dueño')) throw e;
+    throw new Error(
+      e instanceof Error
+        ? `No se pudo eliminar el producto: ${e.message}`
+        : 'No se pudo eliminar el producto. Intentá de nuevo.',
+    );
+  }
+}
 
 // ---------- F6 Negocio propio por cuenta (S1 Registro + vínculo / S2 Mi local) ----------
 
