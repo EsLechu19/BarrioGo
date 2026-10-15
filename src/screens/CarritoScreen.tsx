@@ -69,13 +69,17 @@ export default function CarritoScreen({ navigation }: Props) {
     [items],
   );
 
-  // El carrito no guarda negocioId: se infiere del catálogo. Si hay mezcla
-  // de negocios, no se puede crear un único pedido.
+  // El carrito guarda negocioId como snapshot. Si hay mezcla de negocios, no
+  // se puede crear un único pedido. Los ítems antiguos usan el catálogo local
+  // como compatibilidad para carritos persistidos antes de la integración
+  // Firebase.
   const negocioIds: string[] = useMemo(() => {
     const ids = new Set<string>();
     for (const item of items) {
-      const prod = productosMock.find((p) => p.id === item.productoId);
-      if (prod) ids.add(prod.negocioId);
+      const negocioId = item.negocioId ?? productosMock.find(
+        (p) => p.id === item.productoId,
+      )?.negocioId;
+      if (negocioId) ids.add(negocioId);
     }
     return Array.from(ids);
   }, [items]);

@@ -46,6 +46,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
         ...prev,
         {
           productoId: producto.id,
+          negocioId: producto.negocioId,
           cantidad,
           precioUnitario: producto.precio,
           nombre: producto.nombre,

@@ -22,6 +22,8 @@ function isItemPedidoArray(value: unknown): value is ItemPedido[] {
         typeof i === 'object' &&
         i !== null &&
         typeof (i as ItemPedido).productoId === 'string' &&
+        ((i as ItemPedido).negocioId === undefined ||
+          typeof (i as ItemPedido).negocioId === 'string') &&
         typeof (i as ItemPedido).cantidad === 'number' &&
         typeof (i as ItemPedido).precioUnitario === 'number',
     )
