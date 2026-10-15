@@ -107,7 +107,7 @@ export function Menu({
       ) : menuVisible.length === 0 ? (
         <View style={styles.centerRow}>
           <Text style={styles.subtitle}>
-            Todavía no publicas productos. Añadí el primero abajo.
+            Todavía no publicas productos. Añade el primero abajo.
           </Text>
         </View>
       ) : (
