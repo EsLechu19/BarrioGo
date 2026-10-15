@@ -1,7 +1,9 @@
+import { useMemo } from 'react';
 import { StyleSheet, TouchableOpacity, View } from 'react-native';
 import type { ReactNode } from 'react';
 import { Ionicons } from '@expo/vector-icons';
-import { colors } from '../styles/colors';
+import { useColors } from '../context/ThemeContext';
+import type { Colors } from '../styles/colors';
 
 type IconoNombre = React.ComponentProps<typeof Ionicons>['name'];
 
@@ -22,6 +24,8 @@ export function SelectableCard({
   accessibilityLabel,
   children,
 }: Props) {
+  const colors = useColors();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
   return (
     <TouchableOpacity
       style={[styles.card, activo && styles.cardActive]}
@@ -46,26 +50,28 @@ export function SelectableCard({
   );
 }
 
-const styles = StyleSheet.create({
-  card: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-    padding: 14,
-    borderWidth: 1.5,
-    borderColor: colors.border,
-    borderRadius: 16,
-    backgroundColor: colors.surface,
-  },
-  cardActive: { borderColor: colors.primary },
-  iconBox: {
-    width: 48,
-    height: 48,
-    borderRadius: 14,
-    backgroundColor: colors.primarySoft,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  iconBoxActive: { backgroundColor: colors.primary },
-  cardInfo: { flex: 1, gap: 2 },
-});
+function makeStyles(c: Colors) {
+  return StyleSheet.create({
+    card: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 12,
+      padding: 14,
+      borderWidth: 1.5,
+      borderColor: c.border,
+      borderRadius: 16,
+      backgroundColor: c.surface,
+    },
+    cardActive: { borderColor: c.primary },
+    iconBox: {
+      width: 48,
+      height: 48,
+      borderRadius: 14,
+      backgroundColor: c.primarySoft,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    iconBoxActive: { backgroundColor: c.primary },
+    cardInfo: { flex: 1, gap: 2 },
+  });
+}

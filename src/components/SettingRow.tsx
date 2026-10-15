@@ -1,8 +1,10 @@
+import { useMemo } from 'react';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import type { StyleProp, TextStyle, ViewStyle } from 'react-native';
 import type { ReactNode } from 'react';
 import { Ionicons } from '@expo/vector-icons';
-import { colors } from '../styles/colors';
+import { useColors } from '../context/ThemeContext';
+import type { Colors } from '../styles/colors';
 
 type IconoNombre = React.ComponentProps<typeof Ionicons>['name'];
 
@@ -33,6 +35,8 @@ export function SettingRow({
   subtituloNumberOfLines,
   style,
 }: Props) {
+  const colors = useColors();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
   const contenido = (
     <>
       <View style={styles.iconBox}>
@@ -69,23 +73,25 @@ export function SettingRow({
   return <View style={[styles.row, style]}>{contenido}</View>;
 }
 
-const styles = StyleSheet.create({
-  row: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-    paddingHorizontal: 10,
-    paddingVertical: 13,
-  },
-  iconBox: {
-    width: 38,
-    height: 38,
-    borderRadius: 12,
-    backgroundColor: colors.primarySoft,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  rowText: { flex: 1, gap: 2 },
-  titulo: { color: colors.textPrimary, fontSize: 15, fontWeight: '700' },
-  subtitulo: { color: colors.textMuted, fontSize: 13 },
-});
+function makeStyles(c: Colors) {
+  return StyleSheet.create({
+    row: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 12,
+      paddingHorizontal: 10,
+      paddingVertical: 13,
+    },
+    iconBox: {
+      width: 38,
+      height: 38,
+      borderRadius: 12,
+      backgroundColor: c.primarySoft,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    rowText: { flex: 1, gap: 2 },
+    titulo: { color: c.textPrimary, fontSize: 15, fontWeight: '700' },
+    subtitulo: { color: c.textMuted, fontSize: 13 },
+  });
+}

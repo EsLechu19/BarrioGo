@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import {
   ScrollView,
   StyleSheet,
@@ -11,7 +11,8 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../navigation/RootStackParamList';
 import { ScreenHeader } from '../components/ScreenHeader';
-import { colors } from '../styles/colors';
+import { useColors } from '../context/ThemeContext';
+import type { Colors } from '../styles/colors';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Ayuda'>;
 
@@ -37,6 +38,8 @@ const PREGUNTAS: { pregunta: string; respuesta: string }[] = [
 export default function AyudaScreen({ navigation }: Props) {
   const insets = useSafeAreaInsets();
   const [abierta, setAbierta] = useState<number | null>(0);
+  const colors = useColors();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
 
   return (
     <View style={[styles.screen, { paddingTop: insets.top + 12 }]}>
@@ -102,74 +105,76 @@ export default function AyudaScreen({ navigation }: Props) {
   );
 }
 
-const styles = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: colors.background },
-  container: { flexGrow: 1, gap: 12, padding: 16, backgroundColor: colors.background },
+function makeStyles(c: Colors) {
+  return StyleSheet.create({
+    screen: { flex: 1, backgroundColor: c.background },
+    container: { flexGrow: 1, gap: 12, padding: 16, backgroundColor: c.background },
 
-  card: {
-    paddingHorizontal: 6,
-    borderWidth: 1,
-    borderColor: colors.border,
-    borderRadius: 16,
-    backgroundColor: colors.surface,
-  },
-  supportIcon: {
-    width: 60,
-    height: 60,
-    borderRadius: 30,
-    backgroundColor: colors.primarySoft,
-    alignItems: 'center',
-    justifyContent: 'center',
-    alignSelf: 'center',
-    marginTop: 16,
-  },
-  supportTitle: {
-    color: colors.textPrimary,
-    fontSize: 17,
-    fontWeight: '800',
-    textAlign: 'center',
-    marginTop: 8,
-  },
-  supportSub: {
-    color: colors.textMuted,
-    fontSize: 13,
-    textAlign: 'center',
-    marginBottom: 8,
-  },
-  supportRow: {
-    flexDirection: 'row',
-    gap: 8,
-    justifyContent: 'center',
-    paddingBottom: 16,
-  },
-  supportPill: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    paddingVertical: 8,
-    paddingHorizontal: 12,
-    borderRadius: 999,
-    backgroundColor: colors.background,
-    borderWidth: 1,
-    borderColor: colors.border,
-  },
-  supportPillText: { color: colors.textPrimary, fontSize: 13, fontWeight: '700' },
+    card: {
+      paddingHorizontal: 6,
+      borderWidth: 1,
+      borderColor: c.border,
+      borderRadius: 16,
+      backgroundColor: c.surface,
+    },
+    supportIcon: {
+      width: 60,
+      height: 60,
+      borderRadius: 30,
+      backgroundColor: c.primarySoft,
+      alignItems: 'center',
+      justifyContent: 'center',
+      alignSelf: 'center',
+      marginTop: 16,
+    },
+    supportTitle: {
+      color: c.textPrimary,
+      fontSize: 17,
+      fontWeight: '800',
+      textAlign: 'center',
+      marginTop: 8,
+    },
+    supportSub: {
+      color: c.textMuted,
+      fontSize: 13,
+      textAlign: 'center',
+      marginBottom: 8,
+    },
+    supportRow: {
+      flexDirection: 'row',
+      gap: 8,
+      justifyContent: 'center',
+      paddingBottom: 16,
+    },
+    supportPill: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 6,
+      paddingVertical: 8,
+      paddingHorizontal: 12,
+      borderRadius: 999,
+      backgroundColor: c.background,
+      borderWidth: 1,
+      borderColor: c.border,
+    },
+    supportPillText: { color: c.textPrimary, fontSize: 13, fontWeight: '700' },
 
-  sectionTitle: { color: colors.textPrimary, fontSize: 17, fontWeight: '800', marginTop: 4 },
-  faqRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    paddingHorizontal: 10,
-    paddingVertical: 13,
-  },
-  faqQ: { flex: 1, color: colors.textPrimary, fontSize: 15, fontWeight: '700' },
-  faqA: {
-    color: colors.textSecondary,
-    fontSize: 14,
-    lineHeight: 20,
-    paddingHorizontal: 10,
-    paddingBottom: 13,
-  },
-  divider: { height: 1, marginLeft: 10, backgroundColor: colors.border },
-});
+    sectionTitle: { color: c.textPrimary, fontSize: 17, fontWeight: '800', marginTop: 4 },
+    faqRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 8,
+      paddingHorizontal: 10,
+      paddingVertical: 13,
+    },
+    faqQ: { flex: 1, color: c.textPrimary, fontSize: 15, fontWeight: '700' },
+    faqA: {
+      color: c.textSecondary,
+      fontSize: 14,
+      lineHeight: 20,
+      paddingHorizontal: 10,
+      paddingBottom: 13,
+    },
+    divider: { height: 1, marginLeft: 10, backgroundColor: c.border },
+  });
+}

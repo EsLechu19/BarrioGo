@@ -1,6 +1,8 @@
+import { useMemo } from 'react';
 import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { colors } from '../../styles/colors';
+import { useColors } from '../../context/ThemeContext';
+import type { Colors } from '../../styles/colors';
 
 // Menú de secciones del panel: botones circulares del mismo tamaño, con badge
 // de conteo para las secciones que lo necesitan.
@@ -34,6 +36,8 @@ export function CircleTabBar({
   conteoMenu,
   onSeleccionar,
 }: Props) {
+  const colors = useColors();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
   return (
     <ScrollView
       horizontal
@@ -81,36 +85,38 @@ export function CircleTabBar({
   );
 }
 
-const styles = StyleSheet.create({
-  circleRow: { gap: 12, paddingVertical: 4, paddingHorizontal: 4 },
-  circleItem: { alignItems: 'center', gap: 10, width: 88 },
-  circleButton: {
-    width: 64,
-    height: 64,
-    borderRadius: 32,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderWidth: 1.5,
-    borderColor: colors.border,
-    backgroundColor: colors.surface,
-  },
-  circleButtonActive: { backgroundColor: colors.primary, borderColor: colors.primary },
-  circleBadge: {
-    position: 'absolute',
-    top: -4,
-    right: -4,
-    minWidth: 22,
-    height: 22,
-    paddingHorizontal: 5,
-    borderRadius: 11,
-    backgroundColor: colors.primary,
-    borderWidth: 2,
-    borderColor: colors.background,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  circleBadgeText: { color: colors.white, fontSize: 11, fontWeight: '800' },
-  circleLabel: { color: colors.textMuted, fontSize: 12, fontWeight: '700', textAlign: 'center' },
-  circleLabelActive: { color: colors.primary },
-  circleScroll: { flexGrow: 0, flexShrink: 0 },
-});
+function makeStyles(c: Colors) {
+  return StyleSheet.create({
+    circleRow: { gap: 12, paddingVertical: 4, paddingHorizontal: 4 },
+    circleItem: { alignItems: 'center', gap: 10, width: 88 },
+    circleButton: {
+      width: 64,
+      height: 64,
+      borderRadius: 32,
+      alignItems: 'center',
+      justifyContent: 'center',
+      borderWidth: 1.5,
+      borderColor: c.border,
+      backgroundColor: c.surface,
+    },
+    circleButtonActive: { backgroundColor: c.primary, borderColor: c.primary },
+    circleBadge: {
+      position: 'absolute',
+      top: -4,
+      right: -4,
+      minWidth: 22,
+      height: 22,
+      paddingHorizontal: 5,
+      borderRadius: 11,
+      backgroundColor: c.primary,
+      borderWidth: 2,
+      borderColor: c.background,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    circleBadgeText: { color: c.white, fontSize: 11, fontWeight: '800' },
+    circleLabel: { color: c.textMuted, fontSize: 12, fontWeight: '700', textAlign: 'center' },
+    circleLabelActive: { color: c.primary },
+    circleScroll: { flexGrow: 0, flexShrink: 0 },
+  });
+}

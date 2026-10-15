@@ -1,13 +1,14 @@
 import { StyleSheet, Text, View, Image, TouchableOpacity, KeyboardAvoidingView, Platform, ScrollView } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { Ionicons } from '@expo/vector-icons';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { AuthStackParamList } from '../navigation/AuthStackParamList';
 import { FormField } from '../components/FormField';
 import { PrimaryButton } from '../components/PrimaryButton';
 import { authErrorEs, useAuth } from '../context/AuthContext';
-import { colors } from '../styles/colors';
+import { useColors } from '../context/ThemeContext';
+import type { Colors } from '../styles/colors';
 
 type Props = NativeStackScreenProps<AuthStackParamList, 'Login'>
 
@@ -18,6 +19,8 @@ export default function LoginScreen ({ navigation }: Props){
     const [password,setPassword] = useState('');
     const [error,setError] = useState<{email?: string; password?: string; auth?: string}>({});
     const [submitting, setSubmitting] = useState<boolean>(false);
+    const colors = useColors();
+    const styles = useMemo(() => makeStyles(colors), [colors]);
     const isValidEmail = (value: string): boolean => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value.trim());
     const handleLogin = async () => {
         const newError: {email?:string;password?:string} = {};
@@ -142,42 +145,44 @@ export default function LoginScreen ({ navigation }: Props){
     );
 }
 
-const styles = StyleSheet.create({
-    // Base para teclado + scroll
-    screen: { flex: 1 },
-    scroll: { flexGrow: 1 },
+function makeStyles(c: Colors) {
+    return StyleSheet.create({
+        // Base para teclado + scroll
+        screen: { flex: 1 },
+        scroll: { flexGrow: 1 },
 
-    // Contenedor principal de la pantalla
-    container: { flexGrow: 1, justifyContent: 'flex-start', alignItems: 'center', gap: 24, padding: 24,backgroundColor: colors.background },
+        // Contenedor principal de la pantalla
+        container: { flexGrow: 1, justifyContent: 'flex-start', alignItems: 'center', gap: 24, padding: 24,backgroundColor: c.background },
 
-    // Area del logo (imagen + bienvenida)
-    logoArea: { justifyContent: 'center', alignItems: 'center', gap: 16 },
-    logoFrame: { width: 154, height: 154, justifyContent: 'center', alignItems: 'center', borderRadius: 26 },
-    logo: { width: 142, height: 142 },
-    brandHeadline: { width: '100%', color: colors.textSecondary, fontSize: 28, fontWeight: '900', textAlign: 'center' },
-    brandTagline: { width: '100%', color: colors.textMuted, fontSize: 15, fontWeight: 'normal', textAlign: 'center' },
+        // Area del logo (imagen + bienvenida)
+        logoArea: { justifyContent: 'center', alignItems: 'center', gap: 16 },
+        logoFrame: { width: 154, height: 154, justifyContent: 'center', alignItems: 'center', borderRadius: 26 },
+        logo: { width: 142, height: 142 },
+        brandHeadline: { width: '100%', color: c.textSecondary, fontSize: 28, fontWeight: '900', textAlign: 'center' },
+        brandTagline: { width: '100%', color: c.textMuted, fontSize: 15, fontWeight: 'normal', textAlign: 'center' },
 
-    // Area del formulario
-    formArea: { width: '100%', alignItems: 'center', gap: 16 },
-    inputWrapper: { width: '100%', gap: 16 },
-    forgotWrapper: { alignSelf: 'flex-end', marginTop: 8 },
-    forgotText: { color: colors.primary, fontSize: 14, fontWeight: '600' },
+        // Area del formulario
+        formArea: { width: '100%', alignItems: 'center', gap: 16 },
+        inputWrapper: { width: '100%', gap: 16 },
+        forgotWrapper: { alignSelf: 'flex-end', marginTop: 8 },
+        forgotText: { color: c.primary, fontSize: 14, fontWeight: '600' },
 
-    // Area de botón de ingresar + link a registro
-    // minHeight (no height): con el error de autentificación el contenido crece sin solaparse.
-    actionArea: { width: '100%', minHeight: 89, paddingTop: 8, gap: 16 },
-    authError: { color: colors.google, fontSize: 14, fontWeight: '600', textAlign: 'center' },
-    registerRow: { flexDirection: 'row', justifyContent: 'center', alignItems: 'center' },
-    registerText: { height: 17, fontSize: 14 },
-    registerLink: { height: 17, color: colors.primary, fontSize: 14, fontWeight: '600' },
+        // Area de botón de ingresar + link a registro
+        // minHeight (no height): con el error de autentificación el contenido crece sin solaparse.
+        actionArea: { width: '100%', minHeight: 89, paddingTop: 8, gap: 16 },
+        authError: { color: c.google, fontSize: 14, fontWeight: '600', textAlign: 'center' },
+        registerRow: { flexDirection: 'row', justifyContent: 'center', alignItems: 'center' },
+        registerText: { height: 17, fontSize: 14, color: c.textMuted },
+        registerLink: { height: 17, color: c.primary, fontSize: 14, fontWeight: '600' },
 
-    // Area de separador "O continúa con"
-    dividerRow: { flexDirection: 'row', width: '100%', alignItems: 'center', gap: 12 },
-    dividerLine: { flex: 1, height: 1, backgroundColor: colors.border },
-    dividerText: { color: colors.textPlaceholder, fontSize: 13, fontWeight: '600' },
+        // Area de separador "O continúa con"
+        dividerRow: { flexDirection: 'row', width: '100%', alignItems: 'center', gap: 12 },
+        dividerLine: { flex: 1, height: 1, backgroundColor: c.border },
+        dividerText: { color: c.textPlaceholder, fontSize: 13, fontWeight: '600' },
 
-    // Area de botones de login social (Facebook / Google)
-    socialRow: { flexDirection: 'row', width: '100%', gap: 12 },
-    socialButton: { flex: 1, flexDirection: 'row', height: 48, justifyContent: 'center', alignItems: 'center', gap: 8, borderWidth: 1, borderColor: colors.border, borderRadius: 12 ,backgroundColor: colors.surface },
-    socialText: { color: colors.textSecondary, fontSize: 14, fontWeight: '600' }
-})
+        // Area de botones de login social (Facebook / Google)
+        socialRow: { flexDirection: 'row', width: '100%', gap: 12 },
+        socialButton: { flex: 1, flexDirection: 'row', height: 48, justifyContent: 'center', alignItems: 'center', gap: 8, borderWidth: 1, borderColor: c.border, borderRadius: 12 ,backgroundColor: c.surface },
+        socialText: { color: c.textSecondary, fontSize: 14, fontWeight: '600' }
+    })
+}

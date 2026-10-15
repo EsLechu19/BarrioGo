@@ -1,6 +1,7 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import {
   ActivityIndicator,
+  Alert,
   FlatList,
   StyleSheet,
   Text,
@@ -18,8 +19,9 @@ import {
   notificarCambioEstado,
 } from '../services/notificaciones';
 import { EstadoPedido, Pedido } from '../types/Pedido';
-import { colors } from '../styles/colors';
-import { ESTADO_COLORS, ESTADO_ICONS, ESTADO_LABELS } from '../utils/estadosPedido';
+import { useColors } from '../context/ThemeContext';
+import type { Colors } from '../styles/colors';
+import { ESTADO_COLORS, ESTADO_ICONS, ESTADO_LABELS, EstadoVisible } from '../utils/estadosPedido';
 import { fechaCorta } from '../utils/fechas';
 import { nombreRestaurante } from '../utils/negocios';
 
@@ -32,8 +34,15 @@ export default function PedidosScreen({ navigation }: Props) {
   const [pedidos, setPedidos] = useState<Pedido[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
+  // Cancelación solo visual (solo diseño): pisa el estado al pintar porque
+  // el snapshot de Firestore seguiría emitiendo el estado real.
+  // TODO(back): agregar 'cancelado' a EstadoPedido + cambiarEstadoPedido
+  // + reglas de Firestore. Hoy no se escribe nada.
+  const [cancelados, setCancelados] = useState<Record<string, boolean>>({});
   const estadosPrevios = useRef<Record<string, EstadoPedido>>({});
   const primeraCarga = useRef<boolean>(true);
+  const colors = useColors();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
 
   useEffect(() => {
     // Permiso al montar. No bloquea el listener: si es false, Pedidos sigue en vivo sin notificar.
@@ -152,7 +161,29 @@ export default function PedidosScreen({ navigation }: Props) {
         contentContainerStyle={styles.list}
         ItemSeparatorComponent={() => <View style={styles.separator} />}
         renderItem={({ item }) => {
-          const colorEstado: string = ESTADO_COLORS[item.estado];
+          const estadoVista: EstadoVisible =
+            cancelados[item.id] === true ? 'cancelado' : item.estado;
+          const colorEstado: string = ESTADO_COLORS[estadoVista];
+          const puedeCancelar: boolean =
+            item.estado === 'pendiente' && cancelados[item.id] !== true;
+          const confirmarCancelacion = (): void => {
+            Alert.alert(
+              'Cancelar pedido',
+              '¿Seguro que querés cancelar este pedido? Esta acción no se puede deshacer.',
+              [
+                { text: 'Seguir con el pedido', style: 'cancel' },
+                {
+                  text: 'Sí, cancelar',
+                  style: 'destructive',
+                  onPress: () =>
+                    setCancelados((prev: Record<string, boolean>) => ({
+                      ...prev,
+                      [item.id]: true,
+                    })),
+                },
+              ],
+            );
+          };
           return (
             // Card pedido (tocable -> detalle)
             <TouchableOpacity
@@ -164,7 +195,7 @@ export default function PedidosScreen({ navigation }: Props) {
               {/* Icono estado */}
               <View style={[styles.estadoIcon, { backgroundColor: `${colorEstado}1A` }]}>
                 <Ionicons
-                  name={ESTADO_ICONS[item.estado]}
+                  name={ESTADO_ICONS[estadoVista]}
                   size={24}
                   color={colorEstado}
                 />
@@ -184,8 +215,21 @@ export default function PedidosScreen({ navigation }: Props) {
                   </Text>
                 </View>
                 <View style={styles.bottomRow}>
-                  <View style={[styles.badge, { backgroundColor: colorEstado }]}>
-                    <Text style={styles.badgeText}>{ESTADO_LABELS[item.estado]}</Text>
+                  <View style={styles.estadoRow}>
+                    <View style={[styles.badge, { backgroundColor: colorEstado }]}>
+                      <Text style={styles.badgeText}>{ESTADO_LABELS[estadoVista]}</Text>
+                    </View>
+                    {puedeCancelar ? (
+                      <TouchableOpacity
+                        style={styles.cancelButton}
+                        onPress={confirmarCancelacion}
+                        accessibilityRole="button"
+                        accessibilityLabel="Cancelar pedido"
+                      >
+                        <Ionicons name="close-circle-outline" size={14} color={colors.error} />
+                        <Text style={styles.cancelText}>Cancelar</Text>
+                      </TouchableOpacity>
+                    ) : null}
                   </View>
                   <Text style={styles.total}>S/{item.total.toFixed(2)}</Text>
                 </View>
@@ -198,81 +242,96 @@ export default function PedidosScreen({ navigation }: Props) {
   );
 }
 
-const styles = StyleSheet.create({
-  // Base
-  container: { flex: 1, gap: 4, padding: 16, backgroundColor: colors.background },
-  center: { justifyContent: 'center', alignItems: 'center', gap: 8 },
-  centerEmpty: { justifyContent: 'center', alignItems: 'center', gap: 10, paddingBottom: 70 },
-  subtitle: { color: colors.textMuted, fontSize: 14, textAlign: 'center' },
-  subtitleLeft: { color: colors.textMuted, fontSize: 13 },
-  error: { color: colors.error, fontSize: 14, fontWeight: '600' },
+function makeStyles(c: Colors) {
+  return StyleSheet.create({
+    // Base
+    container: { flex: 1, gap: 4, padding: 16, backgroundColor: c.background },
+    center: { justifyContent: 'center', alignItems: 'center', gap: 8 },
+    centerEmpty: { justifyContent: 'center', alignItems: 'center', gap: 10, paddingBottom: 70 },
+    subtitle: { color: c.textMuted, fontSize: 14, textAlign: 'center' },
+    subtitleLeft: { color: c.textMuted, fontSize: 13 },
+    error: { color: c.error, fontSize: 14, fontWeight: '600' },
 
-  // Area titulo
-  title: { color: colors.textPrimary, fontSize: 22, fontWeight: '900' },
+    // Area titulo
+    title: { color: c.textPrimary, fontSize: 22, fontWeight: '900' },
 
-  // Area vacio
-  emptyIcon: {
-    width: 96,
-    height: 96,
-    borderRadius: 48,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: colors.primarySoft,
-    marginBottom: 6,
-  },
+    // Area vacio
+    emptyIcon: {
+      width: 96,
+      height: 96,
+      borderRadius: 48,
+      justifyContent: 'center',
+      alignItems: 'center',
+      backgroundColor: c.primarySoft,
+      marginBottom: 6,
+    },
 
-  // Area lista de pedidos
-  list: { gap: 4, paddingVertical: 12, paddingBottom: 110 },
-  separator: { height: 10 },
-  // Card pedido
-  card: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-    padding: 14,
-    borderWidth: 1,
-    borderColor: colors.border,
-    borderRadius: 16,
-    backgroundColor: colors.surface,
-  },
-  // Icono estado
-  estadoIcon: {
-    width: 52,
-    height: 52,
-    borderRadius: 26,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  // Informacion
-  cardInfo: { flex: 1, gap: 5 },
-  negocio: { color: colors.textPrimary, fontSize: 16, fontWeight: '800' },
-  metaRow: { flexDirection: 'row', alignItems: 'center', gap: 5 },
-  meta: { color: colors.textMuted, fontSize: 13 },
-  metaDot: { color: colors.textMuted, fontSize: 13 },
-  bottomRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    gap: 8,
-    marginTop: 2,
-  },
-  badge: { paddingHorizontal: 12, paddingVertical: 5, borderRadius: 999 },
-  badgeText: { color: colors.white, fontSize: 12, fontWeight: '800' },
-  total: { color: colors.primary, fontSize: 17, fontWeight: '900' },
+    // Area lista de pedidos
+    list: { gap: 4, paddingVertical: 12, paddingBottom: 110 },
+    separator: { height: 10 },
+    // Card pedido
+    card: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 12,
+      padding: 14,
+      borderWidth: 1,
+      borderColor: c.border,
+      borderRadius: 16,
+      backgroundColor: c.surface,
+    },
+    // Icono estado
+    estadoIcon: {
+      width: 52,
+      height: 52,
+      borderRadius: 26,
+      justifyContent: 'center',
+      alignItems: 'center',
+    },
+    // Informacion
+    cardInfo: { flex: 1, gap: 5 },
+    negocio: { color: c.textPrimary, fontSize: 16, fontWeight: '800' },
+    metaRow: { flexDirection: 'row', alignItems: 'center', gap: 5 },
+    meta: { color: c.textMuted, fontSize: 13 },
+    metaDot: { color: c.textMuted, fontSize: 13 },
+    bottomRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      gap: 8,
+      marginTop: 2,
+    },
+    badge: { paddingHorizontal: 12, paddingVertical: 5, borderRadius: 999 },
+    badgeText: { color: c.white, fontSize: 12, fontWeight: '800' },
+    total: { color: c.primary, fontSize: 17, fontWeight: '900' },
+    estadoRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+    cancelButton: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 4,
+      paddingVertical: 4,
+      paddingHorizontal: 8,
+      borderRadius: 8,
+      backgroundColor: c.background,
+      borderWidth: 1,
+      borderColor: c.border,
+    },
+    cancelText: { color: c.error, fontSize: 12, fontWeight: '800' },
 
-  // Area confirmar
-  primaryButton: {
-    width: '100%',
-    paddingVertical: 15,
-    borderRadius: 16,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: colors.primary,
-    shadowColor: colors.primary,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 4,
-  },
-  primaryText: { color: colors.surface, fontSize: 16, fontWeight: '800' },
-});
+    // Area confirmar
+    primaryButton: {
+      width: '100%',
+      paddingVertical: 15,
+      borderRadius: 16,
+      alignItems: 'center',
+      justifyContent: 'center',
+      backgroundColor: c.primary,
+      shadowColor: c.primary,
+      shadowOffset: { width: 0, height: 4 },
+      shadowOpacity: 0.3,
+      shadowRadius: 8,
+      elevation: 4,
+    },
+    primaryText: { color: c.white, fontSize: 16, fontWeight: '800' },
+  });
+}

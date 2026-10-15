@@ -12,7 +12,8 @@ import { productosMock } from '../data/productosMock';
 import { negociosMock } from '../data/negociosMock';
 import { ScreenHeader } from '../components/ScreenHeader';
 import { CantidadStepper } from '../components/CantidadStepper';
-import { colors } from '../styles/colors';
+import { useColors } from '../context/ThemeContext';
+import type { Colors } from '../styles/colors';
 
 // Tarifa demo cuando el negocio no ofrece envío gratis (Fase 3: real por
 // negocio/zona). Se suma al total del pedido.
@@ -22,10 +23,12 @@ type Props = NativeStackScreenProps<RootStackParamList, 'Carrito'>;
 
 export default function CarritoScreen({ navigation }: Props) {
   const insets = useSafeAreaInsets();
-  const { items, total, setCantidad, clear } = useCart();
+  const { items, total, setCantidad, remove, clear } = useCart();
   const { user } = useAuth();
   const [enviando, setEnviando] = useState<boolean>(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const colors = useColors();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
 
   // Alerta clásica al retroceder con productos: cancelar la compra o
   // seguir viendo (va a Todos los restaurantes). Vacío: sale sin preguntar.
@@ -246,20 +249,31 @@ export default function CarritoScreen({ navigation }: Props) {
                 S/{item.precioUnitario.toFixed(2)} c/u
               </Text>
             </View>
-            {/* Columna derecha: stepper + precio debajo (al llegar a 0 se quita solo) */}
+            {/* Columna derecha: stepper + precio + tacho (borra todo directo) */}
             <View style={styles.rightCol}>
-              {/* Fila cantidad */}
-              <CantidadStepper
-                cantidad={item.cantidad}
-                onDecrement={() =>
-                  setCantidad(item.productoId, item.cantidad - 1)
-                }
-                onIncrement={() =>
-                  setCantidad(item.productoId, item.cantidad + 1)
-                }
-                colorTexto={colors.textPrimary}
-                colorTextoPlus={colors.surface}
-              />
+              {/* Fila cantidad + tacho */}
+              <View style={styles.stepperRow}>
+                <CantidadStepper
+                  cantidad={item.cantidad}
+                  onDecrement={() =>
+                    setCantidad(item.productoId, item.cantidad - 1)
+                  }
+                  onIncrement={() =>
+                    setCantidad(item.productoId, item.cantidad + 1)
+                  }
+                  colorTexto={colors.textPrimary}
+                  colorTextoPlus={colors.white}
+                />
+                <TouchableOpacity
+                  style={styles.trashButton}
+                  onPress={() => remove(item.productoId)}
+                  accessibilityLabel={`Eliminar ${item.nombre ?? item.producto?.nombre ?? 'producto'} del carrito`}
+                  accessibilityRole="button"
+                  hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                >
+                  <Ionicons name="trash-outline" size={20} color={colors.error} />
+                </TouchableOpacity>
+              </View>
               <Text style={styles.price}>
                 S/{(item.precioUnitario * item.cantidad).toFixed(2)}
               </Text>
@@ -306,97 +320,106 @@ export default function CarritoScreen({ navigation }: Props) {
   );
 }
 
-const styles = StyleSheet.create({
-  // Base
-  container: { flex: 1, padding: 16, backgroundColor: colors.background },
-  center: { justifyContent: 'center', alignItems: 'center', gap: 8 },
-  centerEmpty: { justifyContent: 'center', alignItems: 'center', gap: 10 },
-  emptyTop: { alignItems: 'center', gap: 10 },
-  emptyTitle: { color: colors.textPrimary, fontSize: 22, fontWeight: '900', textAlign: 'center' },
-  emptyMiddle: { flex: 1, justifyContent: 'center', alignItems: 'center' },
-  emptyBottom: { gap: 10 },
-  emptyIcon: {
-    width: 96,
-    height: 96,
-    borderRadius: 48,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: colors.primarySoft,
-    marginBottom: 6,
-  },
-  emptyImage: { width: 300, height: 300 },
-  title: { flex: 1, color: colors.textPrimary, fontSize: 22, fontWeight: '900' },
-  ghostButton: {
-    width: '100%',
-    paddingVertical: 14,
-    borderRadius: 16,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderWidth: 1.5,
-    borderColor: colors.primary,
-    backgroundColor: colors.surface,
-  },
-  ghostText: { color: colors.primary, fontSize: 15, fontWeight: '800' },
-  subtitle: { color: colors.textMuted, fontSize: 14, textAlign: 'center' },
-  divider: { height: 1, backgroundColor: colors.border},
+function makeStyles(c: Colors) {
+  return StyleSheet.create({
+    // Base
+    container: { flex: 1, padding: 16, backgroundColor: c.background },
+    center: { justifyContent: 'center', alignItems: 'center', gap: 8 },
+    centerEmpty: { justifyContent: 'center', alignItems: 'center', gap: 10 },
+    emptyTop: { alignItems: 'center', gap: 10 },
+    emptyTitle: { color: c.textPrimary, fontSize: 22, fontWeight: '900', textAlign: 'center' },
+    emptyMiddle: { flex: 1, justifyContent: 'center', alignItems: 'center' },
+    emptyBottom: { gap: 10 },
+    emptyIcon: {
+      width: 96,
+      height: 96,
+      borderRadius: 48,
+      justifyContent: 'center',
+      alignItems: 'center',
+      backgroundColor: c.primarySoft,
+      marginBottom: 6,
+    },
+    emptyImage: { width: 300, height: 300 },
+    title: { flex: 1, color: c.textPrimary, fontSize: 22, fontWeight: '900' },
+    ghostButton: {
+      width: '100%',
+      paddingVertical: 14,
+      borderRadius: 16,
+      alignItems: 'center',
+      justifyContent: 'center',
+      borderWidth: 1.5,
+      borderColor: c.primary,
+      backgroundColor: c.surface,
+    },
+    ghostText: { color: c.primary, fontSize: 15, fontWeight: '800' },
+    subtitle: { color: c.textMuted, fontSize: 14, textAlign: 'center' },
+    divider: { height: 1, backgroundColor: c.border},
 
-  // Area titulo
-  header: { paddingBottom: 15 },
+    // Area titulo
+    header: { paddingBottom: 15 },
 
-  // Area lista de restaurante
-  list: { gap: 4, paddingVertical: 12 },
-  separator: { height: 8 },
-  // Card producto
-  row: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-    padding: 12,
-    borderWidth: 1,
-    borderColor: colors.border,
-    borderRadius: 16,
-    backgroundColor: colors.surface,
-  },
-  // Informacion
-  info: { flex: 1, gap: 4, justifyContent: 'center' },
-  name: { color: colors.textPrimary, fontSize: 15, fontWeight: '700' },
-  desc: { color: colors.textMuted, fontSize: 13 },
-  unit: { color: colors.textMuted, fontSize: 13 },
-  // Columna derecha
-  rightCol: { alignItems: 'flex-end', gap: 6 },
-  thumb: { width: 72, height: 72, borderRadius: 14, backgroundColor: colors.border },
-  thumbPlaceholder: {
-    backgroundColor: colors.background,
-    borderWidth: 1,
-    borderColor: colors.border,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  price: { alignSelf: 'stretch', textAlign: 'center', color: colors.primary, fontSize: 16, fontWeight: '800' },
+    // Area lista de restaurante
+    list: { gap: 4, paddingVertical: 12 },
+    separator: { height: 8 },
+    // Card producto
+    row: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 12,
+      padding: 12,
+      borderWidth: 1,
+      borderColor: c.border,
+      borderRadius: 16,
+      backgroundColor: c.surface,
+    },
+    // Informacion
+    info: { flex: 1, gap: 4, justifyContent: 'center' },
+    name: { color: c.textPrimary, fontSize: 15, fontWeight: '700' },
+    desc: { color: c.textMuted, fontSize: 13 },
+    unit: { color: c.textMuted, fontSize: 13 },
+    // Columna derecha
+    rightCol: { alignItems: 'flex-end', gap: 6 },
+    stepperRow: { flexDirection: 'row', alignItems: 'center', gap: 4 },
+    thumb: { width: 72, height: 72, borderRadius: 14, backgroundColor: c.border },
+    thumbPlaceholder: {
+      backgroundColor: c.background,
+      borderWidth: 1,
+      borderColor: c.border,
+      justifyContent: 'center',
+      alignItems: 'center',
+    },
+    price: { alignSelf: 'stretch', textAlign: 'center', color: c.primary, fontSize: 16, fontWeight: '800' },
+    trashButton: {
+      padding: 6,
+      borderRadius: 10,
+      justifyContent: 'center',
+      alignItems: 'center',
+    },
 
-  // Area total
-  footer: { gap: 10, paddingTop: 8 },
-  // Fila total
-  totalRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  totalLabel: { fontSize: 15, fontWeight: '600', color: colors.textSecondary },
-  subValue: { fontSize: 15, fontWeight: '700', color: colors.textPrimary },
-  freeValue: { fontSize: 15, fontWeight: '800', color: colors.success },
-  totalValue: { fontSize: 20, fontWeight: '900', color: colors.primary },
-  error: { color: colors.error, fontSize: 14, fontWeight: '600' },
-  // Area confirmar
-  primaryButton: {
-    width: '100%',
-    paddingVertical: 15,
-    borderRadius: 16,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: colors.primary,
-    shadowColor: colors.primary,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 4,
-  },
-  primaryButtonDisabled: { opacity: 0.6 },
-  primaryText: { color: colors.surface, fontSize: 16, fontWeight: '800' },
-});
+    // Area total
+    footer: { gap: 10, paddingTop: 8 },
+    // Fila total
+    totalRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+    totalLabel: { fontSize: 15, fontWeight: '600', color: c.textSecondary },
+    subValue: { fontSize: 15, fontWeight: '700', color: c.textPrimary },
+    freeValue: { fontSize: 15, fontWeight: '800', color: c.success },
+    totalValue: { fontSize: 20, fontWeight: '900', color: c.primary },
+    error: { color: c.error, fontSize: 14, fontWeight: '600' },
+    // Area confirmar
+    primaryButton: {
+      width: '100%',
+      paddingVertical: 15,
+      borderRadius: 16,
+      alignItems: 'center',
+      justifyContent: 'center',
+      backgroundColor: c.primary,
+      shadowColor: c.primary,
+      shadowOffset: { width: 0, height: 4 },
+      shadowOpacity: 0.3,
+      shadowRadius: 8,
+      elevation: 4,
+    },
+    primaryButtonDisabled: { opacity: 0.6 },
+    primaryText: { color: c.white, fontSize: 16, fontWeight: '800' },
+  });
+}

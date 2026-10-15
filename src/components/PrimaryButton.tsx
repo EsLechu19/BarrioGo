@@ -1,5 +1,7 @@
+import { useMemo } from 'react';
 import { StyleSheet, Text, TouchableOpacity } from 'react-native';
-import { colors } from '../styles/colors';
+import { useColors } from '../context/ThemeContext';
+import type { Colors } from '../styles/colors';
 
 type Props = {
     title: string;
@@ -8,6 +10,8 @@ type Props = {
 };
 
 export function PrimaryButton({ title, onPress, disabled = false }: Props) {
+    const colors = useColors();
+    const styles = useMemo(() => makeStyles(colors), [colors]);
     return (
         // boton principal
         <TouchableOpacity
@@ -22,9 +26,11 @@ export function PrimaryButton({ title, onPress, disabled = false }: Props) {
     );
 }
 
-const styles = StyleSheet.create({
-    // Boton principal
-    button: { width: '100%', height: 48, justifyContent: 'center', alignItems: 'center', borderRadius: 24, backgroundColor: colors.primary },
-    buttonText: { color: colors.surface, fontSize: 16, fontWeight: 'bold' },
-    disabled: { opacity: 0.6 },
-});
+function makeStyles(c: Colors) {
+    return StyleSheet.create({
+        // Boton principal
+        button: { width: '100%', height: 48, justifyContent: 'center', alignItems: 'center', borderRadius: 24, backgroundColor: c.primary },
+        buttonText: { color: c.white, fontSize: 16, fontWeight: 'bold' },
+        disabled: { opacity: 0.6 },
+    });
+}

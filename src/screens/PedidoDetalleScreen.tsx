@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import {
   FlatList,
   StyleSheet,
@@ -17,7 +17,8 @@ import { Pedido } from '../types/Pedido';
 import { Negocio } from '../types/Negocio';
 import { ScreenHeader } from '../components/ScreenHeader';
 import { LoadingState, ErrorState } from '../components/StateView';
-import { colors } from '../styles/colors';
+import { useColors } from '../context/ThemeContext';
+import type { Colors } from '../styles/colors';
 import { ESTADO_COLORS, ESTADO_LABELS, PASOS } from '../utils/estadosPedido';
 import { fechaLarga } from '../utils/fechas';
 import { nombreRestaurante } from '../utils/negocios';
@@ -33,6 +34,8 @@ export default function PedidoDetalleScreen({ navigation, route }: Props) {
   const [negocio, setNegocio] = useState<Negocio | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
+  const colors = useColors();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
 
   useEffect(() => {
     if (!firebaseReady || !uid) {
@@ -226,90 +229,92 @@ export default function PedidoDetalleScreen({ navigation, route }: Props) {
   );
 }
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: colors.background },
-  center: { justifyContent: 'center', alignItems: 'center', gap: 12, padding: 16 },
-  title: { color: colors.textPrimary, fontSize: 20, fontWeight: '900' },
-  subtitle: { color: colors.textMuted, fontSize: 14, textAlign: 'center' },
+function makeStyles(c: Colors) {
+  return StyleSheet.create({
+    container: { flex: 1, backgroundColor: c.background },
+    center: { justifyContent: 'center', alignItems: 'center', gap: 12, padding: 16 },
+    title: { color: c.textPrimary, fontSize: 20, fontWeight: '900' },
+    subtitle: { color: c.textMuted, fontSize: 14, textAlign: 'center' },
 
-  header: {
-    gap: 10,
-    paddingHorizontal: 16,
-    paddingBottom: 12,
-  },
-  badge: { paddingHorizontal: 12, paddingVertical: 6, borderRadius: 999 },
-  badgeText: { color: colors.white, fontSize: 12, fontWeight: '800' },
+    header: {
+      gap: 10,
+      paddingHorizontal: 16,
+      paddingBottom: 12,
+    },
+    badge: { paddingHorizontal: 12, paddingVertical: 6, borderRadius: 999 },
+    badgeText: { color: c.white, fontSize: 12, fontWeight: '800' },
 
-  list: { paddingHorizontal: 16, paddingBottom: 24 },
-  headerBlock: { gap: 12, paddingBottom: 8 },
-  separator: { height: 8 },
+    list: { paddingHorizontal: 16, paddingBottom: 24 },
+    headerBlock: { gap: 12, paddingBottom: 8 },
+    separator: { height: 8 },
 
-  timeline: { flexDirection: 'row', alignItems: 'flex-start', paddingVertical: 8 },
-  paso: { flex: 1, alignItems: 'center', gap: 4 },
-  pasoDot: {
-    width: 24,
-    height: 24,
-    borderRadius: 12,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  pasoLabel: { color: colors.textMuted, fontSize: 10, textAlign: 'center' },
-  pasoLabelDone: { color: colors.textPrimary, fontWeight: '700' },
-  pasoLine: {
-    position: 'absolute',
-    top: 12,
-    left: '60%',
-    right: '-40%',
-    height: 2,
-    backgroundColor: colors.border,
-  },
+    timeline: { flexDirection: 'row', alignItems: 'flex-start', paddingVertical: 8 },
+    paso: { flex: 1, alignItems: 'center', gap: 4 },
+    pasoDot: {
+      width: 24,
+      height: 24,
+      borderRadius: 12,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    pasoLabel: { color: c.textMuted, fontSize: 10, textAlign: 'center' },
+    pasoLabelDone: { color: c.textPrimary, fontWeight: '700' },
+    pasoLine: {
+      position: 'absolute',
+      top: 12,
+      left: '60%',
+      right: '-40%',
+      height: 2,
+      backgroundColor: c.border,
+    },
 
-  infoCard: {
-    gap: 8,
-    padding: 14,
-    borderWidth: 1,
-    borderColor: colors.border,
-    borderRadius: 16,
-    backgroundColor: colors.surface,
-  },
-  infoRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  meta: { color: colors.textMuted, fontSize: 13, flex: 1 },
+    infoCard: {
+      gap: 8,
+      padding: 14,
+      borderWidth: 1,
+      borderColor: c.border,
+      borderRadius: 16,
+      backgroundColor: c.surface,
+    },
+    infoRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+    meta: { color: c.textMuted, fontSize: 13, flex: 1 },
 
-  sectionTitle: { color: colors.textPrimary, fontSize: 17, fontWeight: '800', marginTop: 4 },
+    sectionTitle: { color: c.textPrimary, fontSize: 17, fontWeight: '800', marginTop: 4 },
 
-  card: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
-    padding: 12,
-    borderWidth: 1,
-    borderColor: colors.border,
-    borderRadius: 16,
-    backgroundColor: colors.surface,
-  },
-  cardInfo: { flex: 1, gap: 2 },
-  dish: { color: colors.textPrimary, fontSize: 15, fontWeight: '700' },
-  subtotal: { color: colors.textPrimary, fontSize: 14, fontWeight: '800' },
+    card: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 10,
+      padding: 12,
+      borderWidth: 1,
+      borderColor: c.border,
+      borderRadius: 16,
+      backgroundColor: c.surface,
+    },
+    cardInfo: { flex: 1, gap: 2 },
+    dish: { color: c.textPrimary, fontSize: 15, fontWeight: '700' },
+    subtotal: { color: c.textPrimary, fontSize: 14, fontWeight: '800' },
 
-  totalRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginTop: 12,
-    padding: 14,
-    borderRadius: 16,
-    backgroundColor: colors.surface,
-    borderWidth: 1,
-    borderColor: colors.border,
-  },
-  totalLabel: { color: colors.textMuted, fontSize: 15, fontWeight: '600' },
-  total: { color: colors.primary, fontSize: 18, fontWeight: '900' },
+    totalRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      marginTop: 12,
+      padding: 14,
+      borderRadius: 16,
+      backgroundColor: c.surface,
+      borderWidth: 1,
+      borderColor: c.border,
+    },
+    totalLabel: { color: c.textMuted, fontSize: 15, fontWeight: '600' },
+    total: { color: c.primary, fontSize: 18, fontWeight: '900' },
 
-  primaryButton: {
-    paddingHorizontal: 20,
-    paddingVertical: 10,
-    borderRadius: 12,
-    backgroundColor: colors.primary,
-  },
-  primaryText: { color: colors.surface, fontSize: 14, fontWeight: '700' },
-});
+    primaryButton: {
+      paddingHorizontal: 20,
+      paddingVertical: 10,
+      borderRadius: 12,
+      backgroundColor: c.primary,
+    },
+    primaryText: { color: c.white, fontSize: 14, fontWeight: '700' },
+  });
+}

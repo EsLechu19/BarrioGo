@@ -1,5 +1,7 @@
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { Ionicons } from '@expo/vector-icons';
+import { StyleSheet } from 'react-native';
+import { useMemo } from 'react';
 import { TabParamList } from './TabParamList';
 import HomeScreen from '../screens/HomeScreen';
 import PedidosScreen from '../screens/PedidosScreen';
@@ -8,13 +10,16 @@ import PerfilScreen from '../screens/PerfilScreen';
 import NegocioScreen from '../screens/NegocioScreen';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuth } from '../context/AuthContext';
-import { colors } from '../styles/colors';
+import { useColors } from '../context/ThemeContext';
+import type { Colors } from '../styles/colors';
 
 const Tab = createBottomTabNavigator<TabParamList>();
 
 export function TabNavigator() {
   const { rol } = useAuth();
   const insets = useSafeAreaInsets();
+  const colors = useColors();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
   const bottomInset = Math.max(insets.bottom, 8);
   return (
     <Tab.Navigator
@@ -23,24 +28,11 @@ export function TabNavigator() {
         tabBarActiveTintColor: colors.primary,
         tabBarInactiveTintColor: colors.textMuted,
         tabBarHideOnKeyboard: true,
-        tabBarStyle: {
-          height: 60 + bottomInset,
-          paddingTop: 8,
-          paddingBottom: bottomInset,
-          backgroundColor: colors.surface,
-          borderTopWidth: 1,
-          borderTopColor: colors.border,
-          elevation: 8,
-          shadowColor: '#0f172a',
-          shadowOffset: { width: 0, height: -2 },
-          shadowOpacity: 0.08,
-          shadowRadius: 8,
-        },
-        tabBarLabelStyle: {
-          fontSize: 11,
-          fontWeight: '600',
-          marginTop: 2,
-        },
+        tabBarStyle: [
+          styles.tabBar,
+          { height: 60 + bottomInset, paddingBottom: bottomInset },
+        ],
+        tabBarLabelStyle: styles.tabBarLabel,
       }}
     >
       <Tab.Screen
@@ -97,4 +89,25 @@ export function TabNavigator() {
       ) : null}
     </Tab.Navigator>
   );
+}
+
+function makeStyles(c: Colors) {
+  return StyleSheet.create({
+    tabBar: {
+      paddingTop: 8,
+      backgroundColor: c.surface,
+      borderTopWidth: 1,
+      borderTopColor: c.border,
+      elevation: 8,
+      shadowColor: '#0f172a',
+      shadowOffset: { width: 0, height: -2 },
+      shadowOpacity: 0.08,
+      shadowRadius: 8,
+    },
+    tabBarLabel: {
+      fontSize: 11,
+      fontWeight: '600',
+      marginTop: 2,
+    },
+  });
 }

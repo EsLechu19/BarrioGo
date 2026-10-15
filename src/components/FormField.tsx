@@ -1,7 +1,8 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { StyleSheet, Text, View, TextInput, TouchableOpacity, KeyboardTypeOptions } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { colors } from '../styles/colors';
+import { useColors } from '../context/ThemeContext';
+import type { Colors } from '../styles/colors';
 
 type Props = {
     label?: string;
@@ -24,6 +25,8 @@ export function FormField({
     keyboardType,
     autoCapitalize,
 }: Props) {
+    const colors = useColors();
+    const styles = useMemo(() => makeStyles(colors), [colors]);
     const [hidden, setHidden] = useState<boolean>(secureTextEntry ?? false);
     const showEye = secureTextEntry === true;
     return (
@@ -64,18 +67,20 @@ export function FormField({
     );
 }
 
-const styles = StyleSheet.create({
-    // Base
-    wrapper: { width: '100%', gap: 16 },
+function makeStyles(c: Colors) {
+    return StyleSheet.create({
+        // Base
+        wrapper: { width: '100%', gap: 16 },
 
-    // Label
-    label: { fontSize: 14, fontWeight: 'bold' },
-    errorText: { color: colors.error, fontSize: 13, fontWeight: '600' },
+        // Label
+        label: { fontSize: 14, fontWeight: 'bold', color: c.textPrimary },
+        errorText: { color: c.error, fontSize: 13, fontWeight: '600' },
 
-    // Input + error juntos (gap corto entre uno y otro)
-    fieldGroup: { width: '100%', gap: 6 },
-    inputContainer: { width: '100%', position: 'relative', justifyContent: 'center' },
-    input: { width: '100%', height: 48, paddingHorizontal: 16, borderWidth: 1, borderColor: colors.border, borderRadius: 12, backgroundColor: colors.surface, fontSize: 16 },
-    inputWithIcon: { paddingRight: 48 },
-    eyeButton: { position: 'absolute', right: 14, height: 48, justifyContent: 'center', alignItems: 'center' },
-});
+        // Input + error juntos (gap corto entre uno y otro)
+        fieldGroup: { width: '100%', gap: 6 },
+        inputContainer: { width: '100%', position: 'relative', justifyContent: 'center' },
+        input: { width: '100%', height: 48, paddingHorizontal: 16, borderWidth: 1, borderColor: c.border, borderRadius: 12, backgroundColor: c.surface, fontSize: 16 },
+        inputWithIcon: { paddingRight: 48 },
+        eyeButton: { position: 'absolute', right: 14, height: 48, justifyContent: 'center', alignItems: 'center' },
+    });
+}

@@ -7,6 +7,9 @@ const KEYS = {
   cart: 'barriogo:cart:v1',
   favorites: 'barriogo:favorites:v1',
   session: 'barriogo:session:v1',
+  // Preferencia de tema: misma clave que el lab del curso (@prefs/theme),
+  // guardada como string 'dark' | 'light' (nunca como boolean).
+  theme: '@prefs/theme',
 } as const;
 
 export interface Session {
@@ -69,4 +72,14 @@ export const storage = {
   loadSession: () => read(KEYS.session, isSession),
   saveSession: (s: Session) => write(KEYS.session, s),
   clearSession: () => AsyncStorage.removeItem(KEYS.session),
+  // Tema: se guarda como 'dark' | 'light'; al leer se valida el valor.
+  loadTheme: async (): Promise<'dark' | 'light' | null> => {
+    try {
+      const valor = await AsyncStorage.getItem(KEYS.theme);
+      return valor === 'dark' || valor === 'light' ? valor : null;
+    } catch {
+      return null;
+    }
+  },
+  saveTheme: (tema: 'dark' | 'light') => write(KEYS.theme, tema),
 };

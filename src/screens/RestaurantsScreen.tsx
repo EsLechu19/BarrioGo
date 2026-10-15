@@ -21,7 +21,8 @@ import { getNegocios } from '../services/api';
 import { UserCoords, formatDistancia, getUserCoords, haversineKm } from '../services/location';
 import { useFavorites } from '../context/FavoritesContext';
 import { RootStackParamList } from '../navigation/RootStackParamList';
-import { colors } from '../styles/colors';
+import { useColors } from '../context/ThemeContext';
+import type { Colors } from '../styles/colors';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Restaurants'>;
 
@@ -65,6 +66,8 @@ export default function RestaurantsScreen({ navigation }: Props) {
   const [filtrosActivos, setFiltrosActivos] = useState<string[]>([]);
   const [userLoc, setUserLoc] = useState<UserCoords | null>(null);
   const { toggle, esFavorito } = useFavorites();
+  const colors = useColors();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
 
   function toggleFiltro(f: string): void {
     if (f === 'Todos') {
@@ -198,14 +201,14 @@ export default function RestaurantsScreen({ navigation }: Props) {
                 <Ionicons
                   name="bicycle-outline"
                   size={15}
-                  color={activo ? colors.surface : colors.primary}
+                  color={activo ? colors.white : colors.primary}
                 />
               ) : null}
               {f === 'Top 4.5+' ? (
                 <Ionicons
                   name="star"
                   size={14}
-                  color={activo ? colors.surface : colors.primary}
+                  color={activo ? colors.white : colors.primary}
                 />
               ) : null}
               <Text style={[styles.chipText, activo && styles.chipTextActive]}>{f}</Text>
@@ -278,87 +281,89 @@ export default function RestaurantsScreen({ navigation }: Props) {
   );
 }
 
-const styles = StyleSheet.create({
-  // Base
-  container: { flex: 1, paddingHorizontal: 16, backgroundColor: colors.background },
-  center: { justifyContent: 'center', alignItems: 'center', gap: 12 },
-  statusText: { color: colors.textMuted, fontSize: 14, textAlign: 'center' },
+function makeStyles(c: Colors) {
+  return StyleSheet.create({
+    // Base
+    container: { flex: 1, paddingHorizontal: 16, backgroundColor: c.background },
+    center: { justifyContent: 'center', alignItems: 'center', gap: 12 },
+    statusText: { color: c.textMuted, fontSize: 14, textAlign: 'center' },
 
-  // Area titulo
-  header: { marginBottom: 12 },
+    // Area titulo
+    header: { marginBottom: 12 },
 
-  // Busqueda
-  inputWrapper: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    paddingHorizontal: 16,
-    borderWidth: 1,
-    borderColor: colors.border,
-    borderRadius: 22,
-    backgroundColor: colors.surface,
-  },
-  input: { flex: 1, paddingVertical: 11, fontSize: 15, color: colors.textPrimary },
+    // Busqueda
+    inputWrapper: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 8,
+      paddingHorizontal: 16,
+      borderWidth: 1,
+      borderColor: c.border,
+      borderRadius: 22,
+      backgroundColor: c.surface,
+    },
+    input: { flex: 1, paddingVertical: 11, fontSize: 15, color: c.textPrimary },
 
-  // Filtros
-  filterScroll: { flexGrow: 0, flexShrink: 0, marginHorizontal: -16, paddingHorizontal: 16 },
-  filterRow: { alignItems: 'center', gap: 8, paddingVertical: 12, paddingRight: 32 },
-  chip: {
-    flexShrink: 0,
-    flexDirection: 'row',
-    alignItems: 'center',
-    alignSelf: 'flex-start',
-    gap: 5,
-    paddingHorizontal: 15,
-    paddingVertical: 9,
-    borderRadius: 999,
-    backgroundColor: colors.surface,
-    borderWidth: 1,
-    borderColor: colors.border,
-  },
-  chipActive: { backgroundColor: colors.primary, borderColor: colors.primary },
-  chipText: { fontSize: 13.5, fontWeight: '700', color: colors.textPrimary },
-  chipTextActive: { color: colors.surface },
-  clearChip: {
-    flexShrink: 0,
-    flexDirection: 'row',
-    alignItems: 'center',
-    alignSelf: 'flex-start',
-    gap: 4,
-    paddingHorizontal: 14,
-    paddingVertical: 9,
-    borderRadius: 999,
-    backgroundColor: colors.surface,
-    borderWidth: 1.5,
-    borderColor: colors.error,
-  },
-  clearChipText: { fontSize: 13.5, fontWeight: '800', color: colors.error },
-  gpsNote: { color: colors.textMuted, fontSize: 12, marginBottom: 4 },
+    // Filtros
+    filterScroll: { flexGrow: 0, flexShrink: 0, marginHorizontal: -16, paddingHorizontal: 16 },
+    filterRow: { alignItems: 'center', gap: 8, paddingVertical: 12, paddingRight: 32 },
+    chip: {
+      flexShrink: 0,
+      flexDirection: 'row',
+      alignItems: 'center',
+      alignSelf: 'flex-start',
+      gap: 5,
+      paddingHorizontal: 15,
+      paddingVertical: 9,
+      borderRadius: 999,
+      backgroundColor: c.surface,
+      borderWidth: 1,
+      borderColor: c.border,
+    },
+    chipActive: { backgroundColor: c.primary, borderColor: c.primary },
+    chipText: { fontSize: 13.5, fontWeight: '700', color: c.textPrimary },
+    chipTextActive: { color: c.white },
+    clearChip: {
+      flexShrink: 0,
+      flexDirection: 'row',
+      alignItems: 'center',
+      alignSelf: 'flex-start',
+      gap: 4,
+      paddingHorizontal: 14,
+      paddingVertical: 9,
+      borderRadius: 999,
+      backgroundColor: c.surface,
+      borderWidth: 1.5,
+      borderColor: c.error,
+    },
+    clearChipText: { fontSize: 13.5, fontWeight: '800', color: c.error },
+    gpsNote: { color: c.textMuted, fontSize: 12, marginBottom: 4 },
 
-  // Area lista de restaurante
-  listContent: { paddingTop: 8 },
-  separator: { height: 12 },
+    // Area lista de restaurante
+    listContent: { paddingTop: 8 },
+    separator: { height: 12 },
 
-  // Area vacio
-  emptyWrap: { paddingVertical: 40, paddingHorizontal: 24 },
-  emptyIcon: { marginBottom: 4 },
-  clearButton: {
-    marginTop: 8,
-    paddingHorizontal: 20,
-    paddingVertical: 10,
-    borderRadius: 12,
-    borderWidth: 1.5,
-    borderColor: colors.primary,
-    backgroundColor: colors.surface,
-  },
-  clearText: { color: colors.primary, fontSize: 14, fontWeight: '700' },
+    // Area vacio
+    emptyWrap: { paddingVertical: 40, paddingHorizontal: 24 },
+    emptyIcon: { marginBottom: 4 },
+    clearButton: {
+      marginTop: 8,
+      paddingHorizontal: 20,
+      paddingVertical: 10,
+      borderRadius: 12,
+      borderWidth: 1.5,
+      borderColor: c.primary,
+      backgroundColor: c.surface,
+    },
+    clearText: { color: c.primary, fontSize: 14, fontWeight: '700' },
 
-  // Area loading / error
-  retryButton: {
-    paddingHorizontal: 20,
-    paddingVertical: 10,
-    borderRadius: 12,
-    backgroundColor: colors.primary,
-  },
-  retryText: { color: colors.surface, fontSize: 14, fontWeight: '700' },
-});
+    // Area loading / error
+    retryButton: {
+      paddingHorizontal: 20,
+      paddingVertical: 10,
+      borderRadius: 12,
+      backgroundColor: c.primary,
+    },
+    retryText: { color: c.white, fontSize: 14, fontWeight: '700' },
+  });
+}

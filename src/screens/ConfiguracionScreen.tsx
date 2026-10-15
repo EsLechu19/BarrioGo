@@ -1,8 +1,7 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import {
   ScrollView,
   StyleSheet,
-  Text,
   TouchableOpacity,
   View,
 } from 'react-native';
@@ -12,9 +11,57 @@ import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../navigation/RootStackParamList';
 import { ScreenHeader } from '../components/ScreenHeader';
 import { SettingRow } from '../components/SettingRow';
-import { colors } from '../styles/colors';
+import { Colors } from '../styles/colors';
+import { useTheme } from '../context/ThemeContext';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Configuracion'>;
+
+function makeStyles(c: Colors) {
+  return StyleSheet.create({
+    screen: { flex: 1, backgroundColor: c.background },
+    container: {
+      flexGrow: 1,
+      gap: 12,
+      padding: 16,
+      backgroundColor: c.background,
+    },
+
+    card: {
+      paddingHorizontal: 6,
+      borderWidth: 1,
+      borderColor: c.border,
+      borderRadius: 16,
+      backgroundColor: c.surface,
+    },
+    divider: { height: 1, marginLeft: 60, backgroundColor: c.border },
+
+    // Toggle personalizado (mismo lenguaje que el resto de la app): pista
+    // redondeada + bolita deslizante, sin el Switch nativo.
+    track: {
+      width: 54,
+      height: 32,
+      borderRadius: 16,
+      padding: 3,
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'flex-start',
+      backgroundColor: c.border,
+      borderWidth: 1,
+      borderColor: c.border,
+    },
+    trackOn: { backgroundColor: c.primary, borderColor: c.primary },
+    thumb: {
+      width: 24,
+      height: 24,
+      borderRadius: 12,
+      alignItems: 'center',
+      justifyContent: 'center',
+      backgroundColor: c.surface,
+    },
+    thumbOn: { marginLeft: 22 },
+    thumbOff: { marginLeft: 0 },
+  });
+}
 
 // Toggle personalizado (mismo lenguaje que el resto de la app): pista
 // redondeada + bolita deslizante, sin el Switch nativo.
@@ -27,6 +74,8 @@ function AjusteToggle({
   onCambiar: (v: boolean) => void;
   etiqueta: string;
 }) {
+  const { colors } = useTheme();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
   return (
     <TouchableOpacity
       style={[styles.track, encendido && styles.trackOn]}
@@ -45,20 +94,34 @@ function AjusteToggle({
   );
 }
 
-// TODO(back): persistir en AsyncStorage / users/{uid} (solo diseño en memoria).
+// Los otros 3 ajustes son solo diseño en memoria.
+// TODO(back): persistir en AsyncStorage / users/{uid}.
 export default function ConfiguracionScreen({ navigation }: Props) {
   const insets = useSafeAreaInsets();
+  const { colors, isDark, toggleTheme } = useTheme();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
   const [notifs, setNotifs] = useState<boolean>(true);
   const [ubicacion, setUbicacion] = useState<boolean>(true);
   const [ofertas, setOfertas] = useState<boolean>(false);
 
   const interruptores: {
-    icono: 'notifications-outline' | 'location-outline' | 'pricetag-outline';
+    icono:
+      | 'moon-outline'
+      | 'notifications-outline'
+      | 'location-outline'
+      | 'pricetag-outline';
     titulo: string;
     subtitulo: string;
     valor: boolean;
     onCambiar: (v: boolean) => void;
   }[] = [
+    {
+      icono: 'moon-outline',
+      titulo: 'Modo oscuro',
+      subtitulo: 'Se recuerda al reabrir la app',
+      valor: isDark,
+      onCambiar: toggleTheme,
+    },
     {
       icono: 'notifications-outline',
       titulo: 'Notificaciones de pedidos',
@@ -84,88 +147,44 @@ export default function ConfiguracionScreen({ navigation }: Props) {
 
   return (
     <View style={[styles.screen, { paddingTop: insets.top + 12 }]}>
-    <ScrollView
-      contentContainerStyle={styles.container}
-      showsVerticalScrollIndicator={false}
-    >
-      <ScreenHeader
-        titulo="Configuración"
-        onBack={() => navigation.goBack()}
-        backAccessibilityLabel="Volver al perfil"
-      />
-
-      <View style={styles.card}>
-        {interruptores.map((op, i) => (
-          <View key={op.titulo}>
-            {i > 0 ? <View style={styles.divider} /> : null}
-            <SettingRow
-              icono={op.icono}
-              titulo={op.titulo}
-              subtitulo={op.subtitulo}
-              right={
-                <AjusteToggle
-                  encendido={op.valor}
-                  onCambiar={op.onCambiar}
-                  etiqueta={op.titulo}
-                />
-              }
-            />
-          </View>
-        ))}
-      </View>
-
-      <View style={styles.card}>
-        <SettingRow
-          icono="information-circle-outline"
-          titulo="Acerca de BarrioGo"
-          subtitulo="Versión 1.0.0"
+      <ScrollView
+        contentContainerStyle={styles.container}
+        showsVerticalScrollIndicator={false}
+      >
+        <ScreenHeader
+          titulo="Configuración"
+          onBack={() => navigation.goBack()}
+          backAccessibilityLabel="Volver al perfil"
         />
-      </View>
 
-      <Text style={styles.hint}>
-        Los cambios se guardan solo en esta sesión (diseño).
-      </Text>
-    </ScrollView>
+        <View style={styles.card}>
+          {interruptores.map((op, i) => (
+            <View key={op.titulo}>
+              {i > 0 ? <View style={styles.divider} /> : null}
+              <SettingRow
+                icono={op.icono}
+                titulo={op.titulo}
+                subtitulo={op.subtitulo}
+                right={
+                  <AjusteToggle
+                    encendido={op.valor}
+                    onCambiar={op.onCambiar}
+                    etiqueta={op.titulo}
+                  />
+                }
+              />
+            </View>
+          ))}
+        </View>
+
+        <View style={styles.card}>
+          <SettingRow
+            icono="information-circle-outline"
+            titulo="Acerca de BarrioGo"
+            subtitulo="Versión 1.0.0"
+          />
+        </View>
+      </ScrollView>
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: colors.background },
-  container: { flexGrow: 1, gap: 12, padding: 16, backgroundColor: colors.background },
-
-  card: {
-    paddingHorizontal: 6,
-    borderWidth: 1,
-    borderColor: colors.border,
-    borderRadius: 16,
-    backgroundColor: colors.surface,
-  },
-  divider: { height: 1, marginLeft: 60, backgroundColor: colors.border },
-
-  // Toggle personalizado
-  track: {
-    width: 54,
-    height: 32,
-    borderRadius: 16,
-    padding: 3,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'flex-start',
-    backgroundColor: colors.border,
-    borderWidth: 1,
-    borderColor: colors.border,
-  },
-  trackOn: { backgroundColor: colors.primary, borderColor: colors.primary },
-  thumb: {
-    width: 24,
-    height: 24,
-    borderRadius: 12,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: colors.surface,
-  },
-  thumbOn: { marginLeft: 22 },
-  thumbOff: { marginLeft: 0 },
-  hint: { color: colors.textMuted, fontSize: 12, textAlign: 'center' },
-});

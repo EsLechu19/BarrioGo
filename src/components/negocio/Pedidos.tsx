@@ -1,8 +1,10 @@
+import { useMemo } from 'react';
 import { ActivityIndicator, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Pedido } from '../../types/Pedido';
 import { SeccionCard } from '../SeccionCard';
-import { colors } from '../../styles/colors';
+import { useColors } from '../../context/ThemeContext';
+import type { Colors } from '../../styles/colors';
 import { ESTADO_COLORS, ESTADO_ICONS, SIGUIENTE_ESTADO } from '../../utils/estadosPedido';
 import { fechaCorta } from '../../utils/fechas';
 
@@ -29,6 +31,8 @@ export function Pedidos({
   avanzandoId,
   onAvanzar,
 }: Props) {
+  const colors = useColors();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
   return (
     <ScrollView
       style={styles.sectionScrollView}
@@ -99,7 +103,7 @@ export function Pedidos({
                         ? 'Actualizando...'
                         : `Avanzar a ${SIGUIENTE_ESTADO[item.estado].replace('_', ' ')}`}
                     </Text>
-                    <Ionicons name="arrow-forward" size={16} color={colors.surface} />
+                    <Ionicons name="arrow-forward" size={16} color={colors.white} />
                   </TouchableOpacity>
                 ) : (
                   <View style={styles.doneRow}>
@@ -120,49 +124,51 @@ export function Pedidos({
   );
 }
 
-const styles = StyleSheet.create({
-  sectionScrollView: { flex: 1 },
-  sectionScroll: { gap: 10, paddingBottom: 120 },
-  sectionTitle: { color: colors.textPrimary, fontSize: 18, fontWeight: '800' },
-  subtitle: { color: colors.textMuted, fontSize: 14, textAlign: 'center' },
+function makeStyles(c: Colors) {
+  return StyleSheet.create({
+    sectionScrollView: { flex: 1 },
+    sectionScroll: { gap: 10, paddingBottom: 120 },
+    sectionTitle: { color: c.textPrimary, fontSize: 18, fontWeight: '800' },
+    subtitle: { color: c.textMuted, fontSize: 14, textAlign: 'center' },
 
-  statsRow: { flexDirection: 'row', gap: 8 },
-  statCard: {
-    flex: 1,
-    alignItems: 'center',
-    gap: 2,
-    paddingVertical: 10,
-    paddingHorizontal: 4,
-    borderWidth: 1,
-    borderColor: colors.border,
-    borderRadius: 16,
-    backgroundColor: colors.surface,
-  },
-  statNum: { fontSize: 18, fontWeight: '900' },
-  statLabel: { color: colors.textMuted, fontSize: 11, fontWeight: '600' },
+    statsRow: { flexDirection: 'row', gap: 8 },
+    statCard: {
+      flex: 1,
+      alignItems: 'center',
+      gap: 2,
+      paddingVertical: 10,
+      paddingHorizontal: 4,
+      borderWidth: 1,
+      borderColor: c.border,
+      borderRadius: 16,
+      backgroundColor: c.surface,
+    },
+    statNum: { fontSize: 18, fontWeight: '900', color: c.textPrimary },
+    statLabel: { color: c.textMuted, fontSize: 11, fontWeight: '600' },
 
-  centerRow: { alignItems: 'center', gap: 8, paddingVertical: 12 },
-  disabledButton: { opacity: 0.6 },
+    centerRow: { alignItems: 'center', gap: 8, paddingVertical: 12 },
+    disabledButton: { opacity: 0.6 },
 
-  advanceButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 8,
-    paddingVertical: 11,
-    paddingHorizontal: 16,
-    borderRadius: 12,
-    backgroundColor: colors.primary,
-  },
-  advanceText: { color: colors.surface, fontSize: 14, fontWeight: '700' },
-  doneRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 6,
-    paddingVertical: 8,
-    borderRadius: 12,
-    backgroundColor: colors.successSoft,
-  },
-  doneText: { color: colors.success, fontSize: 13, fontWeight: '700' },
-});
+    advanceButton: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'center',
+      gap: 8,
+      paddingVertical: 11,
+      paddingHorizontal: 16,
+      borderRadius: 12,
+      backgroundColor: c.primary,
+    },
+    advanceText: { color: c.white, fontSize: 14, fontWeight: '700' },
+    doneRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'center',
+      gap: 6,
+      paddingVertical: 8,
+      borderRadius: 12,
+      backgroundColor: c.successSoft,
+    },
+    doneText: { color: c.success, fontSize: 13, fontWeight: '700' },
+  });
+}

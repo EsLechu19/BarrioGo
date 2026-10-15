@@ -1,7 +1,9 @@
+import { useMemo } from 'react';
 import { Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Negocio } from '../../types/Negocio';
-import { colors } from '../../styles/colors';
+import { useColors } from '../../context/ThemeContext';
+import type { Colors } from '../../styles/colors';
 
 // Encabezado del panel del negocio: foto + nombre + dirección + botón Editar.
 type Props = {
@@ -11,6 +13,8 @@ type Props = {
 };
 
 export function Perfil({ negocio, negocioId, onEditar }: Props) {
+  const colors = useColors();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
   return (
     <View style={styles.heroCard}>
       {negocio?.imagen?.trim() ? (
@@ -44,36 +48,38 @@ export function Perfil({ negocio, negocioId, onEditar }: Props) {
   );
 }
 
-const styles = StyleSheet.create({
-  heroCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-    padding: 14,
-    borderWidth: 1,
-    borderColor: colors.border,
-    borderRadius: 16,
-    backgroundColor: colors.surface,
-  },
-  heroPhoto: { width: 56, height: 56, borderRadius: 28, backgroundColor: colors.border },
-  heroPhotoPlaceholder: {
-    backgroundColor: colors.primarySoft,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  heroText: { flex: 1, gap: 2 },
-  heroTitle: { color: colors.textPrimary, fontSize: 19, fontWeight: '900' },
-  heroSub: { color: colors.textMuted, fontSize: 13 },
-  editButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-    paddingVertical: 8,
-    paddingHorizontal: 12,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: colors.border,
-    backgroundColor: colors.background,
-  },
-  editText: { color: colors.primary, fontSize: 14, fontWeight: '700' },
-});
+function makeStyles(c: Colors) {
+  return StyleSheet.create({
+    heroCard: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 12,
+      padding: 14,
+      borderWidth: 1,
+      borderColor: c.border,
+      borderRadius: 16,
+      backgroundColor: c.surface,
+    },
+    heroPhoto: { width: 56, height: 56, borderRadius: 28, backgroundColor: c.border },
+    heroPhotoPlaceholder: {
+      backgroundColor: c.primarySoft,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    heroText: { flex: 1, gap: 2 },
+    heroTitle: { color: c.textPrimary, fontSize: 19, fontWeight: '900' },
+    heroSub: { color: c.textMuted, fontSize: 13 },
+    editButton: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 4,
+      paddingVertical: 8,
+      paddingHorizontal: 12,
+      borderRadius: 12,
+      borderWidth: 1,
+      borderColor: c.border,
+      backgroundColor: c.background,
+    },
+    editText: { color: c.primary, fontSize: 14, fontWeight: '700' },
+  });
+}

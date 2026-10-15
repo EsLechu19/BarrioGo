@@ -1,3 +1,4 @@
+import { useMemo } from 'react';
 import {
   ScrollView,
   StyleSheet,
@@ -13,7 +14,8 @@ import {
   MAX_TEXTO_OPINION,
   Opinion,
 } from '../../types/Opinion';
-import { colors } from '../../styles/colors';
+import { useColors } from '../../context/ThemeContext';
+import type { Colors } from '../../styles/colors';
 
 const ETIQUETA_ESTRELLAS: Record<number, string> = {
   0: 'Tocá una estrella',
@@ -48,6 +50,8 @@ export function ReviewsTab({
   onTextoChange,
   onPublicar,
 }: Props) {
+  const colors = useColors();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
   return (
     <ScrollView contentContainerStyle={styles.tabContent}>
       {/* Resumen rating (promedio local del mock) */}
@@ -150,101 +154,103 @@ export function ReviewsTab({
   );
 }
 
-const styles = StyleSheet.create({
-  tabContent: { paddingHorizontal: 16, paddingTop: 12, paddingBottom: 20, gap: 12 },
-  statusText: { color: colors.textMuted, fontSize: 14, textAlign: 'center' },
-  meta: { color: colors.textMuted, fontSize: 13 },
-  ratingBig: { color: colors.textPrimary, fontSize: 22, fontWeight: '900' },
-  reviewSummary: {
-    alignItems: 'center',
-    gap: 4,
-    padding: 18,
-    borderWidth: 1,
-    borderColor: colors.border,
-    borderRadius: 16,
-    backgroundColor: colors.surface,
-  },
-  distBlock: { width: '100%', gap: 6, marginTop: 8 },
-  distRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  distLabel: { color: colors.textMuted, fontSize: 12, fontWeight: '700', width: 24 },
-  distTrack: {
-    flex: 1,
-    flexDirection: 'row',
-    height: 8,
-    borderRadius: 4,
-    overflow: 'hidden',
-    backgroundColor: colors.background,
-  },
-  distFill: { backgroundColor: colors.rating, borderRadius: 4 },
-  distCount: { color: colors.textMuted, fontSize: 12, width: 20, textAlign: 'right' },
-  formCard: {
-    gap: 10,
-    padding: 14,
-    borderWidth: 1,
-    borderColor: colors.border,
-    borderRadius: 16,
-    backgroundColor: colors.surface,
-  },
-  formTitle: { color: colors.textPrimary, fontSize: 15, fontWeight: '800' },
-  starsBox: {
-    alignItems: 'center',
-    gap: 8,
-    paddingVertical: 12,
-    paddingHorizontal: 16,
-    borderRadius: 16,
-    backgroundColor: colors.primarySoft,
-  },
-  starsRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10 },
-  starButton: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: colors.surface,
-    borderWidth: 1,
-    borderColor: colors.border,
-  },
-  starButtonActive: { backgroundColor: colors.primary, borderColor: colors.primary },
-  starsLabel: { color: colors.textPrimary, fontSize: 14, fontWeight: '800' },
-  opinionInput: {
-    minHeight: 80,
-    padding: 12,
-    borderWidth: 1,
-    borderColor: colors.border,
-    borderRadius: 12,
-    backgroundColor: colors.background,
-    color: colors.textPrimary,
-    fontSize: 14,
-    textAlignVertical: 'top',
-  },
-  formFooter: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 8 },
-  charCount: { color: colors.textMuted, fontSize: 12 },
-  publishButton: {
-    paddingHorizontal: 20,
-    paddingVertical: 10,
-    borderRadius: 12,
-    backgroundColor: colors.primary,
-  },
-  publishButtonDisabled: { opacity: 0.4 },
-  publishText: { color: colors.surface, fontSize: 14, fontWeight: '700' },
-  emptyCard: {
-    alignItems: 'center',
-    gap: 8,
-    padding: 24,
-    borderWidth: 1,
-    borderStyle: 'dashed',
-    borderColor: colors.border,
-    borderRadius: 16,
-    backgroundColor: colors.surface,
-  },
-  emptyIcon: {
-    width: 60,
-    height: 60,
-    borderRadius: 30,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: colors.primarySoft,
-  },
-  emptyTitle: { color: colors.textPrimary, fontSize: 16, fontWeight: '800' },
-});
+function makeStyles(c: Colors) {
+  return StyleSheet.create({
+    tabContent: { paddingHorizontal: 16, paddingTop: 12, paddingBottom: 20, gap: 12 },
+    statusText: { color: c.textMuted, fontSize: 14, textAlign: 'center' },
+    meta: { color: c.textMuted, fontSize: 13 },
+    ratingBig: { color: c.textPrimary, fontSize: 22, fontWeight: '900' },
+    reviewSummary: {
+      alignItems: 'center',
+      gap: 4,
+      padding: 18,
+      borderWidth: 1,
+      borderColor: c.border,
+      borderRadius: 16,
+      backgroundColor: c.surface,
+    },
+    distBlock: { width: '100%', gap: 6, marginTop: 8 },
+    distRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+    distLabel: { color: c.textMuted, fontSize: 12, fontWeight: '700', width: 24 },
+    distTrack: {
+      flex: 1,
+      flexDirection: 'row',
+      height: 8,
+      borderRadius: 4,
+      overflow: 'hidden',
+      backgroundColor: c.background,
+    },
+    distFill: { backgroundColor: c.rating, borderRadius: 4 },
+    distCount: { color: c.textMuted, fontSize: 12, width: 20, textAlign: 'right' },
+    formCard: {
+      gap: 10,
+      padding: 14,
+      borderWidth: 1,
+      borderColor: c.border,
+      borderRadius: 16,
+      backgroundColor: c.surface,
+    },
+    formTitle: { color: c.textPrimary, fontSize: 15, fontWeight: '800' },
+    starsBox: {
+      alignItems: 'center',
+      gap: 8,
+      paddingVertical: 12,
+      paddingHorizontal: 16,
+      borderRadius: 16,
+      backgroundColor: c.primarySoft,
+    },
+    starsRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10 },
+    starButton: {
+      width: 48,
+      height: 48,
+      borderRadius: 24,
+      alignItems: 'center',
+      justifyContent: 'center',
+      backgroundColor: c.surface,
+      borderWidth: 1,
+      borderColor: c.border,
+    },
+    starButtonActive: { backgroundColor: c.primary, borderColor: c.primary },
+    starsLabel: { color: c.textPrimary, fontSize: 14, fontWeight: '800' },
+    opinionInput: {
+      minHeight: 80,
+      padding: 12,
+      borderWidth: 1,
+      borderColor: c.border,
+      borderRadius: 12,
+      backgroundColor: c.background,
+      color: c.textPrimary,
+      fontSize: 14,
+      textAlignVertical: 'top',
+    },
+    formFooter: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 8 },
+    charCount: { color: c.textMuted, fontSize: 12 },
+    publishButton: {
+      paddingHorizontal: 20,
+      paddingVertical: 10,
+      borderRadius: 12,
+      backgroundColor: c.primary,
+    },
+    publishButtonDisabled: { opacity: 0.4 },
+    publishText: { color: c.white, fontSize: 14, fontWeight: '700' },
+    emptyCard: {
+      alignItems: 'center',
+      gap: 8,
+      padding: 24,
+      borderWidth: 1,
+      borderStyle: 'dashed',
+      borderColor: c.border,
+      borderRadius: 16,
+      backgroundColor: c.surface,
+    },
+    emptyIcon: {
+      width: 60,
+      height: 60,
+      borderRadius: 30,
+      justifyContent: 'center',
+      alignItems: 'center',
+      backgroundColor: c.primarySoft,
+    },
+    emptyTitle: { color: c.textPrimary, fontSize: 16, fontWeight: '800' },
+  });
+}

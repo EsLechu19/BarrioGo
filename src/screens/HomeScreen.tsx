@@ -20,7 +20,8 @@ import { useFavorites } from '../context/FavoritesContext';
 import { useAuth } from '../context/AuthContext';
 import { useCart } from '../context/CartContext';
 import { TabScreenProps } from '../navigation/TabScreenProps';
-import { colors } from '../styles/colors';
+import { useColors } from '../context/ThemeContext';
+import type { Colors } from '../styles/colors';
 import { nombreVisible } from '../utils/usuario';
 
 type Props = TabScreenProps<'InicioTab'>;
@@ -37,6 +38,8 @@ export default function HomeScreen({ navigation }: Props) {
   const { user } = useAuth();
   const { count: cartCount } = useCart();
   const nombre: string = nombreVisible(user);
+  const colors = useColors();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
 
   const load = useCallback(async (isRefresh = false) => {
     if (isRefresh) {
@@ -223,82 +226,84 @@ export default function HomeScreen({ navigation }: Props) {
   );
 }
 
-const styles = StyleSheet.create({
-  // Base
-  container: { flex: 1, padding: 16, backgroundColor: colors.background },
-  center: { justifyContent: 'center', alignItems: 'center', gap: 12 },
-  statusText: { color: colors.textMuted, fontSize: 14, textAlign: 'center' },
+function makeStyles(c: Colors) {
+  return StyleSheet.create({
+    // Base
+    container: { flex: 1, padding: 16, backgroundColor: c.background },
+    center: { justifyContent: 'center', alignItems: 'center', gap: 12 },
+    statusText: { color: c.textMuted, fontSize: 14, textAlign: 'center' },
 
-  // Area del top-bar
-  topBar: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',marginBottom:10 },
-  // Locacion
-  location: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  locationTextBlock: { flexDirection: 'column' },
-  locationLabel: { color: colors.textMuted, fontSize: 12 },
-  locationRow: { flexDirection: 'row', alignItems: 'center', gap: 4 },
-  locationAddress: { color: colors.textPrimary, fontSize: 14, fontWeight: 'bold' },
-  // Notificacion + carrito
-  topActions: { flexDirection: 'row', alignItems: 'center', gap: 10 },
-  iconButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: colors.white,
-    borderColor: colors.border,
-    borderWidth: 1.5,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  cartBadge: {
-    position: 'absolute',
-    top: -4,
-    right: -4,
-    minWidth: 20,
-    height: 20,
-    paddingHorizontal: 4,
-    borderRadius: 10,
-    backgroundColor: colors.primary,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  cartBadgeText: { color: colors.white, fontSize: 11, fontWeight: '800' },
+    // Area del top-bar
+    topBar: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',marginBottom:10 },
+    // Locacion
+    location: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+    locationTextBlock: { flexDirection: 'column' },
+    locationLabel: { color: c.textMuted, fontSize: 12 },
+    locationRow: { flexDirection: 'row', alignItems: 'center', gap: 4 },
+    locationAddress: { color: c.textPrimary, fontSize: 14, fontWeight: 'bold' },
+    // Notificacion + carrito
+    topActions: { flexDirection: 'row', alignItems: 'center', gap: 10 },
+    iconButton: {
+      width: 40,
+      height: 40,
+      borderRadius: 20,
+      backgroundColor: c.surface,
+      borderColor: c.border,
+      borderWidth: 1.5,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    cartBadge: {
+      position: 'absolute',
+      top: -4,
+      right: -4,
+      minWidth: 20,
+      height: 20,
+      paddingHorizontal: 4,
+      borderRadius: 10,
+      backgroundColor: c.primary,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    cartBadgeText: { color: c.white, fontSize: 11, fontWeight: '800' },
 
-  // Area bienvenida y busqueda
-  headerBlock: { gap: 12, marginBottom: 4 },
-  // Bienvenida
-  greeting: { gap: 2 },
-  greetingTitle: { color: colors.textMuted, fontSize: 15 },
-  greetingSubtitle: { color: colors.textPrimary, fontSize: 22, fontWeight: '900' },
-  // Busqueda
-  inputWrapper: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    paddingHorizontal: 16,
-    borderWidth: 1,
-    borderColor: colors.border,
-    borderRadius: 22,
-    backgroundColor: colors.surface,
-  },
-  input: { flex: 1, paddingVertical: 10 },
+    // Area bienvenida y busqueda
+    headerBlock: { gap: 12, marginBottom: 4 },
+    // Bienvenida
+    greeting: { gap: 2 },
+    greetingTitle: { color: c.textMuted, fontSize: 15 },
+    greetingSubtitle: { color: c.textPrimary, fontSize: 22, fontWeight: '900' },
+    // Busqueda
+    inputWrapper: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 8,
+      paddingHorizontal: 16,
+      borderWidth: 1,
+      borderColor: c.border,
+      borderRadius: 22,
+      backgroundColor: c.surface,
+    },
+    input: { flex: 1, paddingVertical: 10 },
 
-  // Area seccion header
-  sectionHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  sectionTitle: { color: colors.textPrimary, fontSize: 18, fontWeight: '800' },
-  seeAll: { color: colors.primary, fontSize: 14, fontWeight: '700' },
-  gpsNote: { color: colors.textMuted, fontSize: 12,paddingBottom:10 },
+    // Area seccion header
+    sectionHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+    sectionTitle: { color: c.textPrimary, fontSize: 18, fontWeight: '800' },
+    seeAll: { color: c.primary, fontSize: 14, fontWeight: '700' },
+    gpsNote: { color: c.textMuted, fontSize: 12,paddingBottom:10 },
 
-  // Area lista de restaurante
-  listContent: { paddingBottom: 110 },
-  emptyList: { paddingVertical: 32 },
-  separator: { height: 12 },
+    // Area lista de restaurante
+    listContent: { paddingBottom: 110 },
+    emptyList: { paddingVertical: 32 },
+    separator: { height: 12 },
 
-  // Area loading / error
-  retryButton: {
-    paddingHorizontal: 20,
-    paddingVertical: 10,
-    borderRadius: 12,
-    backgroundColor: colors.primary,
-  },
-  retryText: { color: colors.surface, fontSize: 14, fontWeight: '700' },
-});
+    // Area loading / error
+    retryButton: {
+      paddingHorizontal: 20,
+      paddingVertical: 10,
+      borderRadius: 12,
+      backgroundColor: c.primary,
+    },
+    retryText: { color: c.white, fontSize: 14, fontWeight: '700' },
+  });
+}

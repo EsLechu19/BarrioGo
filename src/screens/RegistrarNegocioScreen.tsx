@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import {
   StyleSheet,
   Text,
@@ -17,7 +17,8 @@ import { FormField } from '../components/FormField';
 import { PrimaryButton } from '../components/PrimaryButton';
 import { LoadingState } from '../components/StateView';
 import { RootStackParamList } from '../navigation/RootStackParamList';
-import { colors } from '../styles/colors';
+import { useColors } from '../context/ThemeContext';
+import type { Colors } from '../styles/colors';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'RegistrarNegocio'>;
 
@@ -62,6 +63,8 @@ export default function RegistrarNegocioScreen({ navigation }: Props) {
   const [guardando, setGuardando] = useState<boolean>(false);
   const [formError, setFormError] = useState<string | null>(null);
   const [formOk, setFormOk] = useState<string | null>(null);
+  const colors = useColors();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
 
   async function usarMiUbicacion(): Promise<void> {
     const coords = await obtenerUbicacion();
@@ -212,24 +215,26 @@ export default function RegistrarNegocioScreen({ navigation }: Props) {
   );
 }
 
-const styles = StyleSheet.create({
-  // Base
-  container: { flex: 1, gap: 12, padding: 16, backgroundColor: colors.background },
-  center: { justifyContent: 'center', alignItems: 'center' },
-  subtitle: { color: colors.textMuted, fontSize: 14, textAlign: 'center' },
-  error: { color: colors.error, fontSize: 14, fontWeight: '600' },
-  ok: { color: colors.success, fontSize: 14, fontWeight: '600' },
+function makeStyles(c: Colors) {
+  return StyleSheet.create({
+    // Base
+    container: { flex: 1, gap: 12, padding: 16, backgroundColor: c.background },
+    center: { justifyContent: 'center', alignItems: 'center' },
+    subtitle: { color: c.textMuted, fontSize: 14, textAlign: 'center' },
+    error: { color: c.error, fontSize: 14, fontWeight: '600' },
+    ok: { color: c.success, fontSize: 14, fontWeight: '600' },
 
-  // Area titulo
-  title: { color: colors.textPrimary, fontSize: 22, fontWeight: '900' },
+    // Area titulo
+    title: { color: c.textPrimary, fontSize: 22, fontWeight: '900' },
 
-  // Area guardar
-  primaryButton: {
-    paddingVertical: 14,
-    paddingHorizontal: 24,
-    borderRadius: 14,
-    alignItems: 'center',
-    backgroundColor: colors.primary,
-  },
-  primaryText: { color: colors.surface, fontSize: 15, fontWeight: '700' },
-});
+    // Area guardar
+    primaryButton: {
+      paddingVertical: 14,
+      paddingHorizontal: 24,
+      borderRadius: 14,
+      alignItems: 'center',
+      backgroundColor: c.primary,
+    },
+    primaryText: { color: c.white, fontSize: 15, fontWeight: '700' },
+  });
+}

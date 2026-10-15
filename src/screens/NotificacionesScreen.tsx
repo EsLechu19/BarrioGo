@@ -1,10 +1,12 @@
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import { useMemo } from 'react';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../navigation/RootStackParamList';
 import { ScreenHeader } from '../components/ScreenHeader';
-import { colors } from '../styles/colors';
+import { useColors } from '../context/ThemeContext';
+import type { Colors } from '../styles/colors';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Notificaciones'>;
 
@@ -46,6 +48,8 @@ const NOTIFICACIONES: Notificacion[] = [
 
 export default function NotificacionesScreen({ navigation }: Props) {
   const insets = useSafeAreaInsets();
+  const colors = useColors();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
 
   return (
     <View style={[styles.screen, { paddingTop: insets.top + 12 }]}>
@@ -76,46 +80,42 @@ export default function NotificacionesScreen({ navigation }: Props) {
             </View>
           ))}
         </View>
-
-        <Text style={styles.hint}>
-          Estas notificaciones son de ejemplo (solo diseño).
-        </Text>
       </ScrollView>
     </View>
   );
 }
 
-const styles = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: colors.background },
-  container: { flexGrow: 1, gap: 12, padding: 16, backgroundColor: colors.background },
+function makeStyles(c: Colors) {
+  return StyleSheet.create({
+    screen: { flex: 1, backgroundColor: c.background },
+    container: { flexGrow: 1, gap: 12, padding: 16, backgroundColor: c.background },
 
-  card: {
-    paddingHorizontal: 6,
-    borderWidth: 1,
-    borderColor: colors.border,
-    borderRadius: 16,
-    backgroundColor: colors.surface,
-  },
-  divider: { height: 1, marginLeft: 60, backgroundColor: colors.border },
+    card: {
+      paddingHorizontal: 6,
+      borderWidth: 1,
+      borderColor: c.border,
+      borderRadius: 16,
+      backgroundColor: c.surface,
+    },
+    divider: { height: 1, marginLeft: 60, backgroundColor: c.border },
 
-  row: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-    paddingHorizontal: 10,
-    paddingVertical: 13,
-  },
-  iconCircle: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: colors.primarySoft,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  textBlock: { flex: 1, gap: 2 },
-  texto: { color: colors.textPrimary, fontSize: 14, fontWeight: '600', lineHeight: 20 },
-  hora: { color: colors.textMuted, fontSize: 12 },
-
-  hint: { color: colors.textMuted, fontSize: 12, textAlign: 'center' },
-});
+    row: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 12,
+      paddingHorizontal: 10,
+      paddingVertical: 13,
+    },
+    iconCircle: {
+      width: 40,
+      height: 40,
+      borderRadius: 20,
+      backgroundColor: c.primarySoft,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    textBlock: { flex: 1, gap: 2 },
+    texto: { color: c.textPrimary, fontSize: 14, fontWeight: '600', lineHeight: 20 },
+    hora: { color: c.textMuted, fontSize: 12 },
+  });
+}
