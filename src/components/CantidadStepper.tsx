@@ -1,5 +1,7 @@
+import { useMemo } from 'react';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import { colors } from '../styles/colors';
+import { useColors } from '../context/ThemeContext';
+import type { Colors } from '../styles/colors';
 
 // Stepper −/n/+ reutilizable. Los colores y tamaño se pasan por props para
 // respetar las variantes de Carrito (34, + pintado) y Detalle (32, plano).
@@ -28,6 +30,8 @@ export function CantidadStepper({
   colorTexto,
   colorTextoPlus,
 }: Props) {
+  const colors = useColors();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
   const radio: number = radius ?? size / 2;
   const dimensiones = { width: size, height: size, borderRadius: radio };
   return (
@@ -61,16 +65,18 @@ export function CantidadStepper({
   );
 }
 
-const styles = StyleSheet.create({
-  row: { flexDirection: 'row', alignItems: 'center' },
-  button: {
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: colors.background,
-    borderWidth: 1,
-    borderColor: colors.border,
-  },
-  plus: { backgroundColor: colors.primary, borderColor: colors.primary },
-  texto: { fontSize: 18, fontWeight: '700' },
-  qty: { textAlign: 'center', fontSize: 15, fontWeight: '700' },
-});
+function makeStyles(c: Colors) {
+  return StyleSheet.create({
+    row: { flexDirection: 'row', alignItems: 'center' },
+    button: {
+      justifyContent: 'center',
+      alignItems: 'center',
+      backgroundColor: c.background,
+      borderWidth: 1,
+      borderColor: c.border,
+    },
+    plus: { backgroundColor: c.primary, borderColor: c.primary },
+    texto: { fontSize: 18, fontWeight: '700', color: c.textPrimary },
+    qty: { textAlign: 'center', fontSize: 15, fontWeight: '700', color: c.textPrimary },
+  });
+}

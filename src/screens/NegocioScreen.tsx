@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
+import * as ImagePicker from 'expo-image-picker';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuth } from '../context/AuthContext';
 import { TabScreenProps } from '../navigation/TabScreenProps';
@@ -23,7 +24,8 @@ import { Ganancias } from '../components/negocio/Ganancias';
 import { Repartidores } from '../components/negocio/Repartidores';
 import { Locales } from '../components/negocio/Locales';
 import { useNegocioId } from '../hooks/useNegocioId';
-import { colors } from '../styles/colors';
+import { useColors } from '../context/ThemeContext';
+import type { Colors } from '../styles/colors';
 import { SIGUIENTE_ESTADO } from '../utils/estadosPedido';
 
 const GUIA_HABILITACION =
@@ -35,6 +37,8 @@ export default function NegocioScreen({ navigation }: Props) {
   const insets = useSafeAreaInsets();
   const { user, rol } = useAuth();
   const uid: string | undefined = user?.uid;
+  const colors = useColors();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
 
   const {
     negocioId,
@@ -69,6 +73,9 @@ export default function NegocioScreen({ navigation }: Props) {
   const [editandoId, setEditandoId] = useState<string | null>(null);
   const [editNombre, setEditNombre] = useState<string>('');
   const [editPrecio, setEditPrecio] = useState<string>('');
+  // Foto en edición: solo vista previa local (solo diseño, sin subir a nadie).
+  const [editFotoUri, setEditFotoUri] = useState<string | null>(null);
+  const [editFotoError, setEditFotoError] = useState<string | null>(null);
 
   // Aviso para acciones futuras (invitar repartidor, añadir local).
   const [proximo, setProximo] = useState<string | null>(null);
@@ -209,6 +216,35 @@ export default function NegocioScreen({ navigation }: Props) {
     setEditandoId(producto.id);
     setEditNombre(producto.nombre);
     setEditPrecio(String(producto.precio));
+    setEditFotoUri(producto.imagen?.trim() ? producto.imagen : null);
+    setEditFotoError(null);
+  }
+
+  function cancelarEdicion(): void {
+    setEditandoId(null);
+    setEditFotoUri(null);
+    setEditFotoError(null);
+  }
+
+  // Galería → preview local. No sube a Cloudinary ni toca Firestore.
+  async function subirFotoEdicion(): Promise<void> {
+    setEditFotoError(null);
+    try {
+      const aspect: [number, number] = [1, 1];
+      const resultado = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ['images'],
+        allowsEditing: true,
+        aspect,
+        quality: 0.7,
+      });
+      // Cancelado → no hace nada, nunca crashea.
+      if (resultado.canceled) return;
+      const asset = resultado.assets[0];
+      if (!asset) return;
+      setEditFotoUri(asset.uri);
+    } catch {
+      setEditFotoError('No se pudo elegir la foto. Intentá de nuevo.');
+    }
   }
 
   function guardarEdicionLocal(productoId: string): void {
@@ -218,11 +254,18 @@ export default function NegocioScreen({ navigation }: Props) {
     setProductos((prev) =>
       prev.map((p) =>
         p.id === productoId
-          ? { ...p, nombre: nombreValido, precio: precioNumerico }
+          ? {
+              ...p,
+              nombre: nombreValido,
+              precio: precioNumerico,
+              ...(editFotoUri !== null ? { imagen: editFotoUri } : {}),
+            }
           : p,
       ),
     );
     setEditandoId(null);
+    setEditFotoUri(null);
+    setEditFotoError(null);
   }
 
   const menuVisible: Producto[] = productos.filter(
@@ -317,11 +360,14 @@ export default function NegocioScreen({ navigation }: Props) {
           editandoId={editandoId}
           editNombre={editNombre}
           editPrecio={editPrecio}
+          editFoto={editFotoUri}
+          editFotoError={editFotoError}
           onEditNombreChange={setEditNombre}
           onEditPrecioChange={setEditPrecio}
+          onSubirFotoEdicion={() => void subirFotoEdicion()}
           onVerDetalle={() => navigation.navigate('Detalle', { negocioId })}
           onEmpezarEdicion={empezarEdicion}
-          onCancelarEdicion={() => setEditandoId(null)}
+          onCancelarEdicion={cancelarEdicion}
           onGuardarEdicion={guardarEdicionLocal}
           onTogglePausar={togglePausar}
           onEliminar={eliminarLocal}
@@ -354,13 +400,15 @@ export default function NegocioScreen({ navigation }: Props) {
   );
 }
 
-const styles = StyleSheet.create({
-  // Base
-  container: { flex: 1, gap: 12, padding: 16, backgroundColor: colors.background },
-  center: { justifyContent: 'center', alignItems: 'center' },
-  subtitle: { color: colors.textMuted, fontSize: 14, textAlign: 'center' },
-  error: { color: colors.error, fontSize: 14, fontWeight: '600' },
+function makeStyles(c: Colors) {
+  return StyleSheet.create({
+    // Base
+    container: { flex: 1, gap: 12, padding: 16, backgroundColor: c.background },
+    center: { justifyContent: 'center', alignItems: 'center' },
+    subtitle: { color: c.textMuted, fontSize: 14, textAlign: 'center' },
+    error: { color: c.error, fontSize: 14, fontWeight: '600' },
 
-  // Hero del negocio
-  title: { color: colors.textPrimary, fontSize: 22, fontWeight: '900' },
-});
+    // Hero del negocio
+    title: { color: c.textPrimary, fontSize: 22, fontWeight: '900' },
+  });
+}

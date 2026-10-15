@@ -1,10 +1,12 @@
+import { useMemo } from 'react';
 import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Negocio } from '../../types/Negocio';
 import { Establecimiento } from '../../types/Establecimiento';
 import { SeccionCard } from '../SeccionCard';
 import { InfoBanner } from '../InfoBanner';
-import { colors } from '../../styles/colors';
+import { useColors } from '../../context/ThemeContext';
+import type { Colors } from '../../styles/colors';
 
 // Sección Locales/establecimientos (solo el local principal es real; el resto
 // es mock visual).
@@ -20,6 +22,8 @@ type Props = {
 };
 
 export function Locales({ negocio, mostrarAviso, onAnadir }: Props) {
+  const colors = useColors();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
   return (
     <ScrollView contentContainerStyle={styles.sectionScroll} showsVerticalScrollIndicator={false}>
       <View style={styles.sectionRow}>
@@ -65,33 +69,35 @@ export function Locales({ negocio, mostrarAviso, onAnadir }: Props) {
   );
 }
 
-const styles = StyleSheet.create({
-  sectionScroll: { gap: 10, paddingBottom: 120 },
-  sectionRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-  },
-  sectionTitle: { color: colors.textPrimary, fontSize: 18, fontWeight: '800' },
-  addButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-    paddingVertical: 8,
-    paddingHorizontal: 12,
-    borderRadius: 12,
-    backgroundColor: colors.primary,
-  },
-  addText: { color: colors.white, fontSize: 13, fontWeight: '800' },
-  openRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 6,
-    paddingVertical: 8,
-    borderRadius: 12,
-    backgroundColor: colors.successSoft,
-  },
-  statusDotOpen: { width: 8, height: 8, borderRadius: 4, backgroundColor: colors.success },
-  doneText: { color: colors.success, fontSize: 13, fontWeight: '700' },
-});
+function makeStyles(c: Colors) {
+  return StyleSheet.create({
+    sectionScroll: { gap: 10, paddingBottom: 120 },
+    sectionRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+    },
+    sectionTitle: { color: c.textPrimary, fontSize: 18, fontWeight: '800' },
+    addButton: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 4,
+      paddingVertical: 8,
+      paddingHorizontal: 12,
+      borderRadius: 12,
+      backgroundColor: c.primary,
+    },
+    addText: { color: c.white, fontSize: 13, fontWeight: '800' },
+    openRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'center',
+      gap: 6,
+      paddingVertical: 8,
+      borderRadius: 12,
+      backgroundColor: c.successSoft,
+    },
+    statusDotOpen: { width: 8, height: 8, borderRadius: 4, backgroundColor: c.success },
+    doneText: { color: c.success, fontSize: 13, fontWeight: '700' },
+  });
+}

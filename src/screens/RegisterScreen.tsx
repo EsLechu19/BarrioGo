@@ -1,12 +1,13 @@
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { StyleSheet, View, Image, Text, TouchableOpacity, KeyboardAvoidingView, Platform, ScrollView } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { AuthStackParamList } from '../navigation/AuthStackParamList';
 import { FormField } from '../components/FormField';
 import { PrimaryButton } from '../components/PrimaryButton';
 import { authErrorEs, useAuth } from '../context/AuthContext';
-import { colors } from '../styles/colors';
+import { useColors } from '../context/ThemeContext';
+import type { Colors } from '../styles/colors';
 
 type Props = NativeStackScreenProps<AuthStackParamList, 'Register'>
 
@@ -19,6 +20,8 @@ export default function RegisterScreen({ navigation }: Props) {
     const [confirmPassword, setConfirmPassword] = useState('');
     const [error, setError] = useState<{ nombre?: string; email?: string; password?: string; confirmPassword?: string; auth?: string }>({});
     const [submitting, setSubmitting] = useState<boolean>(false);
+    const colors = useColors();
+    const styles = useMemo(() => makeStyles(colors), [colors]);
     const isValidEmail = (value: string): boolean => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value.trim());
     const handleRegister = async () => {
         const newError: { nombre?: string; email?: string; password?: string; confirmPassword?: string } = {};
@@ -122,29 +125,31 @@ export default function RegisterScreen({ navigation }: Props) {
     );
 }
 
-const styles = StyleSheet.create({
-    // Base para teclado + scroll
-    screen: { flex: 1 },
-    scroll: { flexGrow: 1 },
+function makeStyles(c: Colors) {
+    return StyleSheet.create({
+        // Base para teclado + scroll
+        screen: { flex: 1 },
+        scroll: { flexGrow: 1 },
 
-    // Contenedor principal de la pantalla
-    container: { flexGrow: 1, justifyContent: 'flex-start', alignItems: 'center', gap: 24, padding: 24, backgroundColor: colors.background },
+        // Contenedor principal de la pantalla
+        container: { flexGrow: 1, justifyContent: 'flex-start', alignItems: 'center', gap: 24, padding: 24, backgroundColor: c.background },
 
-    // Area del logo
-    logoArea: { width: '100%', justifyContent: 'center', alignItems: 'center', gap: 16 },
-    logoFrame: { width: 154, height: 154, justifyContent: 'center', alignItems: 'center', borderRadius: 26 },
-    logo: { width: 142, height: 142 },
-    brandHeadline: { width: '100%', alignSelf: 'flex-start', color: colors.textSecondary, fontSize: 28, fontWeight: '900', textAlign: 'left' },
-    brandTagline: { width: '100%', alignSelf: 'flex-start', color: colors.textMuted, fontSize: 15, fontWeight: 'normal', textAlign: 'left' },
+        // Area del logo
+        logoArea: { width: '100%', justifyContent: 'center', alignItems: 'center', gap: 16 },
+        logoFrame: { width: 154, height: 154, justifyContent: 'center', alignItems: 'center', borderRadius: 26 },
+        logo: { width: 142, height: 142 },
+        brandHeadline: { width: '100%', alignSelf: 'flex-start', color: c.textSecondary, fontSize: 28, fontWeight: '900', textAlign: 'left' },
+        brandTagline: { width: '100%', alignSelf: 'flex-start', color: c.textMuted, fontSize: 15, fontWeight: 'normal', textAlign: 'left' },
 
-    // Area del formulario
-    formArea: { width: '100%', alignItems: 'center', gap: 8 },
+        // Area del formulario
+        formArea: { width: '100%', alignItems: 'center', gap: 8 },
 
-    // Area de boton de registrarse + link de inicia sesion
-    // minHeight (no height): con el error de autentificación el contenido crece sin solaparse.
-    actionArea: { width: '100%', minHeight: 89, paddingTop: 8, gap: 16 },
-    authError: { color: colors.google, fontSize: 14, fontWeight: '600', textAlign: 'center' },
-    loginRow: { flexDirection: 'row', justifyContent: 'center', alignItems: 'center' },
-    loginText: { height: 17, fontSize: 14 },
-    loginLink: { height: 17, color: colors.primary, fontSize: 14, fontWeight: '600' }
-});
+        // Area de boton de registrarse + link de inicia sesion
+        // minHeight (no height): con el error de autentificación el contenido crece sin solaparse.
+        actionArea: { width: '100%', minHeight: 89, paddingTop: 8, gap: 16 },
+        authError: { color: c.google, fontSize: 14, fontWeight: '600', textAlign: 'center' },
+        loginRow: { flexDirection: 'row', justifyContent: 'center', alignItems: 'center' },
+        loginText: { height: 17, fontSize: 14, color: c.textMuted },
+        loginLink: { height: 17, color: c.primary, fontSize: 14, fontWeight: '600' }
+    });
+}

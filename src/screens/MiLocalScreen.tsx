@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import {
   ActivityIndicator,
   Image,
@@ -24,7 +24,8 @@ import { PrimaryButton } from '../components/PrimaryButton';
 import { UbicacionInput } from '../components/UbicacionInput';
 import { LoadingState } from '../components/StateView';
 import { RootStackParamList } from '../navigation/RootStackParamList';
-import { colors } from '../styles/colors';
+import { useColors } from '../context/ThemeContext';
+import type { Colors } from '../styles/colors';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'MiLocal'>;
 
@@ -35,6 +36,8 @@ export default function MiLocalScreen({ navigation }: Props) {
   const insets = useSafeAreaInsets();
   const { user } = useAuth();
   const uid: string | undefined = user?.uid;
+  const colors = useColors();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
 
   // Mismo patrón que NegocioScreen: negocioId en users/{uid} + precarga
   // con getDoc del negocio.
@@ -396,84 +399,86 @@ export default function MiLocalScreen({ navigation }: Props) {
   );
 }
 
-const styles = StyleSheet.create({
-  // Base
-  screen: { flex: 1, backgroundColor: colors.background },
-  container: { flexGrow: 1, gap: 12, padding: 16, backgroundColor: colors.background },
-  center: { flex: 1, justifyContent: 'center', alignItems: 'center' },
-  subtitle: { color: colors.textMuted, fontSize: 14, textAlign: 'center' },
-  error: { color: colors.error, fontSize: 14, fontWeight: '600' },
-  ok: { color: colors.success, fontSize: 14, fontWeight: '600' },
-  disabledButton: { opacity: 0.6 },
+function makeStyles(c: Colors) {
+  return StyleSheet.create({
+    // Base
+    screen: { flex: 1, backgroundColor: c.background },
+    container: { flexGrow: 1, gap: 12, padding: 16, backgroundColor: c.background },
+    center: { flex: 1, justifyContent: 'center', alignItems: 'center' },
+    subtitle: { color: c.textMuted, fontSize: 14, textAlign: 'center' },
+    error: { color: c.error, fontSize: 14, fontWeight: '600' },
+    ok: { color: c.success, fontSize: 14, fontWeight: '600' },
+    disabledButton: { opacity: 0.6 },
 
-  // Area titulo
-  title: { color: colors.textPrimary, fontSize: 22, fontWeight: '900' },
+    // Area titulo
+    title: { color: c.textPrimary, fontSize: 22, fontWeight: '900' },
 
-  // Area formulario
-  switchRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-    borderWidth: 1,
-    borderColor: colors.border,
-    borderRadius: 12,
-    backgroundColor: colors.surface,
-  },
-  switchLabel: { color: colors.textPrimary, fontSize: 15, fontWeight: '600' },
-  // Toggle (mismo estilo que Configuración)
-  toggleTrack: {
-    width: 54,
-    height: 32,
-    borderRadius: 16,
-    padding: 3,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'flex-start',
-    backgroundColor: colors.border,
-    borderWidth: 1,
-    borderColor: colors.border,
-  },
-  toggleTrackOn: { backgroundColor: colors.primary, borderColor: colors.primary },
-  toggleThumb: {
-    width: 24,
-    height: 24,
-    borderRadius: 12,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: colors.surface,
-  },
-  toggleThumbOn: { marginLeft: 22 },
-  toggleThumbOff: { marginLeft: 0 },
+    // Area formulario
+    switchRow: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      paddingHorizontal: 12,
+      paddingVertical: 10,
+      borderWidth: 1,
+      borderColor: c.border,
+      borderRadius: 12,
+      backgroundColor: c.surface,
+    },
+    switchLabel: { color: c.textPrimary, fontSize: 15, fontWeight: '600' },
+    // Toggle (mismo estilo que Configuración)
+    toggleTrack: {
+      width: 54,
+      height: 32,
+      borderRadius: 16,
+      padding: 3,
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'flex-start',
+      backgroundColor: c.border,
+      borderWidth: 1,
+      borderColor: c.border,
+    },
+    toggleTrackOn: { backgroundColor: c.primary, borderColor: c.primary },
+    toggleThumb: {
+      width: 24,
+      height: 24,
+      borderRadius: 12,
+      alignItems: 'center',
+      justifyContent: 'center',
+      backgroundColor: c.surface,
+    },
+    toggleThumbOn: { marginLeft: 22 },
+    toggleThumbOff: { marginLeft: 0 },
 
-  // Area fotos
-  sectionTitle: { color: colors.textPrimary, fontSize: 17, fontWeight: '800' },
-  // Fila foto
-  fotoRow: { flexDirection: 'row', gap: 12, alignItems: 'center' },
-  iconoPreview: { width: 72, height: 72, borderRadius: 14 },
-  fotoBotones: { flex: 1, gap: 8 },
-  fotoLabel: { color: colors.textPrimary, fontSize: 14, fontWeight: '700' },
-  fotoAcciones: { flexDirection: 'row', gap: 8 },
-  fotoButton: {
-    paddingVertical: 10,
-    paddingHorizontal: 16,
-    borderRadius: 12,
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: colors.border,
-    backgroundColor: colors.surface,
-  },
-  fotoButtonText: { color: colors.primary, fontSize: 14, fontWeight: '700' },
-  // Fila foto
-  fotoColumna: { gap: 8 },
-  portadaPreview: { width: '100%', height: 140, borderRadius: 14 },
-  placeholder: {
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: colors.surface,
-    borderWidth: 1,
-    borderColor: colors.border,
-  },
-  placeholderText: { color: colors.textMuted, fontSize: 13 },
-});
+    // Area fotos
+    sectionTitle: { color: c.textPrimary, fontSize: 17, fontWeight: '800' },
+    // Fila foto
+    fotoRow: { flexDirection: 'row', gap: 12, alignItems: 'center' },
+    iconoPreview: { width: 72, height: 72, borderRadius: 14 },
+    fotoBotones: { flex: 1, gap: 8 },
+    fotoLabel: { color: c.textPrimary, fontSize: 14, fontWeight: '700' },
+    fotoAcciones: { flexDirection: 'row', gap: 8 },
+    fotoButton: {
+      paddingVertical: 10,
+      paddingHorizontal: 16,
+      borderRadius: 12,
+      alignItems: 'center',
+      borderWidth: 1,
+      borderColor: c.border,
+      backgroundColor: c.surface,
+    },
+    fotoButtonText: { color: c.primary, fontSize: 14, fontWeight: '700' },
+    // Fila foto
+    fotoColumna: { gap: 8 },
+    portadaPreview: { width: '100%', height: 140, borderRadius: 14 },
+    placeholder: {
+      justifyContent: 'center',
+      alignItems: 'center',
+      backgroundColor: c.surface,
+      borderWidth: 1,
+      borderColor: c.border,
+    },
+    placeholderText: { color: c.textMuted, fontSize: 13 },
+  });
+}

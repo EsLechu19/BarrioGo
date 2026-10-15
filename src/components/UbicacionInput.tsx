@@ -1,5 +1,7 @@
+import { useMemo } from 'react';
 import { StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
-import { colors } from '../styles/colors';
+import { useColors } from '../context/ThemeContext';
+import type { Colors } from '../styles/colors';
 
 // Bloque de ubicación: botón GPS + aviso + inputs de latitud/longitud.
 // Props controladas: la pantalla decide qué hacer con las coordenadas.
@@ -22,6 +24,8 @@ export function UbicacionInput({
   onLatChange,
   onLngChange,
 }: Props) {
+  const colors = useColors();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
   return (
     <>
       <TouchableOpacity
@@ -54,28 +58,30 @@ export function UbicacionInput({
   );
 }
 
-const styles = StyleSheet.create({
-  gpsButton: {
-    paddingVertical: 12,
-    borderRadius: 14,
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: colors.border,
-    backgroundColor: colors.surface,
-  },
-  gpsText: { color: colors.primary, fontSize: 15, fontWeight: '700' },
-  disabled: { opacity: 0.6 },
-  subtitle: { color: colors.textMuted, fontSize: 14, textAlign: 'center' },
-  coordsRow: { flexDirection: 'row', gap: 8 },
-  coordInput: { flex: 1 },
-  input: {
-    borderWidth: 1,
-    borderColor: colors.border,
-    borderRadius: 12,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-    fontSize: 15,
-    color: colors.textPrimary,
-    backgroundColor: colors.surface,
-  },
-});
+function makeStyles(c: Colors) {
+  return StyleSheet.create({
+    gpsButton: {
+      paddingVertical: 12,
+      borderRadius: 14,
+      alignItems: 'center',
+      borderWidth: 1,
+      borderColor: c.border,
+      backgroundColor: c.surface,
+    },
+    gpsText: { color: c.primary, fontSize: 15, fontWeight: '700' },
+    disabled: { opacity: 0.6 },
+    subtitle: { color: c.textMuted, fontSize: 14, textAlign: 'center' },
+    coordsRow: { flexDirection: 'row', gap: 8 },
+    coordInput: { flex: 1 },
+    input: {
+      borderWidth: 1,
+      borderColor: c.border,
+      borderRadius: 12,
+      paddingHorizontal: 12,
+      paddingVertical: 10,
+      fontSize: 15,
+      color: c.textPrimary,
+      backgroundColor: c.surface,
+    },
+  });
+}

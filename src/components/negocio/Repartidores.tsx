@@ -1,9 +1,11 @@
+import { useMemo } from 'react';
 import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Repartidor } from '../../types/Repartidor';
 import { SeccionCard } from '../SeccionCard';
 import { InfoBanner } from '../InfoBanner';
-import { colors } from '../../styles/colors';
+import { useColors } from '../../context/ThemeContext';
+import type { Colors } from '../../styles/colors';
 import { ESTADO_REPARTIDOR_COLOR, ESTADO_REPARTIDOR_LABEL } from '../../utils/estadosPedido';
 
 // Sección Repartidores (datos mock visuales).
@@ -19,6 +21,8 @@ type Props = {
 };
 
 export function Repartidores({ mostrarAviso, onAnadir }: Props) {
+  const colors = useColors();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
   return (
     <ScrollView contentContainerStyle={styles.sectionScroll} showsVerticalScrollIndicator={false}>
       <View style={styles.sectionRow}>
@@ -53,22 +57,24 @@ export function Repartidores({ mostrarAviso, onAnadir }: Props) {
   );
 }
 
-const styles = StyleSheet.create({
-  sectionScroll: { gap: 10, paddingBottom: 120 },
-  sectionRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-  },
-  sectionTitle: { color: colors.textPrimary, fontSize: 18, fontWeight: '800' },
-  addButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-    paddingVertical: 8,
-    paddingHorizontal: 12,
-    borderRadius: 12,
-    backgroundColor: colors.primary,
-  },
-  addText: { color: colors.white, fontSize: 13, fontWeight: '800' },
-});
+function makeStyles(c: Colors) {
+  return StyleSheet.create({
+    sectionScroll: { gap: 10, paddingBottom: 120 },
+    sectionRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+    },
+    sectionTitle: { color: c.textPrimary, fontSize: 18, fontWeight: '800' },
+    addButton: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 4,
+      paddingVertical: 8,
+      paddingHorizontal: 12,
+      borderRadius: 12,
+      backgroundColor: c.primary,
+    },
+    addText: { color: c.white, fontSize: 13, fontWeight: '800' },
+  });
+}

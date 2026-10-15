@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import {
   ScrollView,
   StyleSheet,
@@ -13,7 +13,8 @@ import { RootStackParamList } from '../navigation/RootStackParamList';
 import { ScreenHeader } from '../components/ScreenHeader';
 import { InfoBanner } from '../components/InfoBanner';
 import { SelectableCard } from '../components/SelectableCard';
-import { colors } from '../styles/colors';
+import { useColors } from '../context/ThemeContext';
+import type { Colors } from '../styles/colors';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'MetodosPago'>;
 
@@ -35,6 +36,8 @@ export default function MetodosPagoScreen({ navigation }: Props) {
   const insets = useSafeAreaInsets();
   const [seleccionado, setSeleccionado] = useState<string>('m1');
   const [aviso, setAviso] = useState<boolean>(false);
+  const colors = useColors();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
 
   return (
     <View style={[styles.screen, { paddingTop: insets.top + 12 }]}>
@@ -51,7 +54,7 @@ export default function MetodosPagoScreen({ navigation }: Props) {
             style={styles.addButton}
             onPress={() => setAviso(true)}
             accessibilityRole="button"
-            accessibilityLabel="Añadir método de pago (diseño)"
+            accessibilityLabel="Añadir método de pago"
           >
             <Ionicons name="add" size={18} color={colors.white} />
             <Text style={styles.addText}>Añadir</Text>
@@ -60,7 +63,7 @@ export default function MetodosPagoScreen({ navigation }: Props) {
       />
 
       {aviso ? (
-        <InfoBanner texto="Pronto: vincular tarjetas y billeteras reales (solo diseño)." />
+        <InfoBanner texto="Pronto: vincular tarjetas y billeteras reales." />
       ) : null}
 
       {METODOS_MOCK.map((m) => {
@@ -78,29 +81,26 @@ export default function MetodosPagoScreen({ navigation }: Props) {
           </SelectableCard>
         );
       })}
-
-      <Text style={styles.hint}>
-        El método elegido se usará al confirmar el carrito (diseño).
-      </Text>
     </ScrollView>
     </View>
   );
 }
 
-const styles = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: colors.background },
-  container: { flexGrow: 1, gap: 10, padding: 16, backgroundColor: colors.background },
-  addButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-    paddingVertical: 8,
-    paddingHorizontal: 12,
-    borderRadius: 12,
-    backgroundColor: colors.primary,
-  },
-  addText: { color: colors.white, fontSize: 13, fontWeight: '800' },
-  nombre: { color: colors.textPrimary, fontSize: 16, fontWeight: '800' },
-  detalle: { color: colors.textMuted, fontSize: 13 },
-  hint: { color: colors.textMuted, fontSize: 12, textAlign: 'center' },
-});
+function makeStyles(c: Colors) {
+  return StyleSheet.create({
+    screen: { flex: 1, backgroundColor: c.background },
+    container: { flexGrow: 1, gap: 10, padding: 16, backgroundColor: c.background },
+    addButton: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 4,
+      paddingVertical: 8,
+      paddingHorizontal: 12,
+      borderRadius: 12,
+      backgroundColor: c.primary,
+    },
+    addText: { color: c.white, fontSize: 13, fontWeight: '800' },
+    nombre: { color: c.textPrimary, fontSize: 16, fontWeight: '800' },
+    detalle: { color: c.textMuted, fontSize: 13 },
+  });
+}

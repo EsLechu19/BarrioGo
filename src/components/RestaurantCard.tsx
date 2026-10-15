@@ -1,7 +1,9 @@
+import { useMemo } from 'react';
 import { StyleSheet, Image, Text, TouchableOpacity, View } from 'react-native'
 import { Negocio } from "../types/Negocio";
 import { Ionicons } from "@expo/vector-icons";
-import { colors } from '../styles/colors';
+import { useColors } from '../context/ThemeContext';
+import type { Colors } from '../styles/colors';
 
 type Props = {
     negocio: Negocio;
@@ -11,6 +13,8 @@ type Props = {
 }
 
 export function RestaurantCard({ negocio, esFavorito, onToggleFavorito, onPress }: Props) {
+    const colors = useColors();
+    const styles = useMemo(() => makeStyles(colors), [colors]);
     // uri vacía ('') rompe <Image>: solo se renderiza con URL real.
     const foto: string | null =
         negocio.portada?.trim() ? negocio.portada
@@ -80,31 +84,33 @@ export function RestaurantCard({ negocio, esFavorito, onToggleFavorito, onPress 
     );
 }
 
-const styles = StyleSheet.create({
-    // Card
-    card: { flexDirection: 'row', alignItems: 'flex-start', gap: 8, padding: 12, borderWidth: 1, borderColor: colors.border, borderRadius: 16, backgroundColor: colors.surface },
+function makeStyles(c: Colors) {
+    return StyleSheet.create({
+        // Card
+        card: { flexDirection: 'row', alignItems: 'flex-start', gap: 8, padding: 12, borderWidth: 1, borderColor: c.border, borderRadius: 16, backgroundColor: c.surface },
 
-    // Area contenido
-    mainPress: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: 12 },
+        // Area contenido
+        mainPress: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: 12 },
 
-    // Foto
-    restaurantImage: { width: 60, height: 60, borderRadius: 12 },
-    placeholder: { justifyContent: 'center', alignItems: 'center', backgroundColor: colors.background },
+        // Foto
+        restaurantImage: { width: 60, height: 60, borderRadius: 12 },
+        placeholder: { justifyContent: 'center', alignItems: 'center', backgroundColor: c.background },
 
-    // Area info
-    info: { flex: 1, gap: 6 },
-    // Fila 1: nombre
-    titleRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-    restaurantName: { fontSize: 16, fontWeight: 'bold' },
-    // Fila 2: rating
-    ratingRow: { flexDirection: 'row', alignItems: 'center', gap: 4 },
-    rating: { fontSize: 14, fontWeight: '600' },
-    opinions: { color: colors.textMuted, fontSize: 13 },
-    // Fila 3: tiempo / distancia / envío
-    metaRow: { flexDirection: 'row', alignItems: 'center',flexWrap:'wrap', gap: 8 },
-    metaText: { color: colors.textMuted, fontSize: 12 },
-    freeShipping: { color: colors.success, fontSize: 12, fontWeight: '900' },
+        // Area info
+        info: { flex: 1, gap: 6 },
+        // Fila 1: nombre
+        titleRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+        restaurantName: { fontSize: 16, fontWeight: 'bold', color: c.textPrimary },
+        // Fila 2: rating
+        ratingRow: { flexDirection: 'row', alignItems: 'center', gap: 4 },
+        rating: { fontSize: 14, fontWeight: '600', color: c.textPrimary },
+        opinions: { color: c.textMuted, fontSize: 13 },
+        // Fila 3: tiempo / distancia / envío
+        metaRow: { flexDirection: 'row', alignItems: 'center',flexWrap:'wrap', gap: 8 },
+        metaText: { color: c.textMuted, fontSize: 12 },
+        freeShipping: { color: c.success, fontSize: 12, fontWeight: '900' },
 
-    // Area favorito
-    favButton: { padding: 4 },
-});
+        // Area favorito
+        favButton: { padding: 4 },
+    });
+}

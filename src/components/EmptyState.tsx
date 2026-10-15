@@ -1,8 +1,10 @@
+import { useMemo } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import type { StyleProp, TextStyle, ViewStyle } from 'react-native';
 import type { ReactNode } from 'react';
 import { Ionicons } from '@expo/vector-icons';
-import { colors } from '../styles/colors';
+import { useColors } from '../context/ThemeContext';
+import type { Colors } from '../styles/colors';
 
 type IconoNombre = React.ComponentProps<typeof Ionicons>['name'];
 
@@ -35,6 +37,8 @@ export function EmptyState({
   tituloStyle,
   subtituloStyle,
 }: Props) {
+  const colors = useColors();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
   return (
     <View style={[styles.wrap, style]}>
       <View
@@ -57,13 +61,15 @@ export function EmptyState({
   );
 }
 
-const styles = StyleSheet.create({
-  wrap: { alignItems: 'center', gap: 8 },
-  icono: {
-    backgroundColor: colors.primarySoft,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  titulo: { color: colors.textPrimary, fontWeight: '800' },
-  subtitulo: { color: colors.textMuted, fontSize: 14, textAlign: 'center' },
-});
+function makeStyles(c: Colors) {
+  return StyleSheet.create({
+    wrap: { alignItems: 'center', gap: 8 },
+    icono: {
+      backgroundColor: c.primarySoft,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    titulo: { color: c.textPrimary, fontWeight: '800' },
+    subtitulo: { color: c.textMuted, fontSize: 14, textAlign: 'center' },
+  });
+}

@@ -1,7 +1,9 @@
+import { useMemo } from 'react';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Negocio } from '../../types/Negocio';
-import { colors } from '../../styles/colors';
+import { useColors } from '../../context/ThemeContext';
+import type { Colors } from '../../styles/colors';
 
 // Pestaña Información: descripción, ubicación (placeholder de mapa) y entrega.
 type Props = {
@@ -9,6 +11,8 @@ type Props = {
 };
 
 export function InfoTab({ negocio }: Props) {
+  const colors = useColors();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
   return (
     <ScrollView contentContainerStyle={styles.tabContent}>
       {/* Card descripcion */}
@@ -80,40 +84,42 @@ export function InfoTab({ negocio }: Props) {
   );
 }
 
-const styles = StyleSheet.create({
-  tabContent: { paddingHorizontal: 16, paddingTop: 12, paddingBottom: 20, gap: 12 },
-  infoCard: {
-    gap: 8,
-    padding: 14,
-    borderWidth: 1,
-    borderColor: colors.border,
-    borderRadius: 16,
-    backgroundColor: colors.surface,
-  },
-  infoHeader: { flexDirection: 'row', alignItems: 'center', gap: 10 },
-  infoIcon: {
-    width: 34,
-    height: 34,
-    borderRadius: 10,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: colors.primarySoft,
-  },
-  infoTitle: { color: colors.textPrimary, fontSize: 15, fontWeight: '800' },
-  infoDesc: { color: colors.textSecondary, fontSize: 14, lineHeight: 20 },
-  infoSub: { color: colors.textMuted, fontSize: 12.5 },
-  infoRowLine: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  mapPlaceholder: {
-    height: 160,
-    borderRadius: 12,
-    justifyContent: 'center',
-    alignItems: 'center',
-    gap: 6,
-    backgroundColor: colors.background,
-    borderWidth: 1,
-    borderStyle: 'dashed',
-    borderColor: colors.border,
-  },
-  mapPlaceholderText: { color: colors.textMuted, fontSize: 14, fontWeight: '700' },
-  meta: { color: colors.textMuted, fontSize: 13 },
-});
+function makeStyles(c: Colors) {
+  return StyleSheet.create({
+    tabContent: { paddingHorizontal: 16, paddingTop: 12, paddingBottom: 20, gap: 12 },
+    infoCard: {
+      gap: 8,
+      padding: 14,
+      borderWidth: 1,
+      borderColor: c.border,
+      borderRadius: 16,
+      backgroundColor: c.surface,
+    },
+    infoHeader: { flexDirection: 'row', alignItems: 'center', gap: 10 },
+    infoIcon: {
+      width: 34,
+      height: 34,
+      borderRadius: 10,
+      justifyContent: 'center',
+      alignItems: 'center',
+      backgroundColor: c.primarySoft,
+    },
+    infoTitle: { color: c.textPrimary, fontSize: 15, fontWeight: '800' },
+    infoDesc: { color: c.textSecondary, fontSize: 14, lineHeight: 20 },
+    infoSub: { color: c.textMuted, fontSize: 12.5 },
+    infoRowLine: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+    mapPlaceholder: {
+      height: 160,
+      borderRadius: 12,
+      justifyContent: 'center',
+      alignItems: 'center',
+      gap: 6,
+      backgroundColor: c.background,
+      borderWidth: 1,
+      borderStyle: 'dashed',
+      borderColor: c.border,
+    },
+    mapPlaceholderText: { color: c.textMuted, fontSize: 14, fontWeight: '700' },
+    meta: { color: c.textMuted, fontSize: 13 },
+  });
+}

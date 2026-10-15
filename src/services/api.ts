@@ -236,8 +236,6 @@ export function escucharMisPedidos(
   if (!firebaseReady) return () => {};
   if (!usuarioId.trim()) return () => {};
   try {
-    // Sin orderBy a propósito: where + orderBy exige índice compuesto en
-    // Firestore y rompía la demo. Ordenamos en memoria (fecha desc).
     const q = query(
       collection(getFirestoreDb(), 'pedidos'),
       where('usuarioId', '==', usuarioId),

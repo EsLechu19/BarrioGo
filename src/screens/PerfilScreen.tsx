@@ -1,11 +1,13 @@
 import { ActivityIndicator, Image, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { useMemo } from 'react';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuth } from '../context/AuthContext';
 import { useNegocioId } from '../hooks/useNegocioId';
 import { TabScreenProps } from '../navigation/TabScreenProps';
 import { SettingRow } from '../components/SettingRow';
-import { colors } from '../styles/colors';
+import { useColors } from '../context/ThemeContext';
+import type { Colors } from '../styles/colors';
 import { nombreVisible } from '../utils/usuario';
 
 type Props = TabScreenProps<'PerfilTab'>;
@@ -27,6 +29,8 @@ export default function PerfilScreen({ navigation }: Props) {
   const insets = useSafeAreaInsets();
   const { user, rol, logout } = useAuth();
   const { negocioId, loading: leyendoNegocio } = useNegocioId();
+  const colors = useColors();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
 
   const handleLogout = async () => {
     await logout();
@@ -79,7 +83,7 @@ export default function PerfilScreen({ navigation }: Props) {
         onPress={handleNegocio}
       >
         {leyendoNegocio ? (
-          <ActivityIndicator size="small" color={colors.surface} />
+          <ActivityIndicator size="small" color={colors.white} />
         ) : (
           <Text style={styles.negocioText}>
             {negocioId ? 'Ir a mi negocio' : 'Registrar mi negocio'}
@@ -113,78 +117,80 @@ export default function PerfilScreen({ navigation }: Props) {
   );
 }
 
-const styles = StyleSheet.create({
-  // Base
-  screen: { flex: 1, backgroundColor: colors.background },
-  container: { flexGrow: 1, gap: 12, padding: 16, backgroundColor: colors.background },
+function makeStyles(c: Colors) {
+  return StyleSheet.create({
+    // Base
+    screen: { flex: 1, backgroundColor: c.background },
+    container: { flexGrow: 1, gap: 12, padding: 16, backgroundColor: c.background },
 
-  // Area titulo
-  title: { color: colors.textPrimary, fontSize: 22, fontWeight: '900' },
+    // Area titulo
+    title: { color: c.textPrimary, fontSize: 22, fontWeight: '900' },
 
-  // Area tarjeta
-  card: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 14,
-    padding: 16,
-    borderWidth: 1,
-    borderColor: colors.border,
-    borderRadius: 16,
-    backgroundColor: colors.surface,
-  },
-  avatar: { width: 64, height: 64, borderRadius: 32 },
-  avatarPlaceholder: {
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: colors.primarySoft,
-  },
-  // Informacion
-  cardInfo: { flex: 1, gap: 4 },
-  nameRow: { flexDirection: 'row', alignItems: 'center', gap: 5 },
-  // Fila dato
-  name: { flex: 1, color: colors.textPrimary, fontSize: 18, fontWeight: '800' },
-  rolPill: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-    paddingHorizontal: 10,
-    paddingVertical: 5,
-    borderRadius: 999,
-    backgroundColor: colors.primarySoft,
-  },
-  rolPillText: { color: colors.primary, fontSize: 12, fontWeight: '800', textTransform: 'capitalize' },
-  email: { color: colors.textMuted, fontSize: 14 },
+    // Area tarjeta
+    card: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 14,
+      padding: 16,
+      borderWidth: 1,
+      borderColor: c.border,
+      borderRadius: 16,
+      backgroundColor: c.surface,
+    },
+    avatar: { width: 64, height: 64, borderRadius: 32 },
+    avatarPlaceholder: {
+      justifyContent: 'center',
+      alignItems: 'center',
+      backgroundColor: c.primarySoft,
+    },
+    // Informacion
+    cardInfo: { flex: 1, gap: 4 },
+    nameRow: { flexDirection: 'row', alignItems: 'center', gap: 5 },
+    // Fila dato
+    name: { flex: 1, color: c.textPrimary, fontSize: 18, fontWeight: '800' },
+    rolPill: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 4,
+      paddingHorizontal: 10,
+      paddingVertical: 5,
+      borderRadius: 999,
+      backgroundColor: c.primarySoft,
+    },
+    rolPillText: { color: c.primary, fontSize: 12, fontWeight: '800', textTransform: 'capitalize' },
+    email: { color: c.textMuted, fontSize: 14 },
 
-  // Area botones
-  negocioButton: {
-    paddingVertical: 14,
-    borderRadius: 14,
-    alignItems: 'center',
-    backgroundColor: colors.primary,
-  },
-  negocioText: { color: colors.surface, fontSize: 15, fontWeight: '700' },
-  disabledButton: { opacity: 0.6 },
-  logoutButton: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
-    gap: 8,
-    paddingVertical: 14,
-    borderRadius: 14,
-    borderWidth: 1.5,
-    borderColor: colors.error,
-    backgroundColor: colors.surface,
-  },
-  logoutText: { color: colors.error, fontSize: 15, fontWeight: '700' },
+    // Area botones
+    negocioButton: {
+      paddingVertical: 14,
+      borderRadius: 14,
+      alignItems: 'center',
+      backgroundColor: c.primary,
+    },
+    negocioText: { color: c.white, fontSize: 15, fontWeight: '700' },
+    disabledButton: { opacity: 0.6 },
+    logoutButton: {
+      flexDirection: 'row',
+      justifyContent: 'center',
+      alignItems: 'center',
+      gap: 8,
+      paddingVertical: 14,
+      borderRadius: 14,
+      borderWidth: 1.5,
+      borderColor: c.error,
+      backgroundColor: c.surface,
+    },
+    logoutText: { color: c.error, fontSize: 15, fontWeight: '700' },
 
-  // Area menu
-  menu: {
-    paddingHorizontal: 6,
-    borderWidth: 1,
-    borderColor: colors.border,
-    borderRadius: 16,
-    backgroundColor: colors.surface,
-  },
-  menuText: { flex: 1, color: colors.textPrimary, fontSize: 15, fontWeight: '600' },
-  menuDivider: { height: 1, marginLeft: 60, backgroundColor: colors.border },
-});
+    // Area menu
+    menu: {
+      paddingHorizontal: 6,
+      borderWidth: 1,
+      borderColor: c.border,
+      borderRadius: 16,
+      backgroundColor: c.surface,
+    },
+    menuText: { flex: 1, color: c.textPrimary, fontSize: 15, fontWeight: '600' },
+    menuDivider: { height: 1, marginLeft: 60, backgroundColor: c.border },
+  });
+}

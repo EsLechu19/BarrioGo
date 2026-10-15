@@ -1,42 +1,65 @@
 import { SafeAreaProvider } from 'react-native-safe-area-context';
-import { NavigationContainer } from '@react-navigation/native';
-import { ActivityIndicator, StyleSheet, View } from 'react-native';
+import {
+  DarkTheme,
+  DefaultTheme,
+  NavigationContainer,
+} from '@react-navigation/native';
+import { ActivityIndicator, StatusBar, StyleSheet, View } from 'react-native';
 import { AppNavigator } from './src/navigation/AppNavigator';
 import { AuthNavigator } from './src/navigation/AuthNavigator';
 import { CartProvider } from './src/context/CartContext';
 import { FavoritesProvider } from './src/context/FavoritesContext';
 import { AuthProvider, useAuth } from './src/context/AuthContext';
-import { colors } from './src/styles/colors';
+import { ThemeProvider, useTheme } from './src/context/ThemeContext';
 
 function Root() {
   const { user, loading } = useAuth();
+  const { isDark, colors } = useTheme();
 
   if (loading) {
     return (
-      <View style={styles.center}>
+      <View style={[styles.center, { backgroundColor: colors.background }]}>
         <ActivityIndicator size="large" color={colors.primary} />
       </View>
     );
   }
 
+  // Tema de React Navigation (fondos de headers/backdrops) alineado al nuestro.
+  const navTheme = isDark ? DarkTheme : DefaultTheme;
+  const tema = {
+    ...navTheme,
+    colors: {
+      ...navTheme.colors,
+      primary: colors.primary,
+      background: colors.background,
+      card: colors.surface,
+      text: colors.textPrimary,
+      border: colors.border,
+    },
+  };
+
+  const barStyle = isDark ? 'light-content' : 'dark-content';
+
   return (
-    <NavigationContainer>
+    <NavigationContainer theme={tema}>
+      <StatusBar barStyle={barStyle} />
       {user ? <AppNavigator /> : <AuthNavigator />}
     </NavigationContainer>
   );
 }
 
 export default function App() {
-
   return (
     <SafeAreaProvider>
-      <AuthProvider>
-        <CartProvider>
-          <FavoritesProvider>
-            <Root />
-          </FavoritesProvider>
-        </CartProvider>
-      </AuthProvider>
+      <ThemeProvider>
+        <AuthProvider>
+          <CartProvider>
+            <FavoritesProvider>
+              <Root />
+            </FavoritesProvider>
+          </CartProvider>
+        </AuthProvider>
+      </ThemeProvider>
     </SafeAreaProvider>
   );
 }

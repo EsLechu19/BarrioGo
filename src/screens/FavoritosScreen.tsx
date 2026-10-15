@@ -5,7 +5,7 @@ import {
   Text,
   View,
 } from 'react-native';
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { TabScreenProps } from '../navigation/TabScreenProps';
 import { Negocio } from '../types/Negocio';
@@ -13,7 +13,8 @@ import { getNegocios } from '../services/api';
 import { useFavorites } from '../context/FavoritesContext';
 import { RestaurantCard } from '../components/RestaurantCard';
 import { EmptyState } from '../components/EmptyState';
-import { colors } from '../styles/colors';
+import { useColors } from '../context/ThemeContext';
+import type { Colors } from '../styles/colors';
 
 type Props = TabScreenProps<'FavoritosTab'>;
 
@@ -22,6 +23,8 @@ export default function FavoritosScreen({ navigation }: Props) {
   const { ids, toggle, esFavorito } = useFavorites();
   const [negocios, setNegocios] = useState<Negocio[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
+  const colors = useColors();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
 
   useEffect(() => {
     getNegocios()
@@ -77,19 +80,21 @@ export default function FavoritosScreen({ navigation }: Props) {
   );
 }
 
-const styles = StyleSheet.create({
-  // Base
-  container: { flex: 1, padding: 16, backgroundColor: colors.background },
-  center: { justifyContent: 'center', alignItems: 'center' },
+function makeStyles(c: Colors) {
+  return StyleSheet.create({
+    // Base
+    container: { flex: 1, padding: 16, backgroundColor: c.background },
+    center: { justifyContent: 'center', alignItems: 'center' },
 
-  // Area titulo
-  title: { color: colors.textPrimary, fontSize: 22, fontWeight: '900', marginBottom: 4 },
+    // Area titulo
+    title: { color: c.textPrimary, fontSize: 22, fontWeight: '900', marginBottom: 4 },
 
-  // Area vacio
-  emptyWrap: { flex: 1, justifyContent: 'center', alignItems: 'center', gap: 10, paddingBottom: 60 },
-  emptySubtitulo: { paddingHorizontal: 24 },
+    // Area vacio
+    emptyWrap: { flex: 1, justifyContent: 'center', alignItems: 'center', gap: 10, paddingBottom: 60 },
+    emptySubtitulo: { paddingHorizontal: 24 },
 
-  // Area lista de restaurante
-  list: { gap: 4, paddingVertical: 12, paddingBottom: 110 },
-  separator: { height: 12 },
-});
+    // Area lista de restaurante
+    list: { gap: 4, paddingVertical: 12, paddingBottom: 110 },
+    separator: { height: 12 },
+  });
+}

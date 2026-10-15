@@ -1,8 +1,10 @@
+import { useMemo } from 'react';
 import { Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Producto } from '../../types/Producto';
 import { CantidadStepper } from '../CantidadStepper';
-import { colors } from '../../styles/colors';
+import { useColors } from '../../context/ThemeContext';
+import type { Colors } from '../../styles/colors';
 
 // Card de producto del menú: foto/icono + info + botón Agregar o stepper.
 type Props = {
@@ -20,6 +22,8 @@ export function ProductoCard({
   onDecrement,
   onIncrement,
 }: Props) {
+  const colors = useColors();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
   return (
     <View style={styles.card}>
       {/* Foto producto o icono si no hay foto */}
@@ -59,29 +63,31 @@ export function ProductoCard({
   );
 }
 
-const styles = StyleSheet.create({
-  card: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
-    padding: 12,
-    borderWidth: 1,
-    borderColor: colors.border,
-    borderRadius: 16,
-    backgroundColor: colors.surface,
-  },
-  thumb: { width: 80, height: 80, borderRadius: 12, backgroundColor: colors.border },
-  thumbPlaceholder: {
-    backgroundColor: colors.background,
-    borderWidth: 1,
-    borderColor: colors.border,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  cardInfo: { flex: 1, gap: 2 },
-  dish: { color: colors.textPrimary, fontSize: 15, fontWeight: '700' },
-  desc: { color: colors.textMuted, fontSize: 13 },
-  price: { color: colors.primary, fontSize: 14, fontWeight: '700' },
-  addButton: { paddingHorizontal: 16, paddingVertical: 10, borderRadius: 12, backgroundColor: colors.primary },
-  addText: { color: colors.surface, fontSize: 14, fontWeight: '700' },
-});
+function makeStyles(c: Colors) {
+  return StyleSheet.create({
+    card: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 10,
+      padding: 12,
+      borderWidth: 1,
+      borderColor: c.border,
+      borderRadius: 16,
+      backgroundColor: c.surface,
+    },
+    thumb: { width: 80, height: 80, borderRadius: 12, backgroundColor: c.border },
+    thumbPlaceholder: {
+      backgroundColor: c.background,
+      borderWidth: 1,
+      borderColor: c.border,
+      justifyContent: 'center',
+      alignItems: 'center',
+    },
+    cardInfo: { flex: 1, gap: 2 },
+    dish: { color: c.textPrimary, fontSize: 15, fontWeight: '700' },
+    desc: { color: c.textMuted, fontSize: 13 },
+    price: { color: c.primary, fontSize: 14, fontWeight: '700' },
+    addButton: { paddingHorizontal: 16, paddingVertical: 10, borderRadius: 12, backgroundColor: c.primary },
+    addText: { color: c.white, fontSize: 14, fontWeight: '700' },
+  });
+}

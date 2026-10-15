@@ -1,7 +1,9 @@
+import { useMemo } from 'react';
 import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
 import type { StyleProp, TextStyle, ViewStyle } from 'react-native';
 import type { ReactNode } from 'react';
-import { colors } from '../styles/colors';
+import { useColors } from '../context/ThemeContext';
+import type { Colors } from '../styles/colors';
 
 // Estado de carga centralizado. El contenedor (paddingTop con insets, etc.)
 // lo aporta cada pantalla vía `style`, así no cambia ningún espaciado.
@@ -12,6 +14,8 @@ type LoadingProps = {
 };
 
 export function LoadingState({ mensaje, style, textoStyle }: LoadingProps) {
+  const colors = useColors();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
   return (
     <View style={[styles.center, style]}>
       <ActivityIndicator size="large" color={colors.primary} />
@@ -29,6 +33,8 @@ type ErrorProps = {
 };
 
 export function ErrorState({ mensaje, accion, style, textoStyle }: ErrorProps) {
+  const colors = useColors();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
   return (
     <View style={[styles.center, style]}>
       <Text style={[styles.texto, textoStyle]}>{mensaje}</Text>
@@ -37,7 +43,9 @@ export function ErrorState({ mensaje, accion, style, textoStyle }: ErrorProps) {
   );
 }
 
-const styles = StyleSheet.create({
-  center: { justifyContent: 'center', alignItems: 'center' },
-  texto: { color: colors.textMuted, fontSize: 14, textAlign: 'center' },
-});
+function makeStyles(c: Colors) {
+  return StyleSheet.create({
+    center: { justifyContent: 'center', alignItems: 'center' },
+    texto: { color: c.textMuted, fontSize: 14, textAlign: 'center' },
+  });
+}

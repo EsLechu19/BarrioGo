@@ -1,7 +1,9 @@
+import { useMemo } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import type { StyleProp, TextStyle, ViewStyle } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { colors } from '../styles/colors';
+import { useColors } from '../context/ThemeContext';
+import type { Colors } from '../styles/colors';
 
 // Banner informativo suave (fondo primarySoft + icono info + texto).
 type Props = {
@@ -11,6 +13,8 @@ type Props = {
 };
 
 export function InfoBanner({ texto, style, textoStyle }: Props) {
+  const colors = useColors();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
   return (
     <View style={[styles.banner, style]}>
       <Ionicons
@@ -23,14 +27,16 @@ export function InfoBanner({ texto, style, textoStyle }: Props) {
   );
 }
 
-const styles = StyleSheet.create({
-  banner: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    padding: 12,
-    borderRadius: 14,
-    backgroundColor: colors.primarySoft,
-  },
-  texto: { flex: 1, color: colors.textSecondary, fontSize: 13 },
-});
+function makeStyles(c: Colors) {
+  return StyleSheet.create({
+    banner: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 8,
+      padding: 12,
+      borderRadius: 14,
+      backgroundColor: c.primarySoft,
+    },
+    texto: { flex: 1, color: c.textSecondary, fontSize: 13 },
+  });
+}

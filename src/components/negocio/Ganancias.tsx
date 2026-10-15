@@ -1,5 +1,7 @@
+import { useMemo } from 'react';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
-import { colors } from '../../styles/colors';
+import { useColors } from '../../context/ThemeContext';
+import type { Colors } from '../../styles/colors';
 import type { Stats } from './Pedidos';
 
 // Sección Ganancias: resumen y gráfico semanal (mock visual).
@@ -19,6 +21,8 @@ type Props = {
 };
 
 export function Ganancias({ stats, pedidosCount }: Props) {
+  const colors = useColors();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
   return (
     <ScrollView contentContainerStyle={styles.sectionScroll} showsVerticalScrollIndicator={false}>
       <View style={styles.sectionRow}>
@@ -73,51 +77,53 @@ export function Ganancias({ stats, pedidosCount }: Props) {
   );
 }
 
-const styles = StyleSheet.create({
-  sectionScroll: { gap: 10, paddingBottom: 120 },
-  sectionRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-  },
-  sectionTitle: { color: colors.textPrimary, fontSize: 18, fontWeight: '800' },
+function makeStyles(c: Colors) {
+  return StyleSheet.create({
+    sectionScroll: { gap: 10, paddingBottom: 120 },
+    sectionRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+    },
+    sectionTitle: { color: c.textPrimary, fontSize: 18, fontWeight: '800' },
 
-  statsRow: { flexDirection: 'row', gap: 8 },
-  statCard: {
-    flex: 1,
-    alignItems: 'center',
-    gap: 2,
-    paddingVertical: 10,
-    paddingHorizontal: 4,
-    borderWidth: 1,
-    borderColor: colors.border,
-    borderRadius: 16,
-    backgroundColor: colors.surface,
-  },
-  statNum: { fontSize: 18, fontWeight: '900' },
-  statLabel: { color: colors.textMuted, fontSize: 11, fontWeight: '600' },
+    statsRow: { flexDirection: 'row', gap: 8 },
+    statCard: {
+      flex: 1,
+      alignItems: 'center',
+      gap: 2,
+      paddingVertical: 10,
+      paddingHorizontal: 4,
+      borderWidth: 1,
+      borderColor: c.border,
+      borderRadius: 16,
+      backgroundColor: c.surface,
+    },
+    statNum: { fontSize: 18, fontWeight: '900', color: c.textPrimary },
+    statLabel: { color: c.textMuted, fontSize: 11, fontWeight: '600' },
 
-  chartCard: {
-    gap: 12,
-    padding: 14,
-    borderWidth: 1,
-    borderColor: colors.border,
-    borderRadius: 18,
-    backgroundColor: colors.surface,
-  },
-  formTitle: { color: colors.textPrimary, fontSize: 16, fontWeight: '800' },
-  chartRow: { flexDirection: 'row', alignItems: 'flex-end', gap: 6 },
-  chartCol: { flex: 1, alignItems: 'center', gap: 4 },
-  chartValue: { color: colors.textMuted, fontSize: 10, fontWeight: '700' },
-  chartTrack: {
-    width: '100%',
-    height: 120,
-    justifyContent: 'flex-end',
-    alignItems: 'center',
-    borderRadius: 8,
-    backgroundColor: colors.background,
-  },
-  chartFill: { width: '70%', borderRadius: 6, backgroundColor: colors.primary },
-  chartDay: { color: colors.textMuted, fontSize: 12, fontWeight: '700' },
-  chartNote: { color: colors.textMuted, fontSize: 12, textAlign: 'center' },
-});
+    chartCard: {
+      gap: 12,
+      padding: 14,
+      borderWidth: 1,
+      borderColor: c.border,
+      borderRadius: 18,
+      backgroundColor: c.surface,
+    },
+    formTitle: { color: c.textPrimary, fontSize: 16, fontWeight: '800' },
+    chartRow: { flexDirection: 'row', alignItems: 'flex-end', gap: 6 },
+    chartCol: { flex: 1, alignItems: 'center', gap: 4 },
+    chartValue: { color: c.textMuted, fontSize: 10, fontWeight: '700' },
+    chartTrack: {
+      width: '100%',
+      height: 120,
+      justifyContent: 'flex-end',
+      alignItems: 'center',
+      borderRadius: 8,
+      backgroundColor: c.background,
+    },
+    chartFill: { width: '70%', borderRadius: 6, backgroundColor: c.primary },
+    chartDay: { color: c.textMuted, fontSize: 12, fontWeight: '700' },
+    chartNote: { color: c.textMuted, fontSize: 12, textAlign: 'center' },
+  });
+}
