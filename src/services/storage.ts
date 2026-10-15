@@ -1,5 +1,6 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { ItemPedido } from '../types/Pedido';
+import type { DireccionEntrega, MetodoPago } from '../types/Checkout';
 
 // Persistencia local tipada. REGLA: jamás confiar en JSON.parse a ciegas —
 // todo lo leído se valida con un chequeo de forma antes de usarse.
@@ -7,6 +8,8 @@ const KEYS = {
   cart: 'barriogo:cart:v1',
   favorites: 'barriogo:favorites:v1',
   session: 'barriogo:session:v1',
+  checkoutAddress: 'barriogo:checkout-address:v1',
+  checkoutPayment: 'barriogo:checkout-payment:v1',
 } as const;
 
 export interface Session {
@@ -43,6 +46,22 @@ function isSession(value: unknown): value is Session {
   );
 }
 
+function isDireccionEntrega(value: unknown): value is DireccionEntrega {
+  return typeof value === 'object' && value !== null &&
+    typeof (value as DireccionEntrega).id === 'string' &&
+    typeof (value as DireccionEntrega).alias === 'string' &&
+    typeof (value as DireccionEntrega).detalle === 'string' &&
+    typeof (value as DireccionEntrega).esPrincipal === 'boolean';
+}
+
+function isMetodoPago(value: unknown): value is MetodoPago {
+  return typeof value === 'object' && value !== null &&
+    typeof (value as MetodoPago).id === 'string' &&
+    typeof (value as MetodoPago).nombre === 'string' &&
+    typeof (value as MetodoPago).detalle === 'string' &&
+    ['efectivo', 'yape', 'tarjeta'].includes((value as MetodoPago).tipo);
+}
+
 async function read<T>(key: string, guard: (v: unknown) => v is T): Promise<T | null> {
   try {
     const raw = await AsyncStorage.getItem(key);
@@ -71,4 +90,10 @@ export const storage = {
   loadSession: () => read(KEYS.session, isSession),
   saveSession: (s: Session) => write(KEYS.session, s),
   clearSession: () => AsyncStorage.removeItem(KEYS.session),
+  loadCheckout: async () => ({
+    direccionEntrega: await read(KEYS.checkoutAddress, isDireccionEntrega),
+    metodoPago: await read(KEYS.checkoutPayment, isMetodoPago),
+  }),
+  saveCheckoutAddress: (address: DireccionEntrega) => write(KEYS.checkoutAddress, address),
+  saveCheckoutPaymentMethod: (method: MetodoPago) => write(KEYS.checkoutPayment, method),
 };

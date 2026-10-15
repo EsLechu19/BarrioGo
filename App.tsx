@@ -5,6 +5,7 @@ import { AppNavigator } from './src/navigation/AppNavigator';
 import { AuthNavigator } from './src/navigation/AuthNavigator';
 import { CartProvider } from './src/context/CartContext';
 import { FavoritesProvider } from './src/context/FavoritesContext';
+import { CheckoutProvider } from './src/context/CheckoutContext';
 import { AuthProvider, useAuth } from './src/context/AuthContext';
 import { colors } from './src/styles/colors';
 
@@ -33,7 +34,9 @@ export default function App() {
       <AuthProvider>
         <CartProvider>
           <FavoritesProvider>
-            <Root />
+            <CheckoutProvider>
+              <Root />
+            </CheckoutProvider>
           </FavoritesProvider>
         </CartProvider>
       </AuthProvider>

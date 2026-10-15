@@ -14,25 +14,14 @@ import { ScreenHeader } from '../components/ScreenHeader';
 import { InfoBanner } from '../components/InfoBanner';
 import { SelectableCard } from '../components/SelectableCard';
 import { colors } from '../styles/colors';
+import { DIRECCIONES_DISPONIBLES } from '../data/checkoutOptions';
+import { useCheckout } from '../context/CheckoutContext';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Direcciones'>;
 
-interface DireccionMock {
-  id: string;
-  alias: string;
-  detalle: string;
-  esPrincipal: boolean;
-}
-
-// TODO(back): colección `users/{uid}/direcciones` en Firestore.
-const DIRECCIONES_MOCK: DireccionMock[] = [
-  { id: 'd1', alias: 'Casa', detalle: 'Av. Mi casa 123, Lima', esPrincipal: true },
-  { id: 'd2', alias: 'Trabajo', detalle: 'Av. Arequipa 2450, Lima', esPrincipal: false },
-];
-
 export default function DireccionesScreen({ navigation }: Props) {
   const insets = useSafeAreaInsets();
-  const [seleccionada, setSeleccionada] = useState<string>('d1');
+  const { selectedAddress, setSelectedAddress } = useCheckout();
   const [aviso, setAviso] = useState<boolean>(false);
 
   return (
@@ -62,14 +51,14 @@ export default function DireccionesScreen({ navigation }: Props) {
         <InfoBanner texto="Pronto: guardar nuevas direcciones con GPS (solo diseño)." />
       ) : null}
 
-      {DIRECCIONES_MOCK.map((d) => {
-        const activa: boolean = seleccionada === d.id;
+      {DIRECCIONES_DISPONIBLES.map((d) => {
+        const activa: boolean = selectedAddress?.id === d.id;
         return (
           <SelectableCard
             key={d.id}
             activo={activa}
             icono="location-outline"
-            onPress={() => setSeleccionada(d.id)}
+            onPress={() => setSelectedAddress(d)}
             accessibilityLabel={`Usar dirección ${d.alias}`}
           >
             <View style={styles.aliasRow}>
@@ -88,7 +77,7 @@ export default function DireccionesScreen({ navigation }: Props) {
       })}
 
       <Text style={styles.hint}>
-        La dirección elegida se usará como entrega en Home (diseño).
+        La dirección elegida se usará como entrega en Home y al confirmar el carrito.
       </Text>
     </ScrollView>
     </View>

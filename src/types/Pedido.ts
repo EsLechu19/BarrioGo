@@ -1,3 +1,5 @@
+import type { DireccionEntrega, MetodoPago } from './Checkout';
+
 export type EstadoPedido = 'pendiente' | 'confirmado' | 'en_camino' | 'entregado';
 
 export interface ItemPedido {
@@ -21,4 +23,7 @@ export interface Pedido {
   total: number;
   estado: EstadoPedido;
   fecha: string;
+  // Optional so orders created before this work unit remain readable.
+  direccionEntrega?: DireccionEntrega;
+  metodoPago?: MetodoPago;
 }

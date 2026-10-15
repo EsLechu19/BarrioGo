@@ -14,26 +14,14 @@ import { ScreenHeader } from '../components/ScreenHeader';
 import { InfoBanner } from '../components/InfoBanner';
 import { SelectableCard } from '../components/SelectableCard';
 import { colors } from '../styles/colors';
+import { METODOS_PAGO_DISPONIBLES } from '../data/checkoutOptions';
+import { useCheckout } from '../context/CheckoutContext';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'MetodosPago'>;
 
-interface MetodoMock {
-  id: string;
-  nombre: string;
-  detalle: string;
-  icono: 'card-outline' | 'phone-portrait-outline' | 'cash-outline';
-}
-
-// TODO(back): métodos reales con pasarela (Yape/Plin/tarjeta) + Firestore.
-const METODOS_MOCK: MetodoMock[] = [
-  { id: 'm1', nombre: 'Efectivo', detalle: 'Pago al recibir', icono: 'cash-outline' },
-  { id: 'm2', nombre: 'Yape', detalle: '999 888 777', icono: 'phone-portrait-outline' },
-  { id: 'm3', nombre: 'Visa •• 4321', detalle: 'Vence 08/28', icono: 'card-outline' },
-];
-
 export default function MetodosPagoScreen({ navigation }: Props) {
   const insets = useSafeAreaInsets();
-  const [seleccionado, setSeleccionado] = useState<string>('m1');
+  const { selectedPaymentMethod, setSelectedPaymentMethod } = useCheckout();
   const [aviso, setAviso] = useState<boolean>(false);
 
   return (
@@ -63,14 +51,19 @@ export default function MetodosPagoScreen({ navigation }: Props) {
         <InfoBanner texto="Pronto: vincular tarjetas y billeteras reales (solo diseño)." />
       ) : null}
 
-      {METODOS_MOCK.map((m) => {
-        const activo: boolean = seleccionado === m.id;
+      {METODOS_PAGO_DISPONIBLES.map((m) => {
+        const activo: boolean = selectedPaymentMethod?.id === m.id;
+        const icono = m.tipo === 'efectivo'
+          ? 'cash-outline'
+          : m.tipo === 'yape'
+            ? 'phone-portrait-outline'
+            : 'card-outline';
         return (
           <SelectableCard
             key={m.id}
             activo={activo}
-            icono={m.icono}
-            onPress={() => setSeleccionado(m.id)}
+            icono={icono}
+            onPress={() => setSelectedPaymentMethod(m)}
             accessibilityLabel={`Pagar con ${m.nombre}`}
           >
             <Text style={styles.nombre}>{m.nombre}</Text>
@@ -80,7 +73,7 @@ export default function MetodosPagoScreen({ navigation }: Props) {
       })}
 
       <Text style={styles.hint}>
-        El método elegido se usará al confirmar el carrito (diseño).
+        Se guardan métodos declarados de demostración; todavía no hay pasarela de pago.
       </Text>
     </ScrollView>
     </View>

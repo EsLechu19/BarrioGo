@@ -18,6 +18,7 @@ Conservar el diseño visual, navegación y componentes de `feature/apf2-ui-unido
 - [x] T2. Consolidar contextos, tipos y Hooks manteniendo el diseño de datos requerido por la UI APF2.
 - [x] T3. Integrar la lógica de autenticación, catálogo, detalle, carrito, favoritos, pedidos y panel negocio en las pantallas visuales APF2.
 - [ ] T4. Verificar navegación, tipos, compilación y flujos funcionales en Expo.
+- [x] P0-1. Conectar selección de dirección y método de pago al checkout, con persistencia local y payload de pedidos compatible.
 
 ## Criterios de aceptación
 
@@ -35,6 +36,7 @@ Conservar el diseño visual, navegación y componentes de `feature/apf2-ui-unido
 - Servicios APF3 y pantallas APF2 reconciliados en la rama de integración.
 - Verificación estática completada; la ejecución visual de Expo queda pendiente por no iniciar un runtime interactivo en esta sesión.
 - El carrito conserva `nombre`, persiste con AsyncStorage y ahora guarda también `negocioId` para pedidos con productos de Firestore; los carritos antiguos mantienen compatibilidad con el catálogo local.
+- P0-1 implementado sin cambiar el diseño APF2: Dirección y Método de pago usan estado compartido, AsyncStorage validado y snapshot en nuevos pedidos; pedidos antiguos siguen siendo legibles.
 
 ## Verificación
 
@@ -43,6 +45,7 @@ Conservar el diseño visual, navegación y componentes de `feature/apf2-ui-unido
 - Expo lint: falla por 10 errores `react-hooks/set-state-in-effect` y 6 advertencias ya presentes en la integración; no se usó como criterio de compilación.
 - Ejecución Expo: no ejecutada en esta verificación acotada.
 - Firebase runtime: no verificado; depende del `.env` local y no se leyeron ni documentaron secretos.
+- P0-1: verificación de Firebase/device pendiente; el flujo requiere un runtime Expo y una configuración Firebase válida para confirmar la escritura real del pedido.
 
 ## Próximo paso
 
