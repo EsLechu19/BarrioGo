@@ -1,0 +1,254 @@
+import { useMemo } from 'react';
+import { ActivityIndicator, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
+import { Pedido } from '../../types/Pedido';
+import { SeccionCard } from '../SeccionCard';
+import { useColors } from '../../context/ThemeContext';
+import type { Colors } from '../../styles/colors';
+import { ESTADO_COLORS, ESTADO_ICONS, ESTADO_LABELS, SIGUIENTE_ESTADO } from '../../utils/estadosPedido';
+import { fechaCorta, fechaLarga } from '../../utils/fechas';
+
+// Resumen derivado de los pedidos en vivo.
+export type Stats = {
+  pendientes: number;
+  enCurso: number;
+  entregados: number;
+  ventas: number;
+};
+
+type Props = {
+  stats: Stats;
+  loadingPedidos: boolean;
+  pedidos: Pedido[];
+  avanzandoId: string | null;
+  onAvanzar: (pedido: Pedido) => void;
+  onRechazar: (pedido: Pedido) => void;
+};
+
+export function Pedidos({
+  stats,
+  loadingPedidos,
+  pedidos,
+  avanzandoId,
+  onAvanzar,
+  onRechazar,
+}: Props) {
+  const colors = useColors();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
+  return (
+    <ScrollView
+      style={styles.sectionScrollView}
+      contentContainerStyle={styles.sectionScroll}
+      showsVerticalScrollIndicator={false}
+    >
+      {/* Resumen */}
+      <Text style={styles.sectionTitle}>Mis pedidos</Text>
+      <View style={styles.statsRow}>
+        <View style={styles.statCard}>
+          <Text style={[styles.statNum, { color: '#F59E0B' }]}>{stats.pendientes}</Text>
+          <Text style={styles.statLabel}>Pendientes</Text>
+        </View>
+        <View style={styles.statCard}>
+          <Text style={[styles.statNum, { color: '#8B5CF6' }]}>{stats.enCurso}</Text>
+          <Text style={styles.statLabel}>En curso</Text>
+        </View>
+        <View style={styles.statCard}>
+          <Text style={[styles.statNum, { color: '#10B981' }]}>{stats.entregados}</Text>
+          <Text style={styles.statLabel}>Entregados</Text>
+        </View>
+        <View style={styles.statCard}>
+          <Text style={[styles.statNum, { color: colors.primary }]}>
+            S/{stats.ventas.toFixed(0)}
+          </Text>
+          <Text style={styles.statLabel}>Ventas</Text>
+        </View>
+      </View>
+
+      {loadingPedidos ? (
+        <View style={styles.centerRow}>
+          <ActivityIndicator size="large" color={colors.primary} />
+          <Text style={styles.subtitle}>Cargando pedidos...</Text>
+        </View>
+      ) : pedidos.length === 0 ? (
+        <View style={styles.centerRow}>
+          <Text style={styles.subtitle}>
+            Todavía no hay pedidos para tu negocio.
+          </Text>
+        </View>
+      ) : (
+        pedidos.map((item) => {
+          const colorEstado: string = ESTADO_COLORS[item.estado];
+          return (
+            <SeccionCard
+              key={item.id}
+              titulo={`${fechaCorta(item.fecha)} — ${item.items.length} ${
+                item.items.length === 1 ? 'item' : 'items'
+              }`}
+              subtitulo={`S/${item.total.toFixed(2)}`}
+              icono={
+                item.estado === 'cancelado'
+                  ? 'close-circle-outline'
+                  : ESTADO_ICONS[item.estado]
+              }
+              iconoFondo={`${colorEstado}1A`}
+              iconoColor={colorEstado}
+               badgeTexto={ESTADO_LABELS[item.estado]}
+               badgeColor={colorEstado}
+              >
+               <View style={styles.detailArea}>
+                 <Text style={styles.detailTitle}>Detalle del pedido</Text>
+                 {item.items.length > 0 ? item.items.map((orderItem) => (
+                   <View key={`${orderItem.productoId}-${orderItem.cantidad}`} style={styles.itemRow}>
+                     <Text style={styles.itemName} numberOfLines={1}>
+                       {orderItem.nombre?.trim() || 'Producto sin nombre'} x{orderItem.cantidad}
+                     </Text>
+                     <Text style={styles.itemSubtotal}>
+                       S/{(orderItem.cantidad * orderItem.precioUnitario).toFixed(2)}
+                     </Text>
+                   </View>
+                 )) : <Text style={styles.detailMuted}>Sin detalle de productos disponible.</Text>}
+                 <Text style={styles.detailLine}>Total: S/{item.total.toFixed(2)}</Text>
+                 <Text style={styles.detailMuted}>Fecha: {fechaLarga(item.fecha)}</Text>
+                 <Text style={styles.detailMuted}>
+                   Cuenta del cliente: {identificadorCliente(item.usuarioId)}
+                 </Text>
+                 {item.direccion ? (
+                   <Text style={styles.detailMuted}>
+                     Entrega: {item.direccion.alias} — {item.direccion.detalle}
+                   </Text>
+                 ) : null}
+                 {item.metodoPago ? (
+                   <Text style={styles.detailMuted}>
+                     Pago: {item.metodoPago.nombre || item.metodoPago.tipo}
+                   </Text>
+                 ) : null}
+               </View>
+               accionInferior={
+                 item.estado !== 'entregado' && item.estado !== 'cancelado' ? (
+                   <View style={styles.actions}>
+                   <TouchableOpacity
+                    style={[
+                      styles.advanceButton,
+                      avanzandoId === item.id && styles.disabledButton,
+                    ]}
+                    disabled={avanzandoId === item.id}
+                    onPress={() => onAvanzar(item)}
+                  >
+                    <Text style={styles.advanceText}>
+                      {avanzandoId === item.id
+                        ? 'Actualizando...'
+                         : `Avanzar a ${ESTADO_LABELS[SIGUIENTE_ESTADO[item.estado]]}`}
+                    </Text>
+                    <Ionicons name="arrow-forward" size={16} color={colors.white} />
+                   </TouchableOpacity>
+                   {item.estado === 'pendiente' ? (
+                     <TouchableOpacity
+                       style={[styles.rejectButton, avanzandoId === item.id && styles.disabledButton]}
+                       disabled={avanzandoId === item.id}
+                       onPress={() => onRechazar(item)}
+                     >
+                       <Ionicons name="close-outline" size={16} color={colors.error} />
+                       <Text style={styles.rejectText}>Rechazar pedido</Text>
+                     </TouchableOpacity>
+                   ) : null}
+                   </View>
+                 ) : item.estado === 'cancelado' ? (
+                  <View style={styles.doneRow}>
+                    <Ionicons name="close-circle-outline" size={16} color={colors.error} />
+                    <Text style={[styles.doneText, { color: colors.error }]}>Pedido cancelado</Text>
+                  </View>
+                ) : (
+                  <View style={styles.doneRow}>
+                    <Ionicons
+                       name="checkmark-done-outline"
+                       size={16}
+                       color={colors.success}
+                     />
+                    <Text style={styles.doneText}>Pedido completado</Text>
+                  </View>
+                )
+              }
+            </SeccionCard>
+          );
+        })
+      )}
+    </ScrollView>
+  );
+}
+
+function makeStyles(c: Colors) {
+  return StyleSheet.create({
+    sectionScrollView: { flex: 1 },
+    sectionScroll: { gap: 10, paddingBottom: 120 },
+    sectionTitle: { color: c.textPrimary, fontSize: 18, fontWeight: '800' },
+    subtitle: { color: c.textMuted, fontSize: 14, textAlign: 'center' },
+
+    statsRow: { flexDirection: 'row', gap: 8 },
+    statCard: {
+      flex: 1,
+      alignItems: 'center',
+      gap: 2,
+      paddingVertical: 10,
+      paddingHorizontal: 4,
+      borderWidth: 1,
+      borderColor: c.border,
+      borderRadius: 16,
+      backgroundColor: c.surface,
+    },
+    statNum: { fontSize: 18, fontWeight: '900', color: c.textPrimary },
+    statLabel: { color: c.textMuted, fontSize: 11, fontWeight: '600' },
+
+    centerRow: { alignItems: 'center', gap: 8, paddingVertical: 12 },
+    disabledButton: { opacity: 0.6 },
+
+    detailArea: { gap: 6, paddingTop: 2 },
+    detailTitle: { color: c.textPrimary, fontSize: 13, fontWeight: '800' },
+    itemRow: { flexDirection: 'row', justifyContent: 'space-between', gap: 8 },
+    itemName: { flex: 1, color: c.textPrimary, fontSize: 13 },
+    itemSubtotal: { color: c.textPrimary, fontSize: 13, fontWeight: '700' },
+    detailLine: { color: c.textPrimary, fontSize: 14, fontWeight: '800', marginTop: 2 },
+    detailMuted: { color: c.textMuted, fontSize: 12 },
+    actions: { gap: 8 },
+
+    advanceButton: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'center',
+      gap: 8,
+      paddingVertical: 11,
+      paddingHorizontal: 16,
+      borderRadius: 12,
+      backgroundColor: c.primary,
+    },
+    advanceText: { color: c.white, fontSize: 14, fontWeight: '700' },
+    rejectButton: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'center',
+      gap: 6,
+      paddingVertical: 9,
+      paddingHorizontal: 16,
+      borderRadius: 12,
+      borderWidth: 1,
+      borderColor: c.error,
+      backgroundColor: c.surface,
+    },
+    rejectText: { color: c.error, fontSize: 13, fontWeight: '700' },
+    doneRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'center',
+      gap: 6,
+      paddingVertical: 8,
+      borderRadius: 12,
+      backgroundColor: c.successSoft,
+    },
+    doneText: { color: c.success, fontSize: 13, fontWeight: '700' },
+  });
+}
+
+function identificadorCliente(usuarioId: string): string {
+  const limpio: string = usuarioId.trim();
+  if (limpio.length <= 12) return limpio || 'No disponible';
+  return `${limpio.slice(0, 6)}…${limpio.slice(-4)}`;
+}

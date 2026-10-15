@@ -1,143 +1,327 @@
-import { Ionicons } from "@expo/vector-icons";
-import { StyleSheet, Text, TouchableOpacity, View, TextInput } from 'react-native'
-import { useSafeAreaInsets } from 'react-native-safe-area-context'
-import { Negocio } from "../types/Negocio";
-import { RestaurantCard } from "../components/RestaurantCard";
-import { colors } from "../styles/colors";
+import { Ionicons } from '@expo/vector-icons';
+import {
+  FlatList,
+  RefreshControl,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
+} from 'react-native';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { Negocio } from '../types/Negocio';
+import { RestaurantCard } from '../components/RestaurantCard';
+import { LoadingState, ErrorState } from '../components/StateView';
+import { EmptyState } from '../components/EmptyState';
+import { getNegociosConOrigen } from '../services/api';
+import { UserCoords, formatDistancia, getUserCoords, haversineKm } from '../services/location';
+import { useFavorites } from '../context/FavoritesContext';
+import { useAuth } from '../context/AuthContext';
+import { useCart } from '../context/CartContext';
+import { TabScreenProps } from '../navigation/TabScreenProps';
+import { useColors } from '../context/ThemeContext';
+import type { Colors } from '../styles/colors';
+import { nombreVisible } from '../utils/usuario';
 
-const negocios: Negocio[] = [
-    {
-        id: '1',
-        nombre: 'Polleria Don Tito',
-        imagen: 'https://img.magnific.com/vector-premium/plantilla-vector-diseno-logotipo-mascota-pollo_441059-165.jpg?semt=ais_hybrid&w=740&q=80',
-        rating: 4.6,
-        opiniones: 128,
-        tiempoEstimado: '15-20 min',
-        distancia: '0.8 km',
-        envioGratis: true,
-    },
-    {
-        id: '2',
-        nombre: 'Chifa El Dragón',
-        imagen: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTK7PL9nvCC4AO4q6M7QiYztfQWqIJAIXnmxNN8zz-ICQoed7ZJOEZ9lFAF&s=10',
-        rating: 4.5,
-        opiniones: 96,
-        tiempoEstimado: '20-30 min',
-        distancia: '1.2 km',
-        envioGratis: false,
-        envioMinimo: 'Envío gratis desde S/25',
-    },
-    {
-        id: '3',
-        nombre: 'Sabor Criollo',
-        imagen: 'https://images.rappi.pe/restaurants_logo/1871458496846096-1774365845062.jpg',
-        rating: 4.3,
-        opiniones: 78,
-        tiempoEstimado: '25-35 min',
-        distancia: '1.8 km',
-        envioGratis: false,
-        envioMinimo: 'Envío gratis desde S/5',
-    },
-    {
-        id: '4',
-        nombre: 'Julitos Broaster Huarique',
-        imagen: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRgXNJgsPzLYm41MJPlizF__tQb5LYI6QvwebJ_toMCg6a0aj489CYRgkcu&s=10',
-        rating: 4.1,
-        opiniones: 138,
-        tiempoEstimado: '5-10 min',
-        distancia: '0.4 km',
-        envioGratis: true,
-    },
-];
+type Props = TabScreenProps<'InicioTab'>;
 
-export default function HomeScreen() {
-    const insets = useSafeAreaInsets();
-    const handleMore = () => { console.log('Más direcciones'); };
-    const handleSeeAll = () => { console.log('Ver todos'); };
+export default function HomeScreen({ navigation }: Props) {
+  const insets = useSafeAreaInsets();
+  const [negocios, setNegocios] = useState<Negocio[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string | null>(null);
+  const [advertenciaFuente, setAdvertenciaFuente] = useState<string | null>(null);
+  const [refreshing, setRefreshing] = useState<boolean>(false);
+  const [query, setQuery] = useState<string>('');
+  const [userLoc, setUserLoc] = useState<UserCoords | null>(null);
+  const { toggle, esFavorito } = useFavorites();
+  const { user } = useAuth();
+  const { count: cartCount } = useCart();
+  const nombre: string = nombreVisible(user);
+  const colors = useColors();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
+
+  const load = useCallback(async (isRefresh = false) => {
+    if (isRefresh) {
+      setRefreshing(true);
+    } else {
+      setLoading(true);
+    }
+    setError(null);
+    setAdvertenciaFuente(null);
+    try {
+      const resultado = await getNegociosConOrigen();
+      setNegocios(resultado.negocios);
+      setAdvertenciaFuente(resultado.advertencia);
+    } catch {
+      setError('No se pudo cargar los restaurantes. Revisa tu conexión e intenta de nuevo.');
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    load();
+    getUserCoords().then(setUserLoc);
+  }, [load]);
+
+  const handleMore = () => {
+    console.log('Más direcciones');
+  };
+  const handleSeeAll = () => {
+    navigation.navigate('Restaurants');
+  };
+
+  const filtered: Negocio[] = useMemo(() => {
+    const base = query.trim()
+      ? negocios.filter((n) => n.nombre.toLowerCase().includes(query.trim().toLowerCase()))
+      : negocios;
+    // Sin GPS: orden del API. Con GPS: distancia real + orden por cercanía.
+    if (!userLoc) return base;
+    return base
+      .map((n) => {
+        const km = haversineKm(userLoc, { latitude: n.lat, longitude: n.lng });
+        return { negocio: { ...n, distancia: formatDistancia(km) }, km };
+      })
+      .sort((a, b) => a.km - b.km)
+      .map((r) => r.negocio);
+  }, [negocios, query, userLoc]);
+
+  // Los 5 más cercanos a tu punto GPS ("Ver todos" abre la vista Restaurants).
+  const visibles: Negocio[] = filtered.slice(0, 5);
+
+  if (loading && !refreshing) {
+    // Area loading
     return (
-        //contenedor del home
-        <View style={[styles.container, { paddingTop: insets.top + 12 }]}>
-            {/* Area del top-bar*/}
-            <View style={styles.topBar}>
-                {/* Locacion*/}
-                <View style={styles.location}>
-                    <Ionicons name='location-outline' size={30} color={colors.primary} />
-                    <View style={styles.locationTextBlock}>
-                        <Text style={styles.locationLabel}>Direccion de entrega</Text>
-                        <View style={styles.locationRow}>
-                            <Text style={styles.locationAddress}>Av. Mi casa</Text>
-                            <TouchableOpacity onPress={handleMore}>
-                                <Ionicons name='chevron-down' size={18} color={colors.textSecondary} />
-                            </TouchableOpacity>
-                        </View>
-                    </View>
-                </View>
-                {/* Notificacion*/}
-                <View>
-                    <Ionicons name='notifications-outline' size={30} color={colors.textSecondary} />
-                </View>
-            </View>
+      <LoadingState
+        mensaje="Cargando restaurantes cercanos..."
+        style={[styles.container, styles.center, { paddingTop: insets.top + 12 }]}
+        textoStyle={styles.statusText}
+      />
+    );
+  }
 
+  if (error) {
+    // Area error
+    return (
+      <ErrorState
+        mensaje={error}
+        style={[styles.container, styles.center, { paddingTop: insets.top + 12 }]}
+        textoStyle={styles.statusText}
+        accion={
+          <TouchableOpacity style={styles.retryButton} onPress={() => load()}>
+            <Text style={styles.retryText}>Reintentar</Text>
+          </TouchableOpacity>
+        }
+      />
+    );
+  }
+
+  return (
+    <View style={[styles.container, { paddingTop: insets.top + 12 }]}>
+      {/* Area del top-bar*/}
+      <View style={styles.topBar}>
+        {/* Locacion*/}
+        <View style={styles.location}>
+          <Ionicons name="location-outline" size={30} color={colors.primary} />
+          <View style={styles.locationTextBlock}>
+            <Text style={styles.locationLabel}>Direccion de entrega</Text>
+            <View style={styles.locationRow}>
+              <Text style={styles.locationAddress}>Av. Mi casa</Text>
+              <TouchableOpacity onPress={handleMore}>
+                <Ionicons name="chevron-down" size={18} color={colors.textSecondary}/>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+        {/* Notificacion + carrito lado a lado */}
+        <View style={styles.topActions}>
+          <TouchableOpacity
+            style={styles.iconButton}
+            onPress={() => navigation.navigate('Notificaciones')}
+            hitSlop={8}
+            accessibilityRole="button"
+            accessibilityLabel="Ver notificaciones de pedidos"
+          >
+            <Ionicons name="notifications-outline" size={22} color={colors.textSecondary} />
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={styles.iconButton}
+            onPress={() => navigation.navigate('Carrito')}
+            hitSlop={8}
+            accessibilityRole="button"
+            accessibilityLabel={cartCount > 0 ? `Abrir carrito con ${cartCount} productos` : 'Abrir carrito'}
+          >
+            <Ionicons name="cart-outline" size={22} color={colors.textSecondary} />
+            {cartCount > 0 ? (
+              <View style={styles.cartBadge}>
+                <Text style={styles.cartBadgeText}>{cartCount > 99 ? '99+' : String(cartCount)}</Text>
+              </View>
+            ) : null}
+          </TouchableOpacity>
+        </View>
+      </View>
+
+      {/*Area lista de restaurante*/}
+      <FlatList
+        data={visibles}
+        keyExtractor={(item) => item.id}
+        renderItem={({ item }) => (
+          <RestaurantCard
+            negocio={item}
+            esFavorito={esFavorito(item.id)}
+            onToggleFavorito={() => toggle(item.id)}
+            onPress={() => navigation.navigate('Detalle', { negocioId: item.id })}
+          />
+        )}
+        contentContainerStyle={styles.listContent}
+        ItemSeparatorComponent={() => <View style={styles.separator} />}
+        ListHeaderComponent={
+          <View style={styles.headerBlock}>
             {/*Area bienvenida y busqueda*/}
-            <View style={styles.areaGreetingSearch}>
-                {/* Bienvenida */}
-                <View style={styles.greeting}>
-                    <Text style={styles.greetingTitle}>¡Hola, Juan!👋</Text>
-                    <Text style={styles.greetingSubtitle}>¿Qué se te antoja hoy?</Text>
-                </View>
-                {/* Busqueda */}
-                <View style={styles.inputWrapper}>
-                    <Ionicons name='search' size={20} color={colors.textPlaceholder} />
-                    <TextInput
-                        placeholder="Buscar negocios o productos"
-                        placeholderTextColor={colors.textPlaceholder}
-                    />
-                </View>
+            {/* Bienvenida */}
+            <View style={styles.greeting}>
+              <Text style={styles.greetingTitle}>¡Hola, {nombre}!👋</Text>
+              <Text style={styles.greetingSubtitle}>¿Qué se te antoja hoy?</Text>
             </View>
-
+            {/* Busqueda */}
+            <View style={styles.inputWrapper}>
+              <Ionicons name="search" size={20} color={colors.textPlaceholder} />
+              <TextInput
+                value={query}
+                onChangeText={setQuery}
+                placeholder="Buscar restaurantes o platos"
+                placeholderTextColor={colors.textPlaceholder}
+                style={styles.input}
+              />
+            </View>
             {/*Area seccion header */}
             <View style={styles.sectionHeader}>
-                <Text style={styles.sectionTitle}>Negocios cercanos</Text>
-                <TouchableOpacity onPress={handleSeeAll}>
-                    <Text style={styles.seeAll}>Ver todos</Text>
-                </TouchableOpacity>
+              <Text style={styles.sectionTitle}>Restaurantes cercanos</Text>
+              <TouchableOpacity onPress={handleSeeAll}>
+                <Text style={styles.seeAll}>Ver todos</Text>
+              </TouchableOpacity>
             </View>
-
-            {/*Area lista de restaurante*/}
-            <View style={styles.restaurantList}>
-                {/* CardRestaurant */}
-                {negocios.map((negocio) => (
-                    <RestaurantCard key={negocio.id} negocio={negocio} />
-                ))}
-            </View>
-        </View>
-    );
+            {advertenciaFuente ? (
+              <View style={styles.sourceWarning}>
+                <Ionicons name="cloud-offline-outline" size={18} color={colors.textMuted} />
+                <Text style={styles.sourceWarningText}>{advertenciaFuente}</Text>
+              </View>
+            ) : null}
+            <Text style={styles.gpsNote}>
+              {userLoc
+                ? '📍 Ordenado por tu ubicación real'
+                : 'Sin ubicación: activá el GPS para ordenar por cercanía'}
+            </Text>
+          </View>
+        }
+        ListEmptyComponent={
+          // Area vacio
+          <EmptyState
+            icono="search-outline"
+            titulo="Sin resultados"
+            subtitulo={`No hay restaurantes para "${query}".`}
+            style={styles.emptyList}
+          />
+        }
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={() => load(true)} />
+        }
+      />
+    </View>
+  );
 }
 
-const styles = StyleSheet.create({
-    // Contenedor principal de la pantalla
-    container: { flex: 1, gap: 20, padding: 16, backgroundColor: colors.background },
+function makeStyles(c: Colors) {
+  return StyleSheet.create({
+    // Base
+    container: { flex: 1, padding: 16, backgroundColor: c.background },
+    center: { justifyContent: 'center', alignItems: 'center', gap: 12 },
+    statusText: { color: c.textMuted, fontSize: 14, textAlign: 'center' },
 
-    // Area del top-bar (ubicacion + notificaciones)
-    topBar: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+    // Area del top-bar
+    topBar: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',marginBottom:10 },
+    // Locacion
     location: { flexDirection: 'row', alignItems: 'center', gap: 8 },
     locationTextBlock: { flexDirection: 'column' },
-    locationLabel: { color: colors.textMuted, fontSize: 12 },
+    locationLabel: { color: c.textMuted, fontSize: 12 },
     locationRow: { flexDirection: 'row', alignItems: 'center', gap: 4 },
-    locationAddress: { color: colors.textPrimary, fontSize: 14, fontWeight: 'bold' },
+    locationAddress: { color: c.textPrimary, fontSize: 14, fontWeight: 'bold' },
+    // Notificacion + carrito
+    topActions: { flexDirection: 'row', alignItems: 'center', gap: 10 },
+    iconButton: {
+      width: 40,
+      height: 40,
+      borderRadius: 20,
+      backgroundColor: c.surface,
+      borderColor: c.border,
+      borderWidth: 1.5,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    cartBadge: {
+      position: 'absolute',
+      top: -4,
+      right: -4,
+      minWidth: 20,
+      height: 20,
+      paddingHorizontal: 4,
+      borderRadius: 10,
+      backgroundColor: c.primary,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    cartBadgeText: { color: c.white, fontSize: 11, fontWeight: '800' },
 
-    // Area de bienvenida y busqueda
-    areaGreetingSearch: { gap: 12 },
+    // Area bienvenida y busqueda
+    headerBlock: { gap: 12, marginBottom: 4 },
+    // Bienvenida
     greeting: { gap: 2 },
-    greetingTitle: { color: colors.textMuted, fontSize: 15 },
-    greetingSubtitle: { color: colors.textPrimary, fontSize: 22, fontWeight: '900' },
-    inputWrapper: { flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 16, borderWidth: 1, borderColor: colors.border, borderRadius: 22, backgroundColor: colors.surface},
+    greetingTitle: { color: c.textMuted, fontSize: 15 },
+    greetingSubtitle: { color: c.textPrimary, fontSize: 22, fontWeight: '900' },
+    // Busqueda
+    inputWrapper: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 8,
+      paddingHorizontal: 16,
+      borderWidth: 1,
+      borderColor: c.border,
+      borderRadius: 22,
+      backgroundColor: c.surface,
+    },
+    input: { flex: 1, paddingVertical: 10 },
 
-    // Area seccion header (titulo + ver todos)
+    // Area seccion header
     sectionHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-    sectionTitle: { color: colors.textPrimary, fontSize: 18, fontWeight: '800' },
-    seeAll: { color: colors.primary, fontSize: 14, fontWeight: '700' },
+    sectionTitle: { color: c.textPrimary, fontSize: 18, fontWeight: '800' },
+    seeAll: { color: c.primary, fontSize: 14, fontWeight: '700' },
+    gpsNote: { color: c.textMuted, fontSize: 12,paddingBottom:10 },
+    sourceWarning: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 8,
+      padding: 10,
+      borderRadius: 10,
+      backgroundColor: c.primarySoft,
+    },
+    sourceWarningText: { flex: 1, color: c.textMuted, fontSize: 13 },
 
-    // Area lista de restaurantes
-    restaurantList: { gap: 12 }
-});
+    // Area lista de restaurante
+    listContent: { paddingBottom: 110 },
+    emptyList: { paddingVertical: 32 },
+    separator: { height: 12 },
+
+    // Area loading / error
+    retryButton: {
+      paddingHorizontal: 20,
+      paddingVertical: 10,
+      borderRadius: 12,
+      backgroundColor: c.primary,
+    },
+    retryText: { color: c.white, fontSize: 14, fontWeight: '700' },
+  });
+}

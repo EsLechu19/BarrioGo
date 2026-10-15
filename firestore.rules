@@ -1,0 +1,109 @@
+rules_version = '2';
+// Pegar en consola Firebase → Firestore → Reglas → Publicar.
+// Catálogo público; escritura solo del dueño (duenioId). S4.
+// Los 15 del seed no tienen dueño: nadie los edita desde la app.
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function esDuenoNegocio(negocioId) {
+      return request.auth != null
+        && get(/databases/$(database)/documents/negocios/$(negocioId)).data.duenioId == request.auth.uid;
+    }
+
+    match /negocios/{id} {
+      allow read: if true;
+      allow create: if request.auth != null;
+      allow update, delete: if request.auth != null
+        && resource.data.duenioId == request.auth.uid;
+    }
+    match /productos/{id} {
+      allow read: if true;
+      allow create: if esDuenoNegocio(request.resource.data.negocioId);
+      allow update: if esDuenoNegocio(resource.data.negocioId)
+        && request.resource.data.negocioId == resource.data.negocioId;
+      allow delete: if esDuenoNegocio(resource.data.negocioId);
+    }
+    match /users/{uid} {
+      allow read: if request.auth != null && request.auth.uid == uid;
+      allow create: if request.auth != null
+        && request.auth.uid == uid
+        && request.resource.data.rol == 'cliente'
+        && !request.resource.data.keys().hasAny(['negocioId']);
+      function esVinculacionNegocio() {
+        return request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+            'rol', 'negocioId'
+          ])
+          && resource.data.rol == 'cliente'
+          && request.resource.data.rol == 'negocio'
+          && request.resource.data.negocioId is string
+          && get(/databases/$(database)/documents/negocios/$(request.resource.data.negocioId)).data.duenioId == request.auth.uid;
+      }
+      // Generic profile writes cannot change role or negocioId. The only
+      // exception is linking a business created by this same authenticated uid.
+      allow update: if request.auth != null
+        && request.auth.uid == uid
+        && (
+          request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+            'nombre', 'email', 'telefono', 'preferencias'
+          ])
+          || esVinculacionNegocio()
+        );
+    }
+    match /pedidos/{id} {
+      function esTransicionValida() {
+        return (resource.data.estado == 'pendiente'
+            && request.resource.data.estado == 'confirmado')
+          || (resource.data.estado == 'confirmado'
+            && request.resource.data.estado == 'en_camino')
+          || (resource.data.estado == 'en_camino'
+            && request.resource.data.estado == 'entregado');
+      }
+
+      function esCancelacionPropia() {
+        return request.auth != null
+          && resource.data.usuarioId == request.auth.uid
+          && resource.data.estado == 'pendiente'
+          && request.resource.data.estado == 'cancelado'
+          && request.resource.data.usuarioId == resource.data.usuarioId
+          && request.resource.data.canceladoPor == request.auth.uid
+          && request.resource.data.canceladoFecha is string;
+      }
+
+      function esRechazoNegocio() {
+        return esDuenoNegocio(resource.data.negocioId)
+          && resource.data.estado == 'pendiente'
+          && request.resource.data.estado == 'cancelado'
+          && request.resource.data.usuarioId == resource.data.usuarioId
+          && request.resource.data.negocioId == resource.data.negocioId
+          && request.resource.data.canceladoPor == request.auth.uid
+          && request.resource.data.canceladoFecha is string;
+      }
+
+      // Crear: solo tus propios pedidos (anti-suplantación).
+      allow create: if request.auth != null
+        && request.resource.data.usuarioId == request.auth.uid
+        && request.resource.data.estado == 'pendiente';
+      // Leer: el cliente ve los suyos, el dueño los de su negocio.
+      allow read: if request.auth != null && (
+        resource.data.usuarioId == request.auth.uid
+        || esDuenoNegocio(resource.data.negocioId)
+      );
+      // Negocio: solo avanza un paso y solo cambia estado.
+      allow update: if esDuenoNegocio(resource.data.negocioId)
+        && esTransicionValida()
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['estado']);
+      // El negocio solo puede rechazar pedidos pendientes antes de aceptarlos.
+      allow update: if request.auth != null
+        && esRechazoNegocio()
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+          'estado', 'canceladoPor', 'canceladoFecha'
+        ]);
+      // Cliente: solo puede cancelar su propio pedido pendiente.
+      allow update: if esCancelacionPropia()
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+          'estado', 'canceladoPor', 'canceladoFecha'
+        ]);
+      allow delete: if false;
+    }
+  }
+}

@@ -1,0 +1,990 @@
+import { Negocio } from '../types/Negocio';
+import { Producto } from '../types/Producto';
+import type { PerfilUsuario, PreferenciasUsuario } from '../types/Usuario';
+import {
+  DireccionPedido,
+  EstadoPedido,
+  ItemPedido,
+  MetodoPagoPedido,
+  Pedido,
+} from '../types/Pedido';
+import {
+  addDoc,
+  collection,
+  doc,
+  getDoc,
+  getDocs,
+  onSnapshot,
+  query,
+  setDoc,
+  updateDoc,
+  where,
+} from 'firebase/firestore';
+import type { Unsubscribe } from 'firebase/firestore';
+import { firebaseReady, getFirebaseAuth, getFirestoreDb } from './firebase';
+// Toda lectura de datos pasa por acá. Ninguna pantalla usa fetch ni
+// Firestore directo. Cadena de orígenes (el primero que responde gana):
+//   1. Firestore (datos reales, necesita reglas publicadas + seed)
+//   2. API local (scripts/mock-server.js, `npm run mock-api`)
+//   3. Fallback local (demo a salvo, sin red)
+import { negociosMock } from '../data/negociosMock';
+import { productosMock } from '../data/productosMock';
+import { storage } from './storage';
+
+const MOCK_API_URL = 'http://localhost:3000/negocios';
+
+const DEFAULT_PREFERENCES: PreferenciasUsuario = {
+  notificaciones: true,
+  ubicacion: true,
+  ofertas: false,
+};
+
+function isPerfilUsuario(value: unknown): value is PerfilUsuario {
+  return typeof value === 'object' && value !== null &&
+    typeof (value as PerfilUsuario).telefono === 'string';
+}
+
+function isPreferenciasUsuario(value: unknown): value is PreferenciasUsuario {
+  return typeof value === 'object' && value !== null &&
+    typeof (value as PreferenciasUsuario).notificaciones === 'boolean' &&
+    typeof (value as PreferenciasUsuario).ubicacion === 'boolean' &&
+    typeof (value as PreferenciasUsuario).ofertas === 'boolean';
+}
+
+function validateUsuarioId(usuarioId: string): void {
+  if (!usuarioId.trim()) throw new Error('Falta el usuario.');
+}
+
+export async function getPerfilUsuario(usuarioId: string): Promise<PerfilUsuario> {
+  validateUsuarioId(usuarioId);
+  const local = await storage.loadUserProfile(usuarioId);
+  if (firebaseReady) {
+    try {
+      const snap = await getDoc(doc(getFirestoreDb(), 'users', usuarioId));
+      const data: unknown = snap.data();
+      if (isPerfilUsuario(data)) {
+        await storage.saveUserProfile(usuarioId, data);
+        return data;
+      }
+    } catch {
+      // El perfil local permite continuar sin conexión.
+    }
+  }
+  return local ?? { telefono: '' };
+}
+
+export async function actualizarPerfilUsuario(
+  usuarioId: string,
+  profile: PerfilUsuario,
+): Promise<void> {
+  validateUsuarioId(usuarioId);
+  const telefono = profile.telefono.trim();
+  if (telefono && !/^\d+$/.test(telefono.replace(/\s/g, ''))) {
+    throw new Error('El teléfono no es válido.');
+  }
+  const safeProfile: PerfilUsuario = { telefono };
+  await storage.saveUserProfile(usuarioId, safeProfile);
+  if (firebaseReady) {
+    await setDoc(doc(getFirestoreDb(), 'users', usuarioId), safeProfile, {
+      merge: true,
+    });
+  }
+}
+
+export async function getPreferenciasUsuario(
+  usuarioId: string,
+): Promise<PreferenciasUsuario> {
+  validateUsuarioId(usuarioId);
+  const local = await storage.loadUserPreferences(usuarioId);
+  if (firebaseReady) {
+    try {
+      const snap = await getDoc(doc(getFirestoreDb(), 'users', usuarioId));
+      const raw: unknown = snap.data()?.preferencias;
+      if (isPreferenciasUsuario(raw)) {
+        await storage.saveUserPreferences(usuarioId, raw);
+        return raw;
+      }
+    } catch {
+      // Se usa la copia local validada.
+    }
+  }
+  return local ?? DEFAULT_PREFERENCES;
+}
+
+export async function actualizarPreferenciasUsuario(
+  usuarioId: string,
+  preferences: PreferenciasUsuario,
+): Promise<void> {
+  validateUsuarioId(usuarioId);
+  if (!isPreferenciasUsuario(preferences)) {
+    throw new Error('Las preferencias no son válidas.');
+  }
+  await storage.saveUserPreferences(usuarioId, preferences);
+  if (firebaseReady) {
+    await setDoc(
+      doc(getFirestoreDb(), 'users', usuarioId),
+      { preferencias: preferences },
+      { merge: true },
+    );
+  }
+}
+
+export interface AppError {
+  message: string;
+  code: 'network' | 'server' | 'parse';
+}
+
+export type OrigenNegocios = 'firestore' | 'api-local' | 'fallback-local';
+
+export interface ResultadoNegocios {
+  negocios: Negocio[];
+  origen: OrigenNegocios;
+  advertencia: string | null;
+}
+
+function isNegocio(value: unknown): value is Negocio {
+  return (
+    typeof value === 'object' &&
+    value !== null &&
+    typeof (value as Negocio).id === 'string' &&
+    typeof (value as Negocio).nombre === 'string'
+  );
+}
+
+function isNegocioArray(value: unknown): value is Negocio[] {
+  return Array.isArray(value) && value.every(isNegocio);
+}
+
+function isProductoArray(value: unknown): value is Producto[] {
+  return (
+    Array.isArray(value) &&
+    value.every(
+      (item) =>
+        typeof item === 'object' &&
+        item !== null &&
+        typeof (item as Producto).id === 'string' &&
+        typeof (item as Producto).negocioId === 'string',
+    )
+  );
+}
+
+async function getNegociosFromMockServer(): Promise<Negocio[] | null> {
+  try {
+    const response = await fetch(MOCK_API_URL);
+    if (!response.ok) return null;
+    const data: unknown = await response.json();
+    return isNegocioArray(data) && data.length > 0 ? data : null;
+  } catch {
+    return null;
+  }
+}
+
+export async function getNegocios(): Promise<Negocio[]> {
+  const resultado: ResultadoNegocios = await getNegociosConOrigen();
+  return resultado.negocios;
+}
+
+export async function getNegociosConOrigen(): Promise<ResultadoNegocios> {
+  let firestoreNoDisponible = false;
+
+  // 1. Firestore
+  if (firebaseReady) {
+    try {
+      const snap = await getDocs(collection(getFirestoreDb(), 'negocios'));
+      const data: unknown = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+      if (isNegocioArray(data) && data.length > 0) {
+        return { negocios: data, origen: 'firestore', advertencia: null };
+      }
+      firestoreNoDisponible = true;
+    } catch {
+      // cae al siguiente origen
+      firestoreNoDisponible = true;
+    }
+  }
+  // 2. API local
+  const mock = await getNegociosFromMockServer();
+  if (mock) {
+    return {
+      negocios: mock,
+      origen: 'api-local',
+      advertencia: firestoreNoDisponible
+        ? 'Firestore no disponible; usando API local.'
+        : null,
+    };
+  }
+  // 3. Fallback local
+  return {
+    negocios: [...negociosMock],
+    origen: 'fallback-local',
+    advertencia: 'Sin conexión al servidor; mostrando datos locales de demostración.',
+  };
+}
+
+export async function getNegocioById(id: string): Promise<Negocio | null> {
+  if (firebaseReady) {
+    try {
+      const snap = await getDoc(doc(getFirestoreDb(), 'negocios', id));
+      const data: unknown = snap.exists()
+        ? { id: snap.id, ...snap.data() }
+        : null;
+      if (data && isNegocio(data)) return data;
+    } catch {
+      // cae al siguiente origen
+    }
+  }
+  const negocios = await getNegocios();
+  return negocios.find((n) => n.id === id) ?? null;
+}
+
+export async function getMenu(negocioId: string): Promise<Producto[]> {
+  if (firebaseReady) {
+    try {
+      const q = query(
+        collection(getFirestoreDb(), 'productos'),
+        where('negocioId', '==', negocioId),
+      );
+      const snap = await getDocs(q);
+      const data: unknown = snap.docs.map((d) =>
+        mapProductoSnapshot(d.id, d.data() as Record<string, unknown>),
+      );
+      if (isProductoArray(data) && data.length > 0) return data;
+    } catch {
+      // cae al fallback local
+    }
+  } else {
+    // Sin Firebase, delay para evidenciar loading en Detalle.
+    await new Promise((resolve) => setTimeout(resolve, 500));
+  }
+  return productosMock.filter((p) => p.negocioId === negocioId);
+}
+
+// ---------- F3 Pedidos con tracking ----------
+
+const FIREBASE_NO_CONFIG_MSG =
+  'Firebase no configurado: falta el .env (ver .env.example)';
+
+export interface CrearPedidoInput {
+  usuarioId: string;
+  negocioId: string;
+  items: ItemPedido[];
+  total: number;
+  direccion?: DireccionPedido;
+  metodoPago?: MetodoPagoPedido;
+}
+
+const ESTADOS_PEDIDO: readonly EstadoPedido[] = [
+  'pendiente',
+  'confirmado',
+  'en_camino',
+  'entregado',
+  'cancelado',
+];
+
+function isEstadoPedido(value: unknown): value is EstadoPedido {
+  return (
+    typeof value === 'string' &&
+    (ESTADOS_PEDIDO as readonly string[]).includes(value)
+  );
+}
+
+function isItemPedido(value: unknown): value is ItemPedido {
+  return (
+    typeof value === 'object' &&
+    value !== null &&
+    typeof (value as ItemPedido).productoId === 'string' &&
+    Number.isFinite((value as ItemPedido).cantidad) &&
+    (value as ItemPedido).cantidad > 0 &&
+    Number.isFinite((value as ItemPedido).precioUnitario) &&
+    (value as ItemPedido).precioUnitario >= 0
+  );
+}
+
+function mapProductoSnapshot(id: string, data: Record<string, unknown>): Producto {
+  const imagenUrl: unknown = data.imagenUrl;
+  return {
+    id,
+    negocioId: String(data.negocioId ?? ''),
+    nombre: String(data.nombre ?? ''),
+    precio: typeof data.precio === 'number' ? data.precio : Number(data.precio ?? 0),
+    descripcion: typeof data.descripcion === 'string' ? data.descripcion : '',
+    ...(typeof imagenUrl === 'string' && imagenUrl.trim() ? { imagen: imagenUrl } : {}),
+  };
+}
+
+function isDireccionPedido(value: unknown): value is DireccionPedido {
+  return (
+    typeof value === 'object' &&
+    value !== null &&
+    typeof (value as DireccionPedido).alias === 'string' &&
+    (value as DireccionPedido).alias.trim().length > 0 &&
+    typeof (value as DireccionPedido).detalle === 'string' &&
+    (value as DireccionPedido).detalle.trim().length > 0
+  );
+}
+
+function isMetodoPagoPedido(value: unknown): value is MetodoPagoPedido {
+  return (
+    typeof value === 'object' &&
+    value !== null &&
+    typeof (value as MetodoPagoPedido).tipo === 'string' &&
+    (value as MetodoPagoPedido).tipo.trim().length > 0 &&
+    typeof (value as MetodoPagoPedido).nombre === 'string' &&
+    (value as MetodoPagoPedido).nombre.trim().length > 0
+  );
+}
+
+function isPedido(value: unknown): value is Pedido {
+  if (typeof value !== 'object' || value === null) return false;
+  const p = value as Pedido;
+  return (
+    typeof p.id === 'string' &&
+    typeof p.usuarioId === 'string' &&
+    typeof p.negocioId === 'string' &&
+    Array.isArray(p.items) &&
+    p.items.every(isItemPedido) &&
+    typeof p.total === 'number' &&
+    isEstadoPedido(p.estado) &&
+    typeof p.fecha === 'string' &&
+    (p.canceladoPor === undefined || typeof p.canceladoPor === 'string') &&
+    (p.canceladoFecha === undefined || typeof p.canceladoFecha === 'string') &&
+    (p.direccion === undefined || isDireccionPedido(p.direccion)) &&
+    (p.metodoPago === undefined || isMetodoPagoPedido(p.metodoPago))
+  );
+}
+
+export async function crearPedido(input: CrearPedidoInput): Promise<string> {
+  if (!firebaseReady) throw new Error(FIREBASE_NO_CONFIG_MSG);
+  if (!input.usuarioId.trim()) throw new Error('Falta el usuario del pedido.');
+  if (!input.negocioId.trim()) throw new Error('Falta el negocio del pedido.');
+  if (input.items.length === 0) throw new Error('El pedido no tiene productos.');
+  if (!input.items.every(isItemPedido)) {
+    throw new Error('El pedido contiene productos no válidos.');
+  }
+  if (
+    input.items.some(
+      (item) => item.negocioId !== undefined && item.negocioId !== input.negocioId,
+    )
+  ) {
+    throw new Error('El pedido contiene productos de otro restaurante.');
+  }
+  const totalCalculadoCentavos = input.items.reduce(
+    (acumulado, item) =>
+      acumulado + Math.round(item.cantidad * item.precioUnitario * 100),
+    0,
+  );
+  const totalInformadoCentavos = Math.round(input.total * 100);
+  if (
+    !(input.total > 0) ||
+    !Number.isFinite(input.total) ||
+    totalInformadoCentavos !== totalCalculadoCentavos
+  ) {
+    throw new Error('El total del pedido no coincide con sus productos.');
+  }
+  if (input.direccion !== undefined && !isDireccionPedido(input.direccion)) {
+    throw new Error('La dirección de entrega no es válida.');
+  }
+  if (input.metodoPago !== undefined && !isMetodoPagoPedido(input.metodoPago)) {
+    throw new Error('El método de pago no es válido.');
+  }
+  try {
+    const ref = await addDoc(collection(getFirestoreDb(), 'pedidos'), {
+      usuarioId: input.usuarioId,
+      negocioId: input.negocioId,
+      items: input.items,
+      total: input.total,
+      ...(input.direccion ? { direccion: input.direccion } : {}),
+      ...(input.metodoPago ? { metodoPago: input.metodoPago } : {}),
+      estado: 'pendiente',
+      fecha: new Date().toISOString(),
+    });
+    return ref.id;
+  } catch (e) {
+    throw new Error(
+      e instanceof Error
+        ? `No se pudo crear el pedido: ${e.message}`
+        : 'No se pudo crear el pedido. Intentá de nuevo.',
+    );
+  }
+}
+
+export function escucharMisPedidos(
+  usuarioId: string,
+  cb: (pedidos: Pedido[]) => void,
+  onError?: (e: Error) => void,
+): Unsubscribe {
+  if (!firebaseReady) return () => {};
+  if (!usuarioId.trim()) return () => {};
+  try {
+    const q = query(
+      collection(getFirestoreDb(), 'pedidos'),
+      where('usuarioId', '==', usuarioId),
+    );
+    return onSnapshot(
+      q,
+      (snap) => {
+        try {
+          const data: unknown = snap.docs.map((d) => ({
+            id: d.id,
+            ...d.data(),
+          }));
+          const pedidos: Pedido[] = Array.isArray(data)
+            ? data.filter(isPedido).sort((a, b) => (a.fecha < b.fecha ? 1 : -1))
+            : [];
+          cb(pedidos);
+        } catch (e) {
+          onError?.(
+            e instanceof Error
+              ? e
+              : new Error('No se pudieron leer tus pedidos.'),
+          );
+        }
+      },
+      (err: Error) => {
+        onError?.(
+          err instanceof Error
+            ? err
+            : new Error('Se perdió la conexión con tus pedidos.'),
+        );
+      },
+    );
+  } catch (e) {
+    onError?.(
+      e instanceof Error
+        ? e
+        : new Error('No se pudo escuchar tus pedidos.'),
+    );
+    return () => {};
+  }
+}
+
+// ---------- F4 Panel negocio ----------
+
+export function escucharPedidosNegocio(
+  negocioId: string,
+  cb: (pedidos: Pedido[]) => void,
+  onError?: (e: Error) => void,
+): Unsubscribe {
+  if (!firebaseReady) return () => {};
+  if (!negocioId.trim()) return () => {};
+  try {
+    // Sin orderBy a propósito (igual que F3): where + orderBy exige índice
+    // compuesto en Firestore. Ordenamos en memoria (fecha desc).
+    const q = query(
+      collection(getFirestoreDb(), 'pedidos'),
+      where('negocioId', '==', negocioId),
+    );
+    return onSnapshot(
+      q,
+      (snap) => {
+        try {
+          const data: unknown = snap.docs.map((d) => ({
+            id: d.id,
+            ...d.data(),
+          }));
+          const pedidos: Pedido[] = Array.isArray(data)
+            ? data.filter(isPedido).sort((a, b) => (a.fecha < b.fecha ? 1 : -1))
+            : [];
+          cb(pedidos);
+        } catch (e) {
+          onError?.(
+            e instanceof Error
+              ? e
+              : new Error('No se pudieron leer los pedidos del negocio.'),
+          );
+        }
+      },
+      (err: Error) => {
+        onError?.(
+          err instanceof Error
+            ? err
+            : new Error('Se perdió la conexión con los pedidos del negocio.'),
+        );
+      },
+    );
+  } catch (e) {
+    onError?.(
+      e instanceof Error
+        ? e
+        : new Error('No se pudo escuchar los pedidos del negocio.'),
+    );
+    return () => {};
+  }
+}
+
+export async function cambiarEstadoPedido(
+  pedidoId: string,
+  estado: EstadoPedido,
+): Promise<void> {
+  if (!firebaseReady) throw new Error(FIREBASE_NO_CONFIG_MSG);
+  if (!pedidoId.trim()) throw new Error('Falta el id del pedido.');
+  if (!isEstadoPedido(estado)) throw new Error('El estado del pedido no es válido.');
+  try {
+    const ref = doc(getFirestoreDb(), 'pedidos', pedidoId);
+    const snap = await getDoc(ref);
+    const data: unknown = snap.exists() ? { id: snap.id, ...snap.data() } : null;
+    if (!isPedido(data)) throw new Error('El pedido no existe o no es válido.');
+    const siguiente: EstadoPedido | undefined =
+      data.estado === 'pendiente'
+        ? 'confirmado'
+        : data.estado === 'confirmado'
+          ? 'en_camino'
+          : data.estado === 'en_camino'
+            ? 'entregado'
+            : undefined;
+    if (siguiente !== estado) {
+      throw new Error('La transición de estado del pedido no es válida.');
+    }
+    await updateDoc(ref, { estado });
+  } catch (e) {
+    if (
+      e instanceof Error &&
+      (e.message === 'El pedido no existe o no es válido.' ||
+        e.message === 'La transición de estado del pedido no es válida.')
+    ) {
+      throw e;
+    }
+    throw new Error(
+      e instanceof Error
+        ? `No se pudo cambiar el estado del pedido: ${e.message}`
+        : 'No se pudo cambiar el estado del pedido. Intentá de nuevo.',
+    );
+  }
+}
+
+export async function rechazarPedidoNegocio(pedidoId: string): Promise<void> {
+  if (!firebaseReady) throw new Error(FIREBASE_NO_CONFIG_MSG);
+  if (!pedidoId.trim()) throw new Error('Falta el id del pedido.');
+  const actor = getFirebaseAuth().currentUser;
+  if (!actor) throw new Error('La sesión del negocio no está disponible.');
+  const ref = doc(getFirestoreDb(), 'pedidos', pedidoId);
+  try {
+    const snap = await getDoc(ref);
+    if (!snap.exists()) throw new Error('El pedido no existe.');
+    const data: unknown = { id: snap.id, ...snap.data() };
+    if (!isPedido(data)) throw new Error('El pedido no tiene un formato válido.');
+    if (data.estado !== 'pendiente') {
+      throw new Error('Solo se puede rechazar un pedido pendiente.');
+    }
+    await updateDoc(ref, {
+      estado: 'cancelado',
+      canceladoPor: actor.uid,
+      canceladoFecha: new Date().toISOString(),
+    });
+  } catch (e) {
+    if (
+      e instanceof Error &&
+      (e.message === 'El pedido no existe.' ||
+        e.message === 'El pedido no tiene un formato válido.' ||
+        e.message === 'Solo se puede rechazar un pedido pendiente.')
+    ) {
+      throw e;
+    }
+    throw new Error(
+      e instanceof Error
+        ? `No se pudo rechazar el pedido: ${e.message}`
+        : 'No se pudo rechazar el pedido. Intentá de nuevo.',
+    );
+  }
+}
+
+export async function cancelarPedido(
+  pedidoId: string,
+  usuarioId: string,
+): Promise<void> {
+  if (!firebaseReady) throw new Error(FIREBASE_NO_CONFIG_MSG);
+  if (!pedidoId.trim()) throw new Error('Falta el id del pedido.');
+  if (!usuarioId.trim()) throw new Error('Falta el usuario del pedido.');
+  const ref = doc(getFirestoreDb(), 'pedidos', pedidoId);
+  try {
+    const snap = await getDoc(ref);
+    if (!snap.exists()) throw new Error('El pedido no existe.');
+    const data: unknown = { id: snap.id, ...snap.data() };
+    if (!isPedido(data)) throw new Error('El pedido no tiene un formato válido.');
+    if (data.usuarioId !== usuarioId) {
+      throw new Error('Solo podés cancelar tus propios pedidos.');
+    }
+    if (data.estado !== 'pendiente') {
+      throw new Error('El pedido ya fue aceptado y no se puede cancelar.');
+    }
+    await updateDoc(ref, {
+      estado: 'cancelado',
+      canceladoPor: usuarioId,
+      canceladoFecha: new Date().toISOString(),
+    });
+  } catch (e) {
+    if (
+      e instanceof Error &&
+      (e.message === 'El pedido no existe.' ||
+        e.message === 'El pedido no tiene un formato válido.' ||
+        e.message === 'Solo podés cancelar tus propios pedidos.' ||
+        e.message === 'El pedido ya fue aceptado y no se puede cancelar.')
+    ) {
+      throw e;
+    }
+    throw new Error(
+      e instanceof Error
+        ? `No se pudo cancelar el pedido: ${e.message}`
+        : 'No se pudo cancelar el pedido. Intentá de nuevo.',
+    );
+  }
+}
+
+export interface CrearProductoInput {
+  negocioId: string;
+  usuarioId: string;
+  nombre: string;
+  precio: number;
+  descripcion?: string;
+  imagenUrl?: string;
+}
+
+async function verificarDuenoNegocio(
+  negocioId: string,
+  usuarioId: string,
+): Promise<void> {
+  if (!usuarioId.trim()) throw new Error('Falta el usuario del negocio.');
+  const usuarioAutenticado: string | undefined = getFirebaseAuth().currentUser?.uid;
+  if (!usuarioAutenticado || usuarioAutenticado !== usuarioId) {
+    throw new Error('La sesión del negocio no es válida.');
+  }
+  const snap = await getDoc(doc(getFirestoreDb(), 'negocios', negocioId));
+  if (!snap.exists()) throw new Error('El negocio no existe.');
+  const data: unknown = snap.data();
+  const duenoId: unknown =
+    typeof data === 'object' && data !== null
+      ? (data as { duenioId?: unknown }).duenioId
+      : undefined;
+  if (typeof duenoId !== 'string' || duenoId !== usuarioId) {
+    throw new Error('Solo el dueño puede modificar los productos de este negocio.');
+  }
+}
+
+export async function crearProducto(input: CrearProductoInput): Promise<string> {
+  if (!firebaseReady) throw new Error(FIREBASE_NO_CONFIG_MSG);
+  if (!input.negocioId.trim()) throw new Error('Falta el negocio del producto.');
+  if (!input.usuarioId.trim()) throw new Error('Falta el usuario del negocio.');
+  if (!input.nombre.trim()) throw new Error('El producto necesita un nombre.');
+  if (!(input.precio > 0)) throw new Error('El precio debe ser mayor a 0.');
+  try {
+    await verificarDuenoNegocio(input.negocioId, input.usuarioId);
+    const ref = await addDoc(collection(getFirestoreDb(), 'productos'), {
+      negocioId: input.negocioId,
+      nombre: input.nombre.trim(),
+      precio: input.precio,
+      descripcion: input.descripcion?.trim() ?? '',
+      imagenUrl: input.imagenUrl?.trim() ?? '',
+      disponible: true,
+    });
+    return ref.id;
+  } catch (e) {
+    if (
+      e instanceof Error &&
+      (e.message === 'El negocio no existe.' ||
+        e.message === 'Solo el dueño puede modificar los productos de este negocio.' ||
+        e.message === 'La sesión del negocio no es válida.')
+    ) {
+      throw e;
+    }
+    throw new Error(
+      e instanceof Error
+        ? `No se pudo crear el producto: ${e.message}`
+        : 'No se pudo crear el producto. Intentá de nuevo.',
+    );
+  }
+}
+
+export interface ActualizarProductoInput {
+  productoId: string;
+  negocioId: string;
+  usuarioId: string;
+  nombre: string;
+  precio: number;
+  imagenUrl: string;
+}
+
+export async function actualizarProducto(input: ActualizarProductoInput): Promise<void> {
+  if (!firebaseReady) throw new Error(FIREBASE_NO_CONFIG_MSG);
+  if (!input.productoId.trim()) throw new Error('Falta el producto a editar.');
+  if (!input.negocioId.trim()) throw new Error('Falta el negocio del producto.');
+  if (!input.nombre.trim()) throw new Error('El producto necesita un nombre.');
+  if (!(input.precio > 0)) throw new Error('El precio debe ser mayor a 0.');
+  try {
+    await verificarDuenoNegocio(input.negocioId, input.usuarioId);
+    const ref = doc(getFirestoreDb(), 'productos', input.productoId);
+    const snap = await getDoc(ref);
+    if (!snap.exists()) throw new Error('El producto no existe.');
+    if (snap.data().negocioId !== input.negocioId) {
+      throw new Error('El producto no pertenece a este negocio.');
+    }
+    await updateDoc(ref, {
+      nombre: input.nombre.trim(),
+      precio: input.precio,
+      imagenUrl: input.imagenUrl.trim(),
+    });
+  } catch (e) {
+    if (
+      e instanceof Error &&
+      (e.message === 'El negocio no existe.' ||
+        e.message === 'El producto no existe.' ||
+        e.message === 'El producto no pertenece a este negocio.' ||
+        e.message === 'Solo el dueño puede modificar los productos de este negocio.' ||
+        e.message === 'La sesión del negocio no es válida.')
+    ) {
+      throw e;
+    }
+    throw new Error(
+      e instanceof Error
+        ? `No se pudo actualizar el producto: ${e.message}`
+        : 'No se pudo actualizar el producto. Intentá de nuevo.',
+    );
+  }
+}
+
+// ---------- F6 Negocio propio por cuenta (S1 Registro + vínculo / S2 Mi local) ----------
+
+export interface ActualizarNegocioInput {
+  negocioId: string;
+  usuarioId: string;
+  nombre: string;
+  descripcion?: string;
+  direccion?: string;
+  tiempoEstimado?: string;
+  envioGratis?: boolean;
+  lat?: number;
+  lng?: number;
+}
+
+export async function actualizarNegocio(
+  input: ActualizarNegocioInput,
+): Promise<void> {
+  if (!firebaseReady) throw new Error(FIREBASE_NO_CONFIG_MSG);
+  if (!input.negocioId.trim()) throw new Error('Falta el negocio a editar.');
+  if (!input.usuarioId.trim())
+    throw new Error('Falta el usuario del negocio.');
+  if (!input.nombre.trim()) throw new Error('El negocio necesita un nombre.');
+  if (
+    (input.lat !== undefined && !Number.isFinite(input.lat)) ||
+    (input.lng !== undefined && !Number.isFinite(input.lng))
+  ) {
+    throw new Error('La ubicación del negocio no es válida.');
+  }
+  try {
+    const ref = doc(getFirestoreDb(), 'negocios', input.negocioId);
+    const snap = await getDoc(ref);
+    if (!snap.exists()) throw new Error('El negocio no existe.');
+    const data: unknown = snap.data();
+    const duenoId: unknown =
+      typeof data === 'object' && data !== null
+        ? (data as { duenioId?: unknown }).duenioId
+        : undefined;
+    // Chequeo de dueño en cliente (S4 lo cierra con rules). Estricto a
+    // propósito: los 15 del seed no tienen duenioId, así que nadie los edita.
+    if (typeof duenoId !== 'string' || duenoId !== input.usuarioId) {
+      throw new Error('Solo el dueño puede editar este negocio.');
+    }
+    const cambios: { [campo: string]: string | boolean | number } = {
+      nombre: input.nombre.trim(),
+    };
+    if (input.descripcion !== undefined)
+      cambios['descripcion'] = input.descripcion.trim();
+    if (input.direccion !== undefined)
+      cambios['direccion'] = input.direccion.trim();
+    if (input.tiempoEstimado !== undefined)
+      cambios['tiempoEstimado'] = input.tiempoEstimado.trim();
+    if (input.envioGratis !== undefined)
+      cambios['envioGratis'] = input.envioGratis;
+    if (input.lat !== undefined) cambios['lat'] = input.lat;
+    if (input.lng !== undefined) cambios['lng'] = input.lng;
+    await updateDoc(ref, cambios);
+  } catch (e) {
+    if (
+      e instanceof Error &&
+      (e.message === 'El negocio no existe.' ||
+        e.message === 'Solo el dueño puede editar este negocio.')
+    ) {
+      throw e;
+    }
+    throw new Error(
+      e instanceof Error
+        ? `No se pudo actualizar el negocio: ${e.message}`
+        : 'No se pudo actualizar el negocio. Intentá de nuevo.',
+    );
+  }
+}
+
+export interface RegistrarNegocioInput {
+  usuarioId: string;
+  nombre: string;
+  descripcion?: string;
+  direccion?: string;
+  lat: number;
+  lng: number;
+}
+
+export async function registrarNegocio(
+  input: RegistrarNegocioInput,
+): Promise<string> {
+  if (!firebaseReady) throw new Error(FIREBASE_NO_CONFIG_MSG);
+  if (!input.usuarioId.trim()) throw new Error('Falta el usuario del negocio.');
+  if (!input.nombre.trim()) throw new Error('El negocio necesita un nombre.');
+  if (!Number.isFinite(input.lat) || !Number.isFinite(input.lng)) {
+    throw new Error('La ubicación del negocio no es válida.');
+  }
+  let negocioId: string;
+  try {
+    const ref = await addDoc(collection(getFirestoreDb(), 'negocios'), {
+      nombre: input.nombre.trim(),
+      descripcion: input.descripcion?.trim() ?? '',
+      direccion: input.direccion?.trim() ?? '',
+      imagen: '',
+      rating: 0,
+      opiniones: 0,
+      tiempoEstimado: '',
+      distancia: '',
+      envioGratis: false,
+      lat: input.lat,
+      lng: input.lng,
+      duenioId: input.usuarioId,
+    });
+    negocioId = ref.id;
+  } catch (e) {
+    throw new Error(
+      e instanceof Error
+        ? `No se pudo registrar el negocio: ${e.message}`
+        : 'No se pudo registrar el negocio. Intentá de nuevo.',
+    );
+  }
+  try {
+    await setDoc(
+      doc(getFirestoreDb(), 'users', input.usuarioId),
+      { rol: 'negocio', negocioId },
+      { merge: true },
+    );
+  } catch (e) {
+    const detalle: string =
+      e instanceof Error ? e.message : 'error desconocido';
+    throw new Error(
+      `El negocio se creó (id ${negocioId}) pero no se pudo vincular a tu cuenta: ${detalle}. Pedí al equipo que en users/${input.usuarioId} ponga negocioId:'${negocioId}' y rol:'negocio'.`,
+    );
+  }
+  return negocioId;
+}
+
+// ---------- F6 Negocio propio por cuenta (S3 Icono + portada con Storage) ----------
+
+export type TipoFotoNegocio = 'icono' | 'portada';
+
+export async function subirFotoNegocio(
+  negocioId: string,
+  usuarioId: string,
+  uriLocal: string,
+  tipo: TipoFotoNegocio,
+): Promise<string> {
+  if (!firebaseReady) throw new Error(FIREBASE_NO_CONFIG_MSG);
+  if (!negocioId.trim()) throw new Error('Falta el negocio de la foto.');
+  if (!usuarioId.trim()) throw new Error('Falta el usuario del negocio.');
+  if (!uriLocal.trim()) throw new Error('Falta la foto a subir.');
+  try {
+    const refDoc = doc(getFirestoreDb(), 'negocios', negocioId);
+    const snap = await getDoc(refDoc);
+    if (!snap.exists()) throw new Error('El negocio no existe.');
+    const data: unknown = snap.data();
+    const duenoId: unknown =
+      typeof data === 'object' && data !== null
+        ? (data as { duenioId?: unknown }).duenioId
+        : undefined;
+    // Dueño estricto, igual que actualizarNegocio (S4 lo cierra con rules).
+    if (typeof duenoId !== 'string' || duenoId !== usuarioId) {
+      throw new Error('Solo el dueño puede cambiar las fotos de este negocio.');
+    }
+    const url: string = await subirImagenCloudinary(uriLocal, negocioId);
+    await updateDoc(refDoc, tipo === 'icono' ? { imagen: url } : { portada: url });
+    return url;
+  } catch (e) {
+    if (
+      e instanceof Error &&
+      (e.message === 'El negocio no existe.' ||
+        e.message === 'Solo el dueño puede cambiar las fotos de este negocio.' ||
+        e.message === 'No se pudo leer la foto elegida. Probá con otra imagen.')
+    ) {
+      throw e;
+    }
+    if (e instanceof Error) throw e;
+    throw new Error('No se pudo subir la foto. Intentá de nuevo.');
+  }
+}
+
+async function subirImagenCloudinary(uriLocal: string, folder: string): Promise<string> {
+  const cloud: string = process.env.EXPO_PUBLIC_CLOUDINARY_CLOUD?.trim() ?? '';
+  const preset: string = process.env.EXPO_PUBLIC_CLOUDINARY_PRESET?.trim() ?? '';
+  if (!cloud || !preset) {
+    throw new Error(
+      'Falta configurar Cloudinary: poné EXPO_PUBLIC_CLOUDINARY_CLOUD y EXPO_PUBLIC_CLOUDINARY_PRESET en tu .env (ver .env.example).',
+    );
+  }
+  // RN FormData no acepta de forma estable {uri,type,name} en este runtime;
+  // XHR + data URL sí funciona con el preset unsigned existente.
+  const blob = await new Promise<Blob>((resolve, reject) => {
+    const xhr = new XMLHttpRequest();
+    xhr.onload = () => resolve(xhr.response as Blob);
+    xhr.onerror = () => reject(new Error('No se pudo leer la foto elegida.'));
+    xhr.responseType = 'blob';
+    xhr.open('GET', uriLocal, true);
+    xhr.send(null);
+  }).catch(() => {
+    throw new Error('No se pudo leer la foto elegida. Probá con otra imagen.');
+  });
+  const dataUrl: string = await new Promise<string>((resolve, reject) => {
+    const lector = new FileReader();
+    lector.onload = () => resolve(String(lector.result));
+    lector.onerror = () => reject(new Error('No se pudo procesar la foto.'));
+    lector.readAsDataURL(blob);
+  }).catch(() => {
+    throw new Error('No se pudo procesar la foto. Probá con otra imagen.');
+  });
+  const form = new FormData();
+  form.append('file', dataUrl);
+  form.append('upload_preset', preset);
+  form.append('folder', `barriogo/${folder}`);
+  try {
+    const subida = await fetch(`https://api.cloudinary.com/v1_1/${cloud}/image/upload`, {
+      method: 'POST',
+      body: form,
+    });
+    if (!subida.ok) {
+      const cuerpo: string = await subida.text().catch(() => '');
+      throw new Error(`Cloudinary HTTP ${subida.status}: ${cuerpo.slice(0, 200) || 'sin detalle'}`);
+    }
+    const json: unknown = await subida.json();
+    const segura: unknown =
+      typeof json === 'object' && json !== null
+        ? (json as { secure_url?: unknown }).secure_url
+        : undefined;
+    if (typeof segura !== 'string' || !segura) {
+      throw new Error('Cloudinary no devolvió la URL de la foto.');
+    }
+    return segura;
+  } catch (e) {
+    if (
+      e instanceof Error &&
+      (e.message.startsWith('Cloudinary HTTP') ||
+        e.message === 'Cloudinary no devolvió la URL de la foto.')
+    ) {
+      throw e;
+    }
+    const causa: string = e instanceof Error && e.message ? ` Causa: ${e.message.slice(0, 200)}` : '';
+    throw new Error(`No se pudo subir la foto a Cloudinary. Revisá tu conexión.${causa}`);
+  }
+}
+
+export async function subirFotoProducto(
+  negocioId: string,
+  usuarioId: string,
+  uriLocal: string,
+): Promise<string> {
+  if (!firebaseReady) throw new Error(FIREBASE_NO_CONFIG_MSG);
+  if (!negocioId.trim()) throw new Error('Falta el negocio de la foto.');
+  if (!uriLocal.trim()) throw new Error('Falta la foto a subir.');
+  await verificarDuenoNegocio(negocioId, usuarioId);
+  return subirImagenCloudinary(uriLocal, `productos/${negocioId}`);
+}
