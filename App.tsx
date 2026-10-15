@@ -11,6 +11,7 @@ import { CartProvider } from './src/context/CartContext';
 import { FavoritesProvider } from './src/context/FavoritesContext';
 import { AuthProvider, useAuth } from './src/context/AuthContext';
 import { ThemeProvider, useTheme } from './src/context/ThemeContext';
+import { CustomerNotificationBridge } from './src/components/CustomerNotificationBridge';
 
 function Root() {
   const { user, loading } = useAuth();
@@ -43,6 +44,7 @@ function Root() {
   return (
     <NavigationContainer theme={tema}>
       <StatusBar barStyle={barStyle} />
+      <CustomerNotificationBridge />
       {user ? <AppNavigator /> : <AuthNavigator />}
     </NavigationContainer>
   );

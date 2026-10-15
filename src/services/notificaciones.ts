@@ -15,6 +15,7 @@ type NotificationsModule = typeof import('expo-notifications');
 
 let modulo: NotificationsModule | null = null;
 let handlerListo = false;
+const NOTIFICATION_CHANNEL_ID = 'order-status';
 
 function enExpoGo(): boolean {
   try {
@@ -58,6 +59,8 @@ export async function asegurarPermisoNotificaciones(): Promise<boolean> {
   try {
     const notifications = await getNotifications();
     if (!notifications) return false;
+    // Android 13 does not show the permission prompt until a channel exists.
+    await asegurarCanalAndroid(notifications);
     const actual = await notifications.getPermissionsAsync();
     if (actual.granted) return true;
     const pedido = await notifications.requestPermissionsAsync();
@@ -77,6 +80,7 @@ export async function notificarCambioEstado(
   try {
     const notifications = await getNotifications();
     if (!notifications) return;
+    await asegurarCanalAndroid(notifications);
     await notifications.scheduleNotificationAsync({
       content: {
         title: 'BarrioGo',
@@ -86,6 +90,20 @@ export async function notificarCambioEstado(
     });
   } catch {
     // Silencioso a propósito: sin permiso o error de hardware, la app sigue andando.
+  }
+}
+
+async function asegurarCanalAndroid(notifications: NotificationsModule): Promise<void> {
+  try {
+    if (typeof notifications.setNotificationChannelAsync !== 'function') return;
+    await notifications.setNotificationChannelAsync(NOTIFICATION_CHANNEL_ID, {
+      name: 'Estado de pedidos',
+      importance: 4,
+      vibrationPattern: [0, 250, 250, 250],
+      sound: 'default',
+    });
+  } catch {
+    // Expo Go or an unavailable native module must remain a safe no-op.
   }
 }
 

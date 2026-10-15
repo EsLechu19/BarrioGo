@@ -24,6 +24,7 @@ Completar el flujo del cliente sin alterar el diseño visual de `origin/feature/
 - [x] P0.7 Persistir el historial local de notificaciones del cliente, aislado por usuario y alimentado por cambios reales de estado/cancelación del listener de pedidos.
 - [x] P0.8 Persistir teléfono de perfil y preferencias del cliente por `uid`, sin alterar la UI APF2. El permiso de notificaciones se solicita solo al activar la preferencia; no se implementa push remoto.
 - [x] P0.9 Persistir por `uid` las selecciones demo de checkout y bloquear confirmaciones sin dirección o método de pago.
+- [x] P0.12 Desacoplar el historial/aviso local de cambios de estado del montaje de `PedidosScreen` y recargarlo al enfocar la pantalla.
 
 ## Restricciones
 
@@ -38,6 +39,7 @@ Completar el flujo del cliente sin alterar el diseño visual de `origin/feature/
 - UI APF2: Home, Configuracion, colors y RestaurantCard permanecen byte-identical al remoto.
 - Runtime Firebase/dispositivo: no ejecutado; cancelación, reglas y listeners requieren Firebase configurado.
 - Notificaciones: el historial local sí queda persistido por `uid`; el aviso del sistema es opcional y local. No se implementó push remoto. Expo Go no garantiza el módulo de notificaciones del sistema; se requiere un development build para validar el comportamiento nativo.
+- Notificaciones P0.12: `CustomerNotificationBridge` escucha los pedidos del cliente desde la raíz autenticada, ignora el primer snapshot como baseline y registra cambios posteriores. `PedidosScreen` conserva solo la lista/cancelación; `NotificacionesScreen` recarga al ganar foco. En Android se crea el canal antes de permisos/programación. No se probó en un development build ni se implementó background/remote push.
 - Commit: pendiente (no se realizó commit por instrucción).
 - Perfil: nombre, correo y año mostrado siguen siendo de solo lectura; solo se persiste el teléfono que ya tenía input. El cambio de contraseña usa Firebase Auth y puede requerir una sesión reciente.
 - Ubicación y ofertas: sus preferencias quedan persistidas, pero no se fuerza el GPS ni existe un canal remoto de ofertas en este work unit.

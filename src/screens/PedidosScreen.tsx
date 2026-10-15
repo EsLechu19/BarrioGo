@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
@@ -14,11 +14,7 @@ import { TabScreenProps } from '../navigation/TabScreenProps';
 import { useAuth } from '../context/AuthContext';
 import { cancelarPedido, escucharMisPedidos } from '../services/api';
 import { firebaseReady } from '../services/firebase';
-import {
-  asegurarPermisoNotificaciones,
-  registrarCambioEstado,
-} from '../services/notificaciones';
-import { EstadoPedido, Pedido } from '../types/Pedido';
+import { Pedido } from '../types/Pedido';
 import { useColors } from '../context/ThemeContext';
 import type { Colors } from '../styles/colors';
 import { ESTADO_COLORS, ESTADO_ICONS, ESTADO_LABELS, EstadoVisible } from '../utils/estadosPedido';
@@ -35,55 +31,19 @@ export default function PedidosScreen({ navigation }: Props) {
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [cancelandoId, setCancelandoId] = useState<string | null>(null);
-  const estadosPrevios = useRef<Record<string, EstadoPedido>>({});
-  const primeraCarga = useRef<boolean>(true);
   const colors = useColors();
   const styles = useMemo(() => makeStyles(colors), [colors]);
-
-  useEffect(() => {
-    // Permiso al montar. No bloquea el listener: si es false, Pedidos sigue en vivo sin notificar.
-    void asegurarPermisoNotificaciones();
-  }, []);
 
   useEffect(() => {
     if (!firebaseReady || !uid) {
       setLoading(false);
       return;
     }
-    primeraCarga.current = true;
-    estadosPrevios.current = {};
     setLoading(true);
     setError(null);
     const unsubscribe = escucharMisPedidos(
       uid,
       (data: Pedido[]) => {
-        try {
-          if (primeraCarga.current) {
-            const mapa: Record<string, EstadoPedido> = {};
-            for (const p of data) {
-              mapa[p.id] = p.estado;
-            }
-            estadosPrevios.current = mapa;
-            primeraCarga.current = false;
-          } else {
-            for (const p of data) {
-              const previo: EstadoPedido | undefined =
-                estadosPrevios.current[p.id];
-              if (previo !== undefined && previo !== p.estado) {
-                void registrarCambioEstado(uid, p).catch(() => {
-                  // Storage/OS notification failures never break the live list.
-                });
-              }
-            }
-            const mapa: Record<string, EstadoPedido> = {};
-            for (const p of data) {
-              mapa[p.id] = p.estado;
-            }
-            estadosPrevios.current = mapa;
-          }
-        } catch {
-          // Silencioso: un fallo notificando jamás rompe la lista en vivo.
-        }
         setPedidos(data);
         setLoading(false);
       },
