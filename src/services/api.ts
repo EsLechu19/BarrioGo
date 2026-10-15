@@ -343,7 +343,29 @@ export async function crearPedido(input: CrearPedidoInput): Promise<string> {
   if (!input.usuarioId.trim()) throw new Error('Falta el usuario del pedido.');
   if (!input.negocioId.trim()) throw new Error('Falta el negocio del pedido.');
   if (input.items.length === 0) throw new Error('El pedido no tiene productos.');
-  if (!(input.total > 0)) throw new Error('El total del pedido no es válido.');
+  if (!input.items.every(isItemPedido)) {
+    throw new Error('El pedido contiene productos no válidos.');
+  }
+  if (
+    input.items.some(
+      (item) => item.negocioId !== undefined && item.negocioId !== input.negocioId,
+    )
+  ) {
+    throw new Error('El pedido contiene productos de otro restaurante.');
+  }
+  const totalCalculadoCentavos = input.items.reduce(
+    (acumulado, item) =>
+      acumulado + Math.round(item.cantidad * item.precioUnitario * 100),
+    0,
+  );
+  const totalInformadoCentavos = Math.round(input.total * 100);
+  if (
+    !(input.total > 0) ||
+    !Number.isFinite(input.total) ||
+    totalInformadoCentavos !== totalCalculadoCentavos
+  ) {
+    throw new Error('El total del pedido no coincide con sus productos.');
+  }
   if (input.direccion !== undefined && !isDireccionPedido(input.direccion)) {
     throw new Error('La dirección de entrega no es válida.');
   }

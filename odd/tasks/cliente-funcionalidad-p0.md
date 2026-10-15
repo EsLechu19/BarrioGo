@@ -19,6 +19,7 @@ Completar el flujo del cliente sin alterar el diseño visual de `origin/feature/
 - [x] P0.4 Validar creación de pedido y compatibilidad con pedidos antiguos.
 - [x] P0.6 Persistir cancelación del cliente y restringir transiciones de estado en Firestore.
 - [x] P0.5 Verificar compilación y checks estáticos. El runtime Firebase/dispositivo queda pendiente si no hay configuración disponible.
+- [x] P0.10 Validar productos, restaurante y total calculado antes de crear pedidos; la validación server-side definitiva requiere backend confiable o Cloud Function.
 - [x] P0.7 Persistir el historial local de notificaciones del cliente, aislado por usuario y alimentado por cambios reales de estado/cancelación del listener de pedidos.
 - [x] P0.8 Persistir teléfono de perfil y preferencias del cliente por `uid`, sin alterar la UI APF2. El permiso de notificaciones se solicita solo al activar la preferencia; no se implementa push remoto.
 - [x] P0.9 Persistir por `uid` las selecciones demo de checkout y bloquear confirmaciones sin dirección o método de pago.
