@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import {
   ScrollView,
   StyleSheet,
@@ -13,6 +13,13 @@ import { ScreenHeader } from '../components/ScreenHeader';
 import { SettingRow } from '../components/SettingRow';
 import { Colors } from '../styles/colors';
 import { useTheme } from '../context/ThemeContext';
+import { useAuth } from '../context/AuthContext';
+import {
+  actualizarPreferenciasUsuario,
+  getPreferenciasUsuario,
+} from '../services/api';
+import { asegurarPermisoNotificaciones } from '../services/notificaciones';
+import type { PreferenciasUsuario } from '../types/Usuario';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Configuracion'>;
 
@@ -94,15 +101,43 @@ function AjusteToggle({
   );
 }
 
-// Los otros 3 ajustes son solo diseño en memoria.
-// TODO(back): persistir en AsyncStorage / users/{uid}.
 export default function ConfiguracionScreen({ navigation }: Props) {
   const insets = useSafeAreaInsets();
   const { colors, isDark, toggleTheme } = useTheme();
+  const { user } = useAuth();
   const styles = useMemo(() => makeStyles(colors), [colors]);
   const [notifs, setNotifs] = useState<boolean>(true);
   const [ubicacion, setUbicacion] = useState<boolean>(true);
   const [ofertas, setOfertas] = useState<boolean>(false);
+
+  useEffect(() => {
+    if (!user) return;
+    void getPreferenciasUsuario(user.uid).then((prefs) => {
+      setNotifs(prefs.notificaciones);
+      setUbicacion(prefs.ubicacion);
+      setOfertas(prefs.ofertas);
+    });
+  }, [user]);
+
+  const guardarPreferencias = (next: PreferenciasUsuario): void => {
+    setNotifs(next.notificaciones);
+    setUbicacion(next.ubicacion);
+    setOfertas(next.ofertas);
+    if (user) void actualizarPreferenciasUsuario(user.uid, next).catch(() => {});
+  };
+
+  const cambiarNotificaciones = (valor: boolean): void => {
+    guardarPreferencias({ notificaciones: valor, ubicacion, ofertas });
+    if (valor) void asegurarPermisoNotificaciones();
+  };
+
+  const cambiarUbicacion = (valor: boolean): void => {
+    guardarPreferencias({ notificaciones: notifs, ubicacion: valor, ofertas });
+  };
+
+  const cambiarOfertas = (valor: boolean): void => {
+    guardarPreferencias({ notificaciones: notifs, ubicacion, ofertas: valor });
+  };
 
   const interruptores: {
     icono:
@@ -127,21 +162,21 @@ export default function ConfiguracionScreen({ navigation }: Props) {
       titulo: 'Notificaciones de pedidos',
       subtitulo: 'Confirmado, en camino y entregado',
       valor: notifs,
-      onCambiar: setNotifs,
+      onCambiar: cambiarNotificaciones,
     },
     {
       icono: 'location-outline',
       titulo: 'Ubicación',
       subtitulo: 'Ordenar negocios por cercanía',
       valor: ubicacion,
-      onCambiar: setUbicacion,
+      onCambiar: cambiarUbicacion,
     },
     {
       icono: 'pricetag-outline',
       titulo: 'Ofertas y novedades',
       subtitulo: 'Promos de tus locales favoritos',
       valor: ofertas,
-      onCambiar: setOfertas,
+      onCambiar: cambiarOfertas,
     },
   ];
 

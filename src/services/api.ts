@@ -1,5 +1,6 @@
 import { Negocio } from '../types/Negocio';
 import { Producto } from '../types/Producto';
+import type { PerfilUsuario, PreferenciasUsuario } from '../types/Usuario';
 import {
   DireccionPedido,
   EstadoPedido,
@@ -28,8 +29,105 @@ import { firebaseReady, getFirestoreDb } from './firebase';
 //   3. Fallback local (demo a salvo, sin red)
 import { negociosMock } from '../data/negociosMock';
 import { productosMock } from '../data/productosMock';
+import { storage } from './storage';
 
 const MOCK_API_URL = 'http://localhost:3000/negocios';
+
+const DEFAULT_PREFERENCES: PreferenciasUsuario = {
+  notificaciones: true,
+  ubicacion: true,
+  ofertas: false,
+};
+
+function isPerfilUsuario(value: unknown): value is PerfilUsuario {
+  return typeof value === 'object' && value !== null &&
+    typeof (value as PerfilUsuario).telefono === 'string';
+}
+
+function isPreferenciasUsuario(value: unknown): value is PreferenciasUsuario {
+  return typeof value === 'object' && value !== null &&
+    typeof (value as PreferenciasUsuario).notificaciones === 'boolean' &&
+    typeof (value as PreferenciasUsuario).ubicacion === 'boolean' &&
+    typeof (value as PreferenciasUsuario).ofertas === 'boolean';
+}
+
+function validateUsuarioId(usuarioId: string): void {
+  if (!usuarioId.trim()) throw new Error('Falta el usuario.');
+}
+
+export async function getPerfilUsuario(usuarioId: string): Promise<PerfilUsuario> {
+  validateUsuarioId(usuarioId);
+  const local = await storage.loadUserProfile(usuarioId);
+  if (firebaseReady) {
+    try {
+      const snap = await getDoc(doc(getFirestoreDb(), 'users', usuarioId));
+      const data: unknown = snap.data();
+      if (isPerfilUsuario(data)) {
+        await storage.saveUserProfile(usuarioId, data);
+        return data;
+      }
+    } catch {
+      // El perfil local permite continuar sin conexión.
+    }
+  }
+  return local ?? { telefono: '' };
+}
+
+export async function actualizarPerfilUsuario(
+  usuarioId: string,
+  profile: PerfilUsuario,
+): Promise<void> {
+  validateUsuarioId(usuarioId);
+  const telefono = profile.telefono.trim();
+  if (telefono && !/^\d+$/.test(telefono.replace(/\s/g, ''))) {
+    throw new Error('El teléfono no es válido.');
+  }
+  const safeProfile: PerfilUsuario = { telefono };
+  await storage.saveUserProfile(usuarioId, safeProfile);
+  if (firebaseReady) {
+    await setDoc(doc(getFirestoreDb(), 'users', usuarioId), safeProfile, {
+      merge: true,
+    });
+  }
+}
+
+export async function getPreferenciasUsuario(
+  usuarioId: string,
+): Promise<PreferenciasUsuario> {
+  validateUsuarioId(usuarioId);
+  const local = await storage.loadUserPreferences(usuarioId);
+  if (firebaseReady) {
+    try {
+      const snap = await getDoc(doc(getFirestoreDb(), 'users', usuarioId));
+      const raw: unknown = snap.data()?.preferencias;
+      if (isPreferenciasUsuario(raw)) {
+        await storage.saveUserPreferences(usuarioId, raw);
+        return raw;
+      }
+    } catch {
+      // Se usa la copia local validada.
+    }
+  }
+  return local ?? DEFAULT_PREFERENCES;
+}
+
+export async function actualizarPreferenciasUsuario(
+  usuarioId: string,
+  preferences: PreferenciasUsuario,
+): Promise<void> {
+  validateUsuarioId(usuarioId);
+  if (!isPreferenciasUsuario(preferences)) {
+    throw new Error('Las preferencias no son válidas.');
+  }
+  await storage.saveUserPreferences(usuarioId, preferences);
+  if (firebaseReady) {
+    await setDoc(
+      doc(getFirestoreDb(), 'users', usuarioId),
+      { preferencias: preferences },
+      { merge: true },
+    );
+  }
+}
 
 export interface AppError {
   message: string;

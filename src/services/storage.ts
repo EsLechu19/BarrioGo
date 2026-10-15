@@ -1,6 +1,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { ItemPedido } from '../types/Pedido';
 import type { Notificacion } from '../types/Notificacion';
+import type { PerfilUsuario, PreferenciasUsuario } from '../types/Usuario';
 
 // Persistencia local tipada. REGLA: jamás confiar en JSON.parse a ciegas —
 // todo lo leído se valida con un chequeo de forma antes de usarse.
@@ -15,6 +16,14 @@ const KEYS = {
 
 function notificationsKey(usuarioId: string): string {
   return `barriogo:notifications:v1:${encodeURIComponent(usuarioId)}`;
+}
+
+function profileKey(usuarioId: string): string {
+  return `barriogo:profile:v1:${encodeURIComponent(usuarioId)}`;
+}
+
+function preferencesKey(usuarioId: string): string {
+  return `barriogo:preferences:v1:${encodeURIComponent(usuarioId)}`;
 }
 
 export interface Session {
@@ -71,6 +80,18 @@ function isNotificacion(value: unknown): value is Notificacion {
 
 function isNotificacionArray(value: unknown): value is Notificacion[] {
   return Array.isArray(value) && value.every(isNotificacion);
+}
+
+function isPerfilUsuario(value: unknown): value is PerfilUsuario {
+  return typeof value === 'object' && value !== null &&
+    typeof (value as PerfilUsuario).telefono === 'string';
+}
+
+function isPreferenciasUsuario(value: unknown): value is PreferenciasUsuario {
+  return typeof value === 'object' && value !== null &&
+    typeof (value as PreferenciasUsuario).notificaciones === 'boolean' &&
+    typeof (value as PreferenciasUsuario).ubicacion === 'boolean' &&
+    typeof (value as PreferenciasUsuario).ofertas === 'boolean';
 }
 
 const notificationWrites = new Map<string, Promise<void>>();
@@ -147,6 +168,21 @@ export const storage = {
     }
   },
   saveTheme: (tema: 'dark' | 'light') => write(KEYS.theme, tema),
+  loadUserProfile: (usuarioId: string): Promise<PerfilUsuario | null> =>
+    usuarioId.trim() ? read(profileKey(usuarioId), isPerfilUsuario) : Promise.resolve(null),
+  saveUserProfile: (usuarioId: string, profile: PerfilUsuario): Promise<void> =>
+    usuarioId.trim() ? write(profileKey(usuarioId), profile) : Promise.resolve(),
+  loadUserPreferences: (usuarioId: string): Promise<PreferenciasUsuario | null> =>
+    usuarioId.trim()
+      ? read(preferencesKey(usuarioId), isPreferenciasUsuario)
+      : Promise.resolve(null),
+  saveUserPreferences: (
+    usuarioId: string,
+    preferences: PreferenciasUsuario,
+  ): Promise<void> =>
+    usuarioId.trim()
+      ? write(preferencesKey(usuarioId), preferences)
+      : Promise.resolve(),
   loadNotifications: (usuarioId: string): Promise<Notificacion[]> => {
     if (!usuarioId.trim()) return Promise.resolve([]);
     return readNotifications(usuarioId);

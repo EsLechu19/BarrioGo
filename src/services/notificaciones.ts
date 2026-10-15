@@ -98,6 +98,8 @@ export async function registrarCambioEstado(
   usuarioId: string,
   pedido: Pedido,
 ): Promise<void> {
+  const preferencias = await storage.loadUserPreferences(usuarioId);
+  if (preferencias?.notificaciones === false) return;
   const notification = {
     id: `${pedido.id}:${pedido.estado}`,
     usuarioId,

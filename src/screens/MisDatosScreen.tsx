@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import {
   Image,
   ScrollView,
@@ -16,18 +16,18 @@ import { SettingRow } from '../components/SettingRow';
 import { InfoBanner } from '../components/InfoBanner';
 import { FormField } from '../components/FormField';
 import { useAuth } from '../context/AuthContext';
+import { updatePassword } from 'firebase/auth';
+import { actualizarPerfilUsuario, getPerfilUsuario } from '../services/api';
 import { useColors } from '../context/ThemeContext';
 import type { Colors } from '../styles/colors';
 import { inicialDe, nombreVisible } from '../utils/usuario';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'MisDatos'>;
 
-// TODO(back): teléfono → users/{uid} en Firestore; contraseña →
-// updatePassword de Firebase Auth. Hoy todo vive en memoria (solo diseño).
 export default function MisDatosScreen({ navigation }: Props) {
   const insets = useSafeAreaInsets();
   const { user } = useAuth();
-  const [telefono, setTelefono] = useState<string>('999 888 777');
+  const [telefono, setTelefono] = useState<string>('');
   const [nuevaPass, setNuevaPass] = useState<string>('');
   const [confirmarPass, setConfirmarPass] = useState<string>('');
   const [telError, setTelError] = useState<string | undefined>(undefined);
@@ -35,6 +35,11 @@ export default function MisDatosScreen({ navigation }: Props) {
   const [exito, setExito] = useState<boolean>(false);
   const colors = useColors();
   const styles = useMemo(() => makeStyles(colors), [colors]);
+
+  useEffect(() => {
+    if (!user) return;
+    void getPerfilUsuario(user.uid).then((perfil) => setTelefono(perfil.telefono));
+  }, [user]);
 
   const nombre: string = nombreVisible(user);
   const inicial: string = inicialDe(nombre);
@@ -49,7 +54,7 @@ export default function MisDatosScreen({ navigation }: Props) {
     { icono: 'calendar-outline', etiqueta: 'Miembro desde', valor: '2026' },
   ];
 
-  const guardar = (): void => {
+  const guardar = async (): Promise<void> => {
     setExito(false);
     const digitos: string = telefono.trim().replace(/\s/g, '');
     let errorTel: string | undefined;
@@ -71,8 +76,18 @@ export default function MisDatosScreen({ navigation }: Props) {
     setTelError(errorTel);
     setPassError(errorPass);
     if (errorTel || errorPass) return;
-    setNuevaPass('');
-    setConfirmarPass('');
+    if (!user) return;
+    try {
+      await actualizarPerfilUsuario(user.uid, { telefono });
+      if (nuevaPass) await updatePassword(user, nuevaPass);
+      setNuevaPass('');
+      setConfirmarPass('');
+    } catch (error) {
+      setPassError(
+        error instanceof Error ? error.message : 'No se pudo guardar la contraseña.',
+      );
+      return;
+    }
     setExito(true);
   };
 
@@ -155,7 +170,7 @@ export default function MisDatosScreen({ navigation }: Props) {
           />
         </View>
 
-        {exito ? <InfoBanner texto="Cambios guardados en esta sesión." /> : null}
+        {exito ? <InfoBanner texto="Cambios guardados correctamente." /> : null}
 
         <TouchableOpacity
           style={styles.primaryButton}

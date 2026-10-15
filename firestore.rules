@@ -22,7 +22,30 @@ service cloud.firestore {
       allow update, delete: if esDuenoNegocio(resource.data.negocioId);
     }
     match /users/{uid} {
-      allow read, write: if request.auth != null && request.auth.uid == uid;
+      allow read: if request.auth != null && request.auth.uid == uid;
+      allow create: if request.auth != null
+        && request.auth.uid == uid
+        && request.resource.data.rol == 'cliente'
+        && !request.resource.data.keys().hasAny(['negocioId']);
+      function esVinculacionNegocio() {
+        return request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+            'rol', 'negocioId'
+          ])
+          && resource.data.rol == 'cliente'
+          && request.resource.data.rol == 'negocio'
+          && request.resource.data.negocioId is string
+          && get(/databases/$(database)/documents/negocios/$(request.resource.data.negocioId)).data.duenioId == request.auth.uid;
+      }
+      // Generic profile writes cannot change role or negocioId. The only
+      // exception is linking a business created by this same authenticated uid.
+      allow update: if request.auth != null
+        && request.auth.uid == uid
+        && (
+          request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+            'nombre', 'email', 'telefono', 'preferencias'
+          ])
+          || esVinculacionNegocio()
+        );
     }
     match /pedidos/{id} {
       function esTransicionValida() {
