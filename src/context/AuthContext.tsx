@@ -6,6 +6,7 @@ import {
   onAuthStateChanged,
   signInWithEmailAndPassword,
   signOut,
+  updateProfile,
 } from 'firebase/auth';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
 import { firebaseReady, getFirebaseAuth, getFirestoreDb } from '../services/firebase';
@@ -53,6 +54,26 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [rol, setRol] = useState<Rol | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
+  // updateProfile muta el User en el lugar y React no lo detecta: este sello
+  // fuerza el re-render para que perfil y Home refresquen el nombre al toque.
+  const [, setSelloAuth] = useState<number>(0);
+
+  // Si Auth no tiene displayName pero Firestore sí tiene el nombre del
+  // dueño de la cuenta, lo copia a Auth una vez. Arregla cuentas viejas
+  // (se veían como la parte del correo antes de la @).
+  const completarDisplayName = useCallback(async (u: User): Promise<void> => {
+    try {
+      if (u.displayName?.trim()) return;
+      const snap = await getDoc(doc(getFirestoreDb(), 'users', u.uid));
+      const nombre: unknown = snap.data()?.nombre;
+      if (typeof nombre === 'string' && nombre.trim()) {
+        await updateProfile(u, { displayName: nombre.trim() });
+        setSelloAuth((s) => s + 1);
+      }
+    } catch {
+      // Silencioso: se vuelve a intentar en el próximo inicio de sesión.
+    }
+  }, []);
 
   const cargarRol = useCallback(async (uid: string): Promise<void> => {
     try {
@@ -73,6 +94,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const unsub = onAuthStateChanged(auth, async (u) => {
       setUser(u);
       if (u) {
+        await completarDisplayName(u);
         await cargarRol(u.uid);
       } else {
         setRol(null);
@@ -80,7 +102,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setLoading(false);
     });
     return unsub;
-  }, [cargarRol]);
+  }, [cargarRol, completarDisplayName]);
 
   // Relee el rol sin pedir re-login (ej. tras registrar el negocio propio,
   // para que el tab Negocio aparezca al instante).
@@ -115,6 +137,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       rol: 'cliente',
       createdAt: new Date().toISOString(),
     });
+    // El nombre del dueño de la cuenta, tal cual lo escribió al registrarse.
+    await updateProfile(cred.user, { displayName: nombre.trim() });
+    setSelloAuth((s) => s + 1);
   };
 
   const logout = async (): Promise<void> => {
