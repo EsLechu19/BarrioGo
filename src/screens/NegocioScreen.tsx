@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { Alert, StyleSheet, Text, View } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuth } from '../context/AuthContext';
@@ -7,6 +7,7 @@ import { TabScreenProps } from '../navigation/TabScreenProps';
 import { firebaseReady } from '../services/firebase';
 import {
   cambiarEstadoPedido,
+  rechazarPedidoNegocio,
   crearProducto,
   actualizarProducto,
   escucharPedidosNegocio,
@@ -262,6 +263,39 @@ export default function NegocioScreen({ navigation }: Props) {
     }
   }
 
+  function confirmarRechazo(pedido: Pedido): void {
+    if (pedido.estado !== 'pendiente' || avanzandoId) return;
+    Alert.alert(
+      'Rechazar pedido',
+      'Se cancelará este pedido antes de aceptarlo. Esta acción no se puede deshacer.',
+      [
+        { text: 'Volver', style: 'cancel' },
+        {
+          text: 'Rechazar pedido',
+          style: 'destructive',
+          onPress: () => void rechazarPedido(pedido),
+        },
+      ],
+    );
+  }
+
+  async function rechazarPedido(pedido: Pedido): Promise<void> {
+    if (pedido.estado !== 'pendiente' || avanzandoId) return;
+    setAvanzandoId(pedido.id);
+    setPedidosError(null);
+    try {
+      await rechazarPedidoNegocio(pedido.id);
+    } catch (e) {
+      setPedidosError(
+        e instanceof Error
+          ? e.message
+          : 'No se pudo rechazar el pedido. Intentá de nuevo.',
+      );
+    } finally {
+      setAvanzandoId(null);
+    }
+  }
+
   async function seleccionarFotoNueva(modo: 'galeria' | 'camara'): Promise<void> {
     setFotoError(null);
     try {
@@ -333,7 +367,9 @@ export default function NegocioScreen({ navigation }: Props) {
       (p) => p.estado === 'confirmado' || p.estado === 'en_camino',
     ).length;
     const entregados: number = pedidos.filter((p) => p.estado === 'entregado').length;
-    const ventas: number = pedidos.reduce((acc, p) => acc + p.total, 0);
+     const ventas: number = pedidos
+       .filter((p) => p.estado === 'entregado')
+       .reduce((acc, p) => acc + p.total, 0);
     return { pendientes, enCurso, entregados, ventas };
   }, [pedidos]);
 
@@ -404,6 +440,7 @@ export default function NegocioScreen({ navigation }: Props) {
           pedidos={pedidos}
           avanzandoId={avanzandoId}
           onAvanzar={(pedido) => void avanzarEstado(pedido)}
+          onRechazar={confirmarRechazo}
         />
       ) : seccion === 'menu' ? (
         <Menu

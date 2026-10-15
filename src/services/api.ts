@@ -551,6 +551,42 @@ export async function cambiarEstadoPedido(
   }
 }
 
+export async function rechazarPedidoNegocio(pedidoId: string): Promise<void> {
+  if (!firebaseReady) throw new Error(FIREBASE_NO_CONFIG_MSG);
+  if (!pedidoId.trim()) throw new Error('Falta el id del pedido.');
+  const actor = getFirebaseAuth().currentUser;
+  if (!actor) throw new Error('La sesión del negocio no está disponible.');
+  const ref = doc(getFirestoreDb(), 'pedidos', pedidoId);
+  try {
+    const snap = await getDoc(ref);
+    if (!snap.exists()) throw new Error('El pedido no existe.');
+    const data: unknown = { id: snap.id, ...snap.data() };
+    if (!isPedido(data)) throw new Error('El pedido no tiene un formato válido.');
+    if (data.estado !== 'pendiente') {
+      throw new Error('Solo se puede rechazar un pedido pendiente.');
+    }
+    await updateDoc(ref, {
+      estado: 'cancelado',
+      canceladoPor: actor.uid,
+      canceladoFecha: new Date().toISOString(),
+    });
+  } catch (e) {
+    if (
+      e instanceof Error &&
+      (e.message === 'El pedido no existe.' ||
+        e.message === 'El pedido no tiene un formato válido.' ||
+        e.message === 'Solo se puede rechazar un pedido pendiente.')
+    ) {
+      throw e;
+    }
+    throw new Error(
+      e instanceof Error
+        ? `No se pudo rechazar el pedido: ${e.message}`
+        : 'No se pudo rechazar el pedido. Intentá de nuevo.',
+    );
+  }
+}
+
 export async function cancelarPedido(
   pedidoId: string,
   usuarioId: string,

@@ -5,8 +5,8 @@ import { Pedido } from '../../types/Pedido';
 import { SeccionCard } from '../SeccionCard';
 import { useColors } from '../../context/ThemeContext';
 import type { Colors } from '../../styles/colors';
-import { ESTADO_COLORS, ESTADO_ICONS, SIGUIENTE_ESTADO } from '../../utils/estadosPedido';
-import { fechaCorta } from '../../utils/fechas';
+import { ESTADO_COLORS, ESTADO_ICONS, ESTADO_LABELS, SIGUIENTE_ESTADO } from '../../utils/estadosPedido';
+import { fechaCorta, fechaLarga } from '../../utils/fechas';
 
 // Resumen derivado de los pedidos en vivo.
 export type Stats = {
@@ -22,6 +22,7 @@ type Props = {
   pedidos: Pedido[];
   avanzandoId: string | null;
   onAvanzar: (pedido: Pedido) => void;
+  onRechazar: (pedido: Pedido) => void;
 };
 
 export function Pedidos({
@@ -30,6 +31,7 @@ export function Pedidos({
   pedidos,
   avanzandoId,
   onAvanzar,
+  onRechazar,
 }: Props) {
   const colors = useColors();
   const styles = useMemo(() => makeStyles(colors), [colors]);
@@ -90,11 +92,41 @@ export function Pedidos({
               }
               iconoFondo={`${colorEstado}1A`}
               iconoColor={colorEstado}
-              badgeTexto={item.estado.replace('_', ' ')}
-              badgeColor={colorEstado}
-              accionInferior={
-                item.estado !== 'entregado' && item.estado !== 'cancelado' ? (
-                  <TouchableOpacity
+               badgeTexto={ESTADO_LABELS[item.estado]}
+               badgeColor={colorEstado}
+              >
+               <View style={styles.detailArea}>
+                 <Text style={styles.detailTitle}>Detalle del pedido</Text>
+                 {item.items.length > 0 ? item.items.map((orderItem) => (
+                   <View key={`${orderItem.productoId}-${orderItem.cantidad}`} style={styles.itemRow}>
+                     <Text style={styles.itemName} numberOfLines={1}>
+                       {orderItem.nombre?.trim() || 'Producto sin nombre'} x{orderItem.cantidad}
+                     </Text>
+                     <Text style={styles.itemSubtotal}>
+                       S/{(orderItem.cantidad * orderItem.precioUnitario).toFixed(2)}
+                     </Text>
+                   </View>
+                 )) : <Text style={styles.detailMuted}>Sin detalle de productos disponible.</Text>}
+                 <Text style={styles.detailLine}>Total: S/{item.total.toFixed(2)}</Text>
+                 <Text style={styles.detailMuted}>Fecha: {fechaLarga(item.fecha)}</Text>
+                 <Text style={styles.detailMuted}>
+                   Cuenta del cliente: {identificadorCliente(item.usuarioId)}
+                 </Text>
+                 {item.direccion ? (
+                   <Text style={styles.detailMuted}>
+                     Entrega: {item.direccion.alias} — {item.direccion.detalle}
+                   </Text>
+                 ) : null}
+                 {item.metodoPago ? (
+                   <Text style={styles.detailMuted}>
+                     Pago: {item.metodoPago.nombre || item.metodoPago.tipo}
+                   </Text>
+                 ) : null}
+               </View>
+               accionInferior={
+                 item.estado !== 'entregado' && item.estado !== 'cancelado' ? (
+                   <View style={styles.actions}>
+                   <TouchableOpacity
                     style={[
                       styles.advanceButton,
                       avanzandoId === item.id && styles.disabledButton,
@@ -105,11 +137,22 @@ export function Pedidos({
                     <Text style={styles.advanceText}>
                       {avanzandoId === item.id
                         ? 'Actualizando...'
-                        : `Avanzar a ${SIGUIENTE_ESTADO[item.estado].replace('_', ' ')}`}
+                         : `Avanzar a ${ESTADO_LABELS[SIGUIENTE_ESTADO[item.estado]]}`}
                     </Text>
                     <Ionicons name="arrow-forward" size={16} color={colors.white} />
-                  </TouchableOpacity>
-                ) : item.estado === 'cancelado' ? (
+                   </TouchableOpacity>
+                   {item.estado === 'pendiente' ? (
+                     <TouchableOpacity
+                       style={[styles.rejectButton, avanzandoId === item.id && styles.disabledButton]}
+                       disabled={avanzandoId === item.id}
+                       onPress={() => onRechazar(item)}
+                     >
+                       <Ionicons name="close-outline" size={16} color={colors.error} />
+                       <Text style={styles.rejectText}>Rechazar pedido</Text>
+                     </TouchableOpacity>
+                   ) : null}
+                   </View>
+                 ) : item.estado === 'cancelado' ? (
                   <View style={styles.doneRow}>
                     <Ionicons name="close-circle-outline" size={16} color={colors.error} />
                     <Text style={[styles.doneText, { color: colors.error }]}>Pedido cancelado</Text>
@@ -117,15 +160,15 @@ export function Pedidos({
                 ) : (
                   <View style={styles.doneRow}>
                     <Ionicons
-                      name="checkmark-done-outline"
-                      size={16}
-                      color={colors.success}
-                    />
+                       name="checkmark-done-outline"
+                       size={16}
+                       color={colors.success}
+                     />
                     <Text style={styles.doneText}>Pedido completado</Text>
                   </View>
                 )
               }
-            />
+            </SeccionCard>
           );
         })
       )}
@@ -158,6 +201,15 @@ function makeStyles(c: Colors) {
     centerRow: { alignItems: 'center', gap: 8, paddingVertical: 12 },
     disabledButton: { opacity: 0.6 },
 
+    detailArea: { gap: 6, paddingTop: 2 },
+    detailTitle: { color: c.textPrimary, fontSize: 13, fontWeight: '800' },
+    itemRow: { flexDirection: 'row', justifyContent: 'space-between', gap: 8 },
+    itemName: { flex: 1, color: c.textPrimary, fontSize: 13 },
+    itemSubtotal: { color: c.textPrimary, fontSize: 13, fontWeight: '700' },
+    detailLine: { color: c.textPrimary, fontSize: 14, fontWeight: '800', marginTop: 2 },
+    detailMuted: { color: c.textMuted, fontSize: 12 },
+    actions: { gap: 8 },
+
     advanceButton: {
       flexDirection: 'row',
       alignItems: 'center',
@@ -169,6 +221,19 @@ function makeStyles(c: Colors) {
       backgroundColor: c.primary,
     },
     advanceText: { color: c.white, fontSize: 14, fontWeight: '700' },
+    rejectButton: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'center',
+      gap: 6,
+      paddingVertical: 9,
+      paddingHorizontal: 16,
+      borderRadius: 12,
+      borderWidth: 1,
+      borderColor: c.error,
+      backgroundColor: c.surface,
+    },
+    rejectText: { color: c.error, fontSize: 13, fontWeight: '700' },
     doneRow: {
       flexDirection: 'row',
       alignItems: 'center',
@@ -180,4 +245,10 @@ function makeStyles(c: Colors) {
     },
     doneText: { color: c.success, fontSize: 13, fontWeight: '700' },
   });
+}
+
+function identificadorCliente(usuarioId: string): string {
+  const limpio: string = usuarioId.trim();
+  if (limpio.length <= 12) return limpio || 'No disponible';
+  return `${limpio.slice(0, 6)}…${limpio.slice(-4)}`;
 }

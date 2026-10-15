@@ -26,6 +26,7 @@ Completar el flujo del cliente sin alterar el diseño visual de `origin/feature/
 - [x] P0.9 Persistir por `uid` las selecciones demo de checkout y bloquear confirmaciones sin dirección o método de pago.
 - [x] P0.12 Desacoplar el historial/aviso local de cambios de estado del montaje de `PedidosScreen` y recargarlo al enfocar la pantalla.
 - [x] P0.13 Fotos de productos: selección segura desde galería/cámara, preview y subida unsigned a Cloudinary antes de crear o editar; la URL queda persistida en `productos.imagenUrl`.
+- [x] P0.14 Panel negocio operativo: detalle de pedido, rechazo previo a la aceptación protegido por reglas y ventas calculadas solo con pedidos entregados.
 
 ## Restricciones
 
@@ -42,6 +43,8 @@ Completar el flujo del cliente sin alterar el diseño visual de `origin/feature/
 - Notificaciones: el historial local sí queda persistido por `uid`; el aviso del sistema es opcional y local. No se implementó push remoto. Expo Go no garantiza el módulo de notificaciones del sistema; se requiere un development build para validar el comportamiento nativo.
 - Notificaciones P0.12: `CustomerNotificationBridge` escucha los pedidos del cliente desde la raíz autenticada, ignora el primer snapshot como baseline y registra cambios posteriores. `PedidosScreen` conserva solo la lista/cancelación; `NotificacionesScreen` recarga al ganar foco. En Android se crea el canal antes de permisos/programación. No se probó en un development build ni se implementó background/remote push.
 - Commit: pendiente (no se realizó commit por instrucción).
+- Panel negocio P0.14: el negocio ve únicamente los datos presentes en el pedido; los pedidos antiguos pueden no tener nombres de producto, dirección o método de pago. En ese caso se muestra la ausencia de datos y un identificador truncado de la cuenta cliente, sin inventar nombres.
+- Panel negocio P0.14: el flujo conserva los estados lineales existentes; no se implementa repartidor, asignación, GPS ni un modelo de entrega nuevo. La acción de rechazo requiere confirmación y registra `canceladoPor`/`canceladoFecha`; su validación final depende de reglas publicadas y Firebase autenticado.
 - Perfil: nombre, correo y año mostrado siguen siendo de solo lectura; solo se persiste el teléfono que ya tenía input. El cambio de contraseña usa Firebase Auth y puede requerir una sesión reciente.
 - Ubicación y ofertas: sus preferencias quedan persistidas, pero no se fuerza el GPS ni existe un canal remoto de ofertas en este work unit.
 - Checkout: dirección y método de pago son datos demo locales; no se procesa precio en servidor ni se integra una pasarela de pagos.

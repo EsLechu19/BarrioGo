@@ -69,6 +69,16 @@ service cloud.firestore {
           && request.resource.data.canceladoFecha is string;
       }
 
+      function esRechazoNegocio() {
+        return esDuenoNegocio(resource.data.negocioId)
+          && resource.data.estado == 'pendiente'
+          && request.resource.data.estado == 'cancelado'
+          && request.resource.data.usuarioId == resource.data.usuarioId
+          && request.resource.data.negocioId == resource.data.negocioId
+          && request.resource.data.canceladoPor == request.auth.uid
+          && request.resource.data.canceladoFecha is string;
+      }
+
       // Crear: solo tus propios pedidos (anti-suplantación).
       allow create: if request.auth != null
         && request.resource.data.usuarioId == request.auth.uid
@@ -82,6 +92,12 @@ service cloud.firestore {
       allow update: if esDuenoNegocio(resource.data.negocioId)
         && esTransicionValida()
         && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['estado']);
+      // El negocio solo puede rechazar pedidos pendientes antes de aceptarlos.
+      allow update: if request.auth != null
+        && esRechazoNegocio()
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+          'estado', 'canceladoPor', 'canceladoFecha'
+        ]);
       // Cliente: solo puede cancelar su propio pedido pendiente.
       allow update: if esCancelacionPropia()
         && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
