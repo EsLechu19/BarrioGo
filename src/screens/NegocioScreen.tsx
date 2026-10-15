@@ -140,7 +140,7 @@ export default function NegocioScreen({ navigation }: Props) {
   }, [negocioId]);
 
   async function avanzarEstado(pedido: Pedido): Promise<void> {
-    if (pedido.estado === 'entregado' || avanzandoId) return;
+    if (pedido.estado === 'entregado' || pedido.estado === 'cancelado' || avanzandoId) return;
     const siguiente: EstadoPedido = SIGUIENTE_ESTADO[pedido.estado];
     setAvanzandoId(pedido.id);
     setPedidosError(null);

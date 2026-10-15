@@ -1,8 +1,7 @@
 import { EstadoPedido } from '../types/Pedido';
 import { EstadoRepartidor } from '../types/Repartidor';
 
-// Estados de pedido: color, etiqueta e icono en un solo lugar. Incluye
-// 'cancelado' solo a nivel visual (el back aún no lo emite).
+// Estados de pedido: color, etiqueta e icono en un solo lugar.
 export type EstadoVisible = EstadoPedido | 'cancelado';
 
 export type EstadoIcono =
@@ -38,7 +37,7 @@ export const ESTADO_ICONS = {
 
 // Flujo lineal del pedido: el negocio avanza al siguiente estado.
 export const SIGUIENTE_ESTADO: Record<
-  Exclude<EstadoPedido, 'entregado'>,
+  Exclude<EstadoPedido, 'entregado' | 'cancelado'>,
   EstadoPedido
 > = {
   pendiente: 'confirmado',
@@ -47,7 +46,7 @@ export const SIGUIENTE_ESTADO: Record<
 };
 
 // Pasos del seguimiento (línea de progreso del detalle).
-export const PASOS: EstadoPedido[] = [
+export const PASOS: Array<Exclude<EstadoPedido, 'cancelado'>> = [
   'pendiente',
   'confirmado',
   'en_camino',

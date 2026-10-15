@@ -17,7 +17,8 @@ Completar el flujo del cliente sin alterar el diseño visual de `origin/feature/
 - [x] P0.2 Impedir mezcla de restaurantes antes de confirmar, con reemplazo explícito.
 - [~] P0.3 Extender el payload para dirección y método de pago sin cambiar la distribución visual. Las pantallas actuales son mock y no se conectan automáticamente al checkout.
 - [x] P0.4 Validar creación de pedido y compatibilidad con pedidos antiguos.
-- [~] P0.5 Verificar compilación y checks estáticos. El runtime Firebase/dispositivo queda pendiente si no hay configuración disponible.
+- [x] P0.6 Persistir cancelación del cliente y restringir transiciones de estado en Firestore.
+- [x] P0.5 Verificar compilación y checks estáticos. El runtime Firebase/dispositivo queda pendiente si no hay configuración disponible.
 
 ## Restricciones
 
@@ -30,5 +31,5 @@ Completar el flujo del cliente sin alterar el diseño visual de `origin/feature/
 - TypeScript: `npx tsc --noEmit` PASS.
 - Checks: `git diff --check` PASS; `node --check scripts/mock-server.js` PASS.
 - UI APF2: Home, Configuracion, colors y RestaurantCard permanecen byte-identical al remoto.
-- Runtime Firebase/dispositivo: no ejecutado; dirección y pago siguen siendo pantallas mock.
-- Commit: pendiente.
+- Runtime Firebase/dispositivo: no ejecutado; cancelación, reglas y listeners requieren Firebase configurado.
+- Commit: pendiente (no se realizó commit por instrucción).

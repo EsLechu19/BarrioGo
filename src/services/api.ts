@@ -177,6 +177,7 @@ const ESTADOS_PEDIDO: readonly EstadoPedido[] = [
   'confirmado',
   'en_camino',
   'entregado',
+  'cancelado',
 ];
 
 function isEstadoPedido(value: unknown): value is EstadoPedido {
@@ -232,6 +233,8 @@ function isPedido(value: unknown): value is Pedido {
     typeof p.total === 'number' &&
     isEstadoPedido(p.estado) &&
     typeof p.fecha === 'string' &&
+    (p.canceladoPor === undefined || typeof p.canceladoPor === 'string') &&
+    (p.canceladoFecha === undefined || typeof p.canceladoFecha === 'string') &&
     (p.direccion === undefined || isDireccionPedido(p.direccion)) &&
     (p.metodoPago === undefined || isMetodoPagoPedido(p.metodoPago))
   );
@@ -382,12 +385,76 @@ export async function cambiarEstadoPedido(
   if (!pedidoId.trim()) throw new Error('Falta el id del pedido.');
   if (!isEstadoPedido(estado)) throw new Error('El estado del pedido no es válido.');
   try {
-    await updateDoc(doc(getFirestoreDb(), 'pedidos', pedidoId), { estado });
+    const ref = doc(getFirestoreDb(), 'pedidos', pedidoId);
+    const snap = await getDoc(ref);
+    const data: unknown = snap.exists() ? { id: snap.id, ...snap.data() } : null;
+    if (!isPedido(data)) throw new Error('El pedido no existe o no es válido.');
+    const siguiente: EstadoPedido | undefined =
+      data.estado === 'pendiente'
+        ? 'confirmado'
+        : data.estado === 'confirmado'
+          ? 'en_camino'
+          : data.estado === 'en_camino'
+            ? 'entregado'
+            : undefined;
+    if (siguiente !== estado) {
+      throw new Error('La transición de estado del pedido no es válida.');
+    }
+    await updateDoc(ref, { estado });
   } catch (e) {
+    if (
+      e instanceof Error &&
+      (e.message === 'El pedido no existe o no es válido.' ||
+        e.message === 'La transición de estado del pedido no es válida.')
+    ) {
+      throw e;
+    }
     throw new Error(
       e instanceof Error
         ? `No se pudo cambiar el estado del pedido: ${e.message}`
         : 'No se pudo cambiar el estado del pedido. Intentá de nuevo.',
+    );
+  }
+}
+
+export async function cancelarPedido(
+  pedidoId: string,
+  usuarioId: string,
+): Promise<void> {
+  if (!firebaseReady) throw new Error(FIREBASE_NO_CONFIG_MSG);
+  if (!pedidoId.trim()) throw new Error('Falta el id del pedido.');
+  if (!usuarioId.trim()) throw new Error('Falta el usuario del pedido.');
+  const ref = doc(getFirestoreDb(), 'pedidos', pedidoId);
+  try {
+    const snap = await getDoc(ref);
+    if (!snap.exists()) throw new Error('El pedido no existe.');
+    const data: unknown = { id: snap.id, ...snap.data() };
+    if (!isPedido(data)) throw new Error('El pedido no tiene un formato válido.');
+    if (data.usuarioId !== usuarioId) {
+      throw new Error('Solo podés cancelar tus propios pedidos.');
+    }
+    if (data.estado !== 'pendiente') {
+      throw new Error('El pedido ya fue aceptado y no se puede cancelar.');
+    }
+    await updateDoc(ref, {
+      estado: 'cancelado',
+      canceladoPor: usuarioId,
+      canceladoFecha: new Date().toISOString(),
+    });
+  } catch (e) {
+    if (
+      e instanceof Error &&
+      (e.message === 'El pedido no existe.' ||
+        e.message === 'El pedido no tiene un formato válido.' ||
+        e.message === 'Solo podés cancelar tus propios pedidos.' ||
+        e.message === 'El pedido ya fue aceptado y no se puede cancelar.')
+    ) {
+      throw e;
+    }
+    throw new Error(
+      e instanceof Error
+        ? `No se pudo cancelar el pedido: ${e.message}`
+        : 'No se pudo cancelar el pedido. Intentá de nuevo.',
     );
   }
 }

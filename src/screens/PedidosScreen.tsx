@@ -12,7 +12,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { TabScreenProps } from '../navigation/TabScreenProps';
 import { useAuth } from '../context/AuthContext';
-import { escucharMisPedidos } from '../services/api';
+import { cancelarPedido, escucharMisPedidos } from '../services/api';
 import { firebaseReady } from '../services/firebase';
 import {
   asegurarPermisoNotificaciones,
@@ -34,11 +34,7 @@ export default function PedidosScreen({ navigation }: Props) {
   const [pedidos, setPedidos] = useState<Pedido[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
-  // Cancelación solo visual (solo diseño): pisa el estado al pintar porque
-  // el snapshot de Firestore seguiría emitiendo el estado real.
-  // TODO(back): agregar 'cancelado' a EstadoPedido + cambiarEstadoPedido
-  // + reglas de Firestore. Hoy no se escribe nada.
-  const [cancelados, setCancelados] = useState<Record<string, boolean>>({});
+  const [cancelandoId, setCancelandoId] = useState<string | null>(null);
   const estadosPrevios = useRef<Record<string, EstadoPedido>>({});
   const primeraCarga = useRef<boolean>(true);
   const colors = useColors();
@@ -161,11 +157,10 @@ export default function PedidosScreen({ navigation }: Props) {
         contentContainerStyle={styles.list}
         ItemSeparatorComponent={() => <View style={styles.separator} />}
         renderItem={({ item }) => {
-          const estadoVista: EstadoVisible =
-            cancelados[item.id] === true ? 'cancelado' : item.estado;
+          const estadoVista: EstadoVisible = item.estado;
           const colorEstado: string = ESTADO_COLORS[estadoVista];
           const puedeCancelar: boolean =
-            item.estado === 'pendiente' && cancelados[item.id] !== true;
+            item.estado === 'pendiente' && cancelandoId !== item.id;
           const confirmarCancelacion = (): void => {
             Alert.alert(
               'Cancelar pedido',
@@ -175,11 +170,17 @@ export default function PedidosScreen({ navigation }: Props) {
                 {
                   text: 'Sí, cancelar',
                   style: 'destructive',
-                  onPress: () =>
-                    setCancelados((prev: Record<string, boolean>) => ({
-                      ...prev,
-                      [item.id]: true,
-                    })),
+                  onPress: () => {
+                    setCancelandoId(item.id);
+                    void cancelarPedido(item.id, uid ?? '')
+                      .catch((e: unknown) => {
+                        Alert.alert(
+                          'No se pudo cancelar',
+                          e instanceof Error ? e.message : 'Intentá de nuevo.',
+                        );
+                      })
+                      .finally(() => setCancelandoId(null));
+                  },
                 },
               ],
             );

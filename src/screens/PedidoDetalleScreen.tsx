@@ -19,7 +19,12 @@ import { ScreenHeader } from '../components/ScreenHeader';
 import { LoadingState, ErrorState } from '../components/StateView';
 import { useColors } from '../context/ThemeContext';
 import type { Colors } from '../styles/colors';
-import { ESTADO_COLORS, ESTADO_LABELS, PASOS } from '../utils/estadosPedido';
+import {
+  ESTADO_COLORS,
+  ESTADO_LABELS,
+  PASOS,
+} from '../utils/estadosPedido';
+import type { EstadoVisible } from '../utils/estadosPedido';
 import { fechaLarga } from '../utils/fechas';
 import { nombreRestaurante } from '../utils/negocios';
 
@@ -126,7 +131,9 @@ export default function PedidoDetalleScreen({ navigation, route }: Props) {
   const colorEstado: string = ESTADO_COLORS[pedido.estado];
   const nombreNegocio: string =
     negocio?.nombre ?? nombreRestaurante(pedido.negocioId);
-  const pasoActual: number = PASOS.indexOf(pedido.estado);
+  const pasosTimeline: EstadoVisible[] =
+    pedido.estado === 'cancelado' ? ['cancelado'] : PASOS;
+  const pasoActual: number = pasosTimeline.indexOf(pedido.estado);
 
   return (
     <View style={[styles.container, { paddingTop: insets.top + 12 }]}>
@@ -156,7 +163,7 @@ export default function PedidoDetalleScreen({ navigation, route }: Props) {
           <View style={styles.headerBlock}>
             {/* Línea de progreso por estados */}
             <View style={styles.timeline}>
-              {PASOS.map((paso, i) => {
+              {pasosTimeline.map((paso, i) => {
                 const done: boolean = i <= pasoActual;
                 return (
                   <View key={paso} style={styles.paso}>
@@ -173,7 +180,7 @@ export default function PedidoDetalleScreen({ navigation, route }: Props) {
                     <Text style={[styles.pasoLabel, done && styles.pasoLabelDone]}>
                       {ESTADO_LABELS[paso]}
                     </Text>
-                    {i < PASOS.length - 1 ? <View style={styles.pasoLine} /> : null}
+                    {i < pasosTimeline.length - 1 ? <View style={styles.pasoLine} /> : null}
                   </View>
                 );
               })}

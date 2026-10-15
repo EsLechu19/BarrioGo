@@ -83,13 +83,17 @@ export function Pedidos({
                 item.items.length === 1 ? 'item' : 'items'
               }`}
               subtitulo={`S/${item.total.toFixed(2)}`}
-              icono={ESTADO_ICONS[item.estado]}
+              icono={
+                item.estado === 'cancelado'
+                  ? 'close-circle-outline'
+                  : ESTADO_ICONS[item.estado]
+              }
               iconoFondo={`${colorEstado}1A`}
               iconoColor={colorEstado}
               badgeTexto={item.estado.replace('_', ' ')}
               badgeColor={colorEstado}
               accionInferior={
-                item.estado !== 'entregado' ? (
+                item.estado !== 'entregado' && item.estado !== 'cancelado' ? (
                   <TouchableOpacity
                     style={[
                       styles.advanceButton,
@@ -105,6 +109,11 @@ export function Pedidos({
                     </Text>
                     <Ionicons name="arrow-forward" size={16} color={colors.white} />
                   </TouchableOpacity>
+                ) : item.estado === 'cancelado' ? (
+                  <View style={styles.doneRow}>
+                    <Ionicons name="close-circle-outline" size={16} color={colors.error} />
+                    <Text style={[styles.doneText, { color: colors.error }]}>Pedido cancelado</Text>
+                  </View>
                 ) : (
                   <View style={styles.doneRow}>
                     <Ionicons

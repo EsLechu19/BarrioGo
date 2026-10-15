@@ -25,17 +25,43 @@ service cloud.firestore {
       allow read, write: if request.auth != null && request.auth.uid == uid;
     }
     match /pedidos/{id} {
+      function esTransicionValida() {
+        return (resource.data.estado == 'pendiente'
+            && request.resource.data.estado == 'confirmado')
+          || (resource.data.estado == 'confirmado'
+            && request.resource.data.estado == 'en_camino')
+          || (resource.data.estado == 'en_camino'
+            && request.resource.data.estado == 'entregado');
+      }
+
+      function esCancelacionPropia() {
+        return request.auth != null
+          && resource.data.usuarioId == request.auth.uid
+          && resource.data.estado == 'pendiente'
+          && request.resource.data.estado == 'cancelado'
+          && request.resource.data.usuarioId == resource.data.usuarioId
+          && request.resource.data.canceladoPor == request.auth.uid
+          && request.resource.data.canceladoFecha is string;
+      }
+
       // Crear: solo tus propios pedidos (anti-suplantación).
       allow create: if request.auth != null
-        && request.resource.data.usuarioId == request.auth.uid;
+        && request.resource.data.usuarioId == request.auth.uid
+        && request.resource.data.estado == 'pendiente';
       // Leer: el cliente ve los suyos, el dueño los de su negocio.
       allow read: if request.auth != null && (
         resource.data.usuarioId == request.auth.uid
         || esDuenoNegocio(resource.data.negocioId)
       );
-      // Cambiar estado: solo el dueño, y solo el campo estado.
+      // Negocio: solo avanza un paso y solo cambia estado.
       allow update: if esDuenoNegocio(resource.data.negocioId)
+        && esTransicionValida()
         && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['estado']);
+      // Cliente: solo puede cancelar su propio pedido pendiente.
+      allow update: if esCancelacionPropia()
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+          'estado', 'canceladoPor', 'canceladoFecha'
+        ]);
       allow delete: if false;
     }
   }

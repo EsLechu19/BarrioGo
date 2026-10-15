@@ -1,4 +1,9 @@
-export type EstadoPedido = 'pendiente' | 'confirmado' | 'en_camino' | 'entregado';
+export type EstadoPedido =
+  | 'pendiente'
+  | 'confirmado'
+  | 'en_camino'
+  | 'entregado'
+  | 'cancelado';
 
 export interface ItemPedido {
   productoId: string;
@@ -35,6 +40,8 @@ export interface Pedido {
   total: number;
   estado: EstadoPedido;
   fecha: string;
+  canceladoPor?: string;
+  canceladoFecha?: string;
   direccion?: DireccionPedido;
   metodoPago?: MetodoPagoPedido;
 }

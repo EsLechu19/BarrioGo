@@ -13,8 +13,9 @@ export type IconoCard =
   | 'fast-food-outline'
   | 'time-outline'
   | 'checkmark-circle-outline'
-  | 'bicycle-outline'
-  | 'checkmark-done-outline';
+   | 'bicycle-outline'
+  | 'checkmark-done-outline'
+  | 'close-circle-outline';
 
 type Props = {
   titulo: string;
