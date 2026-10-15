@@ -16,7 +16,7 @@ import { cancelarPedido, escucharMisPedidos } from '../services/api';
 import { firebaseReady } from '../services/firebase';
 import {
   asegurarPermisoNotificaciones,
-  notificarCambioEstado,
+  registrarCambioEstado,
 } from '../services/notificaciones';
 import { EstadoPedido, Pedido } from '../types/Pedido';
 import { useColors } from '../context/ThemeContext';
@@ -50,6 +50,8 @@ export default function PedidosScreen({ navigation }: Props) {
       setLoading(false);
       return;
     }
+    primeraCarga.current = true;
+    estadosPrevios.current = {};
     setLoading(true);
     setError(null);
     const unsubscribe = escucharMisPedidos(
@@ -68,7 +70,9 @@ export default function PedidosScreen({ navigation }: Props) {
               const previo: EstadoPedido | undefined =
                 estadosPrevios.current[p.id];
               if (previo !== undefined && previo !== p.estado) {
-                void notificarCambioEstado(p.estado);
+                void registrarCambioEstado(uid, p).catch(() => {
+                  // Storage/OS notification failures never break the live list.
+                });
               }
             }
             const mapa: Record<string, EstadoPedido> = {};

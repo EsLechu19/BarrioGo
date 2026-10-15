@@ -19,6 +19,7 @@ Completar el flujo del cliente sin alterar el diseño visual de `origin/feature/
 - [x] P0.4 Validar creación de pedido y compatibilidad con pedidos antiguos.
 - [x] P0.6 Persistir cancelación del cliente y restringir transiciones de estado en Firestore.
 - [x] P0.5 Verificar compilación y checks estáticos. El runtime Firebase/dispositivo queda pendiente si no hay configuración disponible.
+- [x] P0.7 Persistir el historial local de notificaciones del cliente, aislado por usuario y alimentado por cambios reales de estado/cancelación del listener de pedidos.
 
 ## Restricciones
 
@@ -32,4 +33,5 @@ Completar el flujo del cliente sin alterar el diseño visual de `origin/feature/
 - Checks: `git diff --check` PASS; `node --check scripts/mock-server.js` PASS.
 - UI APF2: Home, Configuracion, colors y RestaurantCard permanecen byte-identical al remoto.
 - Runtime Firebase/dispositivo: no ejecutado; cancelación, reglas y listeners requieren Firebase configurado.
+- Notificaciones: el historial local sí queda persistido por `uid`; el aviso del sistema es opcional y local. No se implementó push remoto. Expo Go no garantiza el módulo de notificaciones del sistema; se requiere un development build para validar el comportamiento nativo.
 - Commit: pendiente (no se realizó commit por instrucción).

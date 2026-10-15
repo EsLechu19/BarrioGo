@@ -1,55 +1,49 @@
-import { ScrollView, StyleSheet, Text, View } from 'react-native';
-import { useMemo } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import { ActivityIndicator, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../navigation/RootStackParamList';
 import { ScreenHeader } from '../components/ScreenHeader';
+import { useAuth } from '../context/AuthContext';
+import { storage } from '../services/storage';
+import type { Notificacion } from '../types/Notificacion';
+import { ESTADO_ICONS } from '../utils/estadosPedido';
+import { fechaLarga } from '../utils/fechas';
 import { useColors } from '../context/ThemeContext';
 import type { Colors } from '../styles/colors';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Notificaciones'>;
 
-// TODO(back): reemplazar por notificaciones reales del backend (colección
-// notifications/{uid}). Por ahora es una lista en memoria (solo diseño).
-type Notificacion = {
-  id: string;
-  icono: keyof typeof Ionicons.glyphMap;
-  texto: string;
-  hora: string;
-};
-
-const NOTIFICACIONES: Notificacion[] = [
-  {
-    id: '1',
-    icono: 'bicycle-outline',
-    texto: 'Tu pedido #102 cambió a "en camino"',
-    hora: 'hace 2 h',
-  },
-  {
-    id: '2',
-    icono: 'checkmark-circle-outline',
-    texto: 'Tu pedido #098 fue entregado. ¡Buen provecho!',
-    hora: 'ayer',
-  },
-  {
-    id: '3',
-    icono: 'pricetag-outline',
-    texto: 'Pollería El Buen Sabor tiene 20% de descuento hoy',
-    hora: 'hace 2 días',
-  },
-  {
-    id: '4',
-    icono: 'star-outline',
-    texto: '¿Cómo estuvo tu pedido en Chifa Doña Ana? Dejanos tu opinión',
-    hora: 'hace 3 días',
-  },
-];
-
 export default function NotificacionesScreen({ navigation }: Props) {
   const insets = useSafeAreaInsets();
+  const { user } = useAuth();
   const colors = useColors();
   const styles = useMemo(() => makeStyles(colors), [colors]);
+  const [notifications, setNotifications] = useState<Notificacion[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string | null>(null);
+
+  const loadNotifications = useCallback(async (): Promise<void> => {
+    if (!user?.uid) {
+      setNotifications([]);
+      setLoading(false);
+      return;
+    }
+    setLoading(true);
+    setError(null);
+    try {
+      setNotifications(await storage.loadNotifications(user.uid));
+    } catch {
+      setError('No pudimos cargar tus notificaciones. Intentá de nuevo.');
+    } finally {
+      setLoading(false);
+    }
+  }, [user?.uid]);
+
+  useEffect(() => {
+    void loadNotifications();
+  }, [loadNotifications]);
 
   return (
     <View style={[styles.screen, { paddingTop: insets.top + 12 }]}>
@@ -65,20 +59,37 @@ export default function NotificacionesScreen({ navigation }: Props) {
         />
 
         <View style={styles.card}>
-          {NOTIFICACIONES.map((n, i) => (
-            <View key={n.id}>
-              {i > 0 ? <View style={styles.divider} /> : null}
-              <View style={styles.row}>
-                <View style={styles.iconCircle}>
-                  <Ionicons name={n.icono} size={20} color={colors.primary} />
-                </View>
-                <View style={styles.textBlock}>
-                  <Text style={styles.texto}>{n.texto}</Text>
-                  <Text style={styles.hora}>{n.hora}</Text>
-                </View>
-              </View>
+          {!user ? <Text style={styles.stateText}>Iniciá sesión para ver tus notificaciones.</Text> : null}
+          {user && loading ? (
+            <View style={styles.stateBlock}>
+              <ActivityIndicator size="small" color={colors.primary} />
+              <Text style={styles.stateText}>Cargando notificaciones...</Text>
             </View>
-          ))}
+          ) : null}
+          {user && !loading && error ? <Text style={styles.error}>{error}</Text> : null}
+          {user && !loading && !error && notifications.length === 0 ? (
+            <Text style={styles.stateText}>Todavía no tenés novedades de tus pedidos.</Text>
+          ) : null}
+          {user && !loading && !error
+            ? notifications.map((notification, index) => (
+                <View key={notification.id}>
+                  {index > 0 ? <View style={styles.divider} /> : null}
+                  <View style={styles.row}>
+                    <View style={styles.iconCircle}>
+                      <Ionicons
+                        name={ESTADO_ICONS[notification.estado]}
+                        size={20}
+                        color={colors.primary}
+                      />
+                    </View>
+                    <View style={styles.textBlock}>
+                      <Text style={styles.texto}>{notification.texto}</Text>
+                      <Text style={styles.hora}>{fechaLarga(notification.creadaEn)}</Text>
+                    </View>
+                  </View>
+                </View>
+              ))
+            : null}
         </View>
       </ScrollView>
     </View>
@@ -89,7 +100,6 @@ function makeStyles(c: Colors) {
   return StyleSheet.create({
     screen: { flex: 1, backgroundColor: c.background },
     container: { flexGrow: 1, gap: 12, padding: 16, backgroundColor: c.background },
-
     card: {
       paddingHorizontal: 6,
       borderWidth: 1,
@@ -98,7 +108,6 @@ function makeStyles(c: Colors) {
       backgroundColor: c.surface,
     },
     divider: { height: 1, marginLeft: 60, backgroundColor: c.border },
-
     row: {
       flexDirection: 'row',
       alignItems: 'center',
@@ -117,5 +126,8 @@ function makeStyles(c: Colors) {
     textBlock: { flex: 1, gap: 2 },
     texto: { color: c.textPrimary, fontSize: 14, fontWeight: '600', lineHeight: 20 },
     hora: { color: c.textMuted, fontSize: 12 },
+    stateBlock: { alignItems: 'center', gap: 8, paddingVertical: 20 },
+    stateText: { color: c.textMuted, fontSize: 14, textAlign: 'center', padding: 20 },
+    error: { color: c.error, fontSize: 14, textAlign: 'center', padding: 20 },
   });
 }

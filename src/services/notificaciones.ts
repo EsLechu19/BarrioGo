@@ -1,5 +1,7 @@
 import Constants from 'expo-constants';
-import { EstadoPedido } from '../types/Pedido';
+import type { Pedido } from '../types/Pedido';
+import { ESTADO_LABELS } from '../utils/estadosPedido';
+import { storage } from './storage';
 
 // Docs versionados Expo SDK 57:
 // https://docs.expo.dev/versions/v57.0.0/sdk/notifications/
@@ -70,7 +72,7 @@ export async function asegurarPermisoNotificaciones(): Promise<boolean> {
  * En Expo Go es no-op. try/catch silencioso: nunca lanza.
  */
 export async function notificarCambioEstado(
-  estado: EstadoPedido,
+  pedido: Pedido,
 ): Promise<void> {
   try {
     const notifications = await getNotifications();
@@ -78,11 +80,33 @@ export async function notificarCambioEstado(
     await notifications.scheduleNotificationAsync({
       content: {
         title: 'BarrioGo',
-        body: `Tu pedido cambió a ${estado.replace('_', ' ')}`,
+        body: `Tu pedido cambió a ${ESTADO_LABELS[pedido.estado].toLowerCase()}`,
       },
       trigger: null,
     });
   } catch {
     // Silencioso a propósito: sin permiso o error de hardware, la app sigue andando.
   }
+}
+
+/**
+ * Persists one customer status transition before optionally showing a local
+ * OS notification. It is intentionally local-only: no push token or remote
+ * notification service is involved.
+ */
+export async function registrarCambioEstado(
+  usuarioId: string,
+  pedido: Pedido,
+): Promise<void> {
+  const notification = {
+    id: `${pedido.id}:${pedido.estado}`,
+    usuarioId,
+    pedidoId: pedido.id,
+    estado: pedido.estado,
+    texto: `Tu pedido #${pedido.id} cambió a "${ESTADO_LABELS[pedido.estado]}"`,
+    creadaEn: new Date().toISOString(),
+    leida: false,
+  };
+  const added = await storage.appendNotification(usuarioId, notification);
+  if (added) await notificarCambioEstado(pedido);
 }

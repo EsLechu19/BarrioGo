@@ -1,5 +1,6 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { ItemPedido } from '../types/Pedido';
+import type { Notificacion } from '../types/Notificacion';
 
 // Persistencia local tipada. REGLA: jamás confiar en JSON.parse a ciegas —
 // todo lo leído se valida con un chequeo de forma antes de usarse.
@@ -11,6 +12,10 @@ const KEYS = {
   // guardada como string 'dark' | 'light' (nunca como boolean).
   theme: '@prefs/theme',
 } as const;
+
+function notificationsKey(usuarioId: string): string {
+  return `barriogo:notifications:v1:${encodeURIComponent(usuarioId)}`;
+}
 
 export interface Session {
   nombre: string;
@@ -47,6 +52,61 @@ function isSession(value: unknown): value is Session {
     typeof (value as Session).nombre === 'string' &&
     typeof (value as Session).email === 'string'
   );
+}
+
+function isNotificacion(value: unknown): value is Notificacion {
+  if (typeof value !== 'object' || value === null) return false;
+  const n = value as Notificacion;
+  return (
+    typeof n.id === 'string' &&
+    typeof n.usuarioId === 'string' &&
+    typeof n.pedidoId === 'string' &&
+    typeof n.estado === 'string' &&
+    ['pendiente', 'confirmado', 'en_camino', 'entregado', 'cancelado'].includes(n.estado) &&
+    typeof n.texto === 'string' &&
+    typeof n.creadaEn === 'string' &&
+    typeof n.leida === 'boolean'
+  );
+}
+
+function isNotificacionArray(value: unknown): value is Notificacion[] {
+  return Array.isArray(value) && value.every(isNotificacion);
+}
+
+const notificationWrites = new Map<string, Promise<void>>();
+
+async function readNotifications(usuarioId: string): Promise<Notificacion[]> {
+  const raw = await AsyncStorage.getItem(notificationsKey(usuarioId));
+  if (!raw) return [];
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(raw);
+  } catch {
+    return [];
+  }
+  return isNotificacionArray(parsed)
+    ? parsed.filter((notification) => notification.usuarioId === usuarioId)
+    : [];
+}
+
+async function writeNotifications(
+  usuarioId: string,
+  notifications: Notificacion[],
+): Promise<void> {
+  await AsyncStorage.setItem(notificationsKey(usuarioId), JSON.stringify(notifications));
+}
+
+function enqueueNotificationWrite<T>(
+  usuarioId: string,
+  operation: () => Promise<T>,
+): Promise<T> {
+  const previous: Promise<void> = notificationWrites.get(usuarioId) ?? Promise.resolve();
+  const current: Promise<T> = previous.then(operation);
+  notificationWrites.set(
+    usuarioId,
+    current.then(() => undefined, () => undefined),
+  );
+  return current;
 }
 
 async function read<T>(key: string, guard: (v: unknown) => v is T): Promise<T | null> {
@@ -87,4 +147,25 @@ export const storage = {
     }
   },
   saveTheme: (tema: 'dark' | 'light') => write(KEYS.theme, tema),
+  loadNotifications: (usuarioId: string): Promise<Notificacion[]> => {
+    if (!usuarioId.trim()) return Promise.resolve([]);
+    return readNotifications(usuarioId);
+  },
+  appendNotification: (
+    usuarioId: string,
+    notification: Notificacion,
+  ): Promise<boolean> => {
+    if (!usuarioId.trim() || notification.usuarioId !== usuarioId) {
+      return Promise.resolve(false);
+    }
+    return enqueueNotificationWrite(usuarioId, async () => {
+      const existing = await readNotifications(usuarioId);
+      const duplicate = existing.some(
+        (item) => item.pedidoId === notification.pedidoId && item.estado === notification.estado,
+      );
+      if (duplicate) return false;
+      await writeNotifications(usuarioId, [notification, ...existing]);
+      return true;
+    });
+  },
 };
