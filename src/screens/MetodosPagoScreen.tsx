@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import {
   ScrollView,
   StyleSheet,
@@ -14,6 +14,8 @@ import { ScreenHeader } from '../components/ScreenHeader';
 import { InfoBanner } from '../components/InfoBanner';
 import { SelectableCard } from '../components/SelectableCard';
 import { useColors } from '../context/ThemeContext';
+import { useAuth } from '../context/AuthContext';
+import { storage } from '../services/storage';
 import type { Colors } from '../styles/colors';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'MetodosPago'>;
@@ -36,8 +38,26 @@ export default function MetodosPagoScreen({ navigation }: Props) {
   const insets = useSafeAreaInsets();
   const [seleccionado, setSeleccionado] = useState<string>('m1');
   const [aviso, setAviso] = useState<boolean>(false);
+  const { user } = useAuth();
   const colors = useColors();
   const styles = useMemo(() => makeStyles(colors), [colors]);
+
+  useEffect(() => {
+    const usuarioId: string | undefined = user?.uid;
+    setSeleccionado('m1');
+    if (!usuarioId) return;
+    let activa = true;
+    void storage.loadCheckoutPayment(usuarioId).then((metodo) => {
+      if (!activa || !metodo) return;
+      const encontrado: MetodoMock | undefined = METODOS_MOCK.find(
+        (item) => item.id === metodo.tipo && item.nombre === metodo.nombre,
+      );
+      if (encontrado) setSeleccionado(encontrado.id);
+    });
+    return () => {
+      activa = false;
+    };
+  }, [user?.uid]);
 
   return (
     <View style={[styles.screen, { paddingTop: insets.top + 12 }]}>
@@ -73,7 +93,15 @@ export default function MetodosPagoScreen({ navigation }: Props) {
             key={m.id}
             activo={activo}
             icono={m.icono}
-            onPress={() => setSeleccionado(m.id)}
+            onPress={() => {
+              setSeleccionado(m.id);
+              if (user) {
+                void storage.saveCheckoutPayment(user.uid, {
+                  tipo: m.id,
+                  nombre: m.nombre,
+                });
+              }
+            }}
             accessibilityLabel={`Pagar con ${m.nombre}`}
           >
             <Text style={styles.nombre}>{m.nombre}</Text>

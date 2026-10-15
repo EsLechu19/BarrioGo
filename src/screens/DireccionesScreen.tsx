@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import {
   Modal,
   ScrollView,
@@ -15,6 +15,8 @@ import { ScreenHeader } from '../components/ScreenHeader';
 import { SelectableCard } from '../components/SelectableCard';
 import { FormField } from '../components/FormField';
 import { useColors } from '../context/ThemeContext';
+import { useAuth } from '../context/AuthContext';
+import { storage } from '../services/storage';
 import type { Colors } from '../styles/colors';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Direcciones'>;
@@ -43,8 +45,26 @@ export default function DireccionesScreen({ navigation }: Props) {
   const [detalle, setDetalle] = useState<string>('');
   const [aliasError, setAliasError] = useState<string | undefined>(undefined);
   const [detalleError, setDetalleError] = useState<string | undefined>(undefined);
+  const { user } = useAuth();
   const colors = useColors();
   const styles = useMemo(() => makeStyles(colors), [colors]);
+
+  useEffect(() => {
+    const usuarioId: string | undefined = user?.uid;
+    setSeleccionada('d1');
+    if (!usuarioId) return;
+    let activa = true;
+    void storage.loadCheckoutAddress(usuarioId).then((direccion) => {
+      if (!activa || !direccion) return;
+      const encontrada: DireccionMock | undefined = DIRECCIONES_MOCK.find(
+        (item) => item.alias === direccion.alias && item.detalle === direccion.detalle,
+      );
+      if (encontrada) setSeleccionada(encontrada.id);
+    });
+    return () => {
+      activa = false;
+    };
+  }, [user?.uid]);
 
   const abrirModal = (): void => {
     setAlias('');
@@ -85,6 +105,12 @@ export default function DireccionesScreen({ navigation }: Props) {
       },
     ]);
     setSeleccionada(nuevaId);
+    if (user) {
+      void storage.saveCheckoutAddress(user.uid, {
+        alias: aliasLimpio,
+        detalle: detalleLimpio,
+      });
+    }
     setModalVisible(false);
   };
 
@@ -118,7 +144,15 @@ export default function DireccionesScreen({ navigation }: Props) {
               key={d.id}
               activo={activa}
               icono="location-outline"
-              onPress={() => setSeleccionada(d.id)}
+              onPress={() => {
+                setSeleccionada(d.id);
+                if (user) {
+                  void storage.saveCheckoutAddress(user.uid, {
+                    alias: d.alias,
+                    detalle: d.detalle,
+                  });
+                }
+              }}
               accessibilityLabel={`Usar dirección ${d.alias}`}
             >
               <View style={styles.aliasRow}>

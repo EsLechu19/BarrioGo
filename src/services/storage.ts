@@ -1,5 +1,9 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { ItemPedido } from '../types/Pedido';
+import {
+  DireccionPedido,
+  ItemPedido,
+  MetodoPagoPedido,
+} from '../types/Pedido';
 import type { Notificacion } from '../types/Notificacion';
 import type { PerfilUsuario, PreferenciasUsuario } from '../types/Usuario';
 
@@ -24,6 +28,14 @@ function profileKey(usuarioId: string): string {
 
 function preferencesKey(usuarioId: string): string {
   return `barriogo:preferences:v1:${encodeURIComponent(usuarioId)}`;
+}
+
+function checkoutAddressKey(usuarioId: string): string {
+  return `barriogo:checkout-address:v1:${encodeURIComponent(usuarioId)}`;
+}
+
+function checkoutPaymentKey(usuarioId: string): string {
+  return `barriogo:checkout-payment:v1:${encodeURIComponent(usuarioId)}`;
 }
 
 export interface Session {
@@ -92,6 +104,28 @@ function isPreferenciasUsuario(value: unknown): value is PreferenciasUsuario {
     typeof (value as PreferenciasUsuario).notificaciones === 'boolean' &&
     typeof (value as PreferenciasUsuario).ubicacion === 'boolean' &&
     typeof (value as PreferenciasUsuario).ofertas === 'boolean';
+}
+
+function isDireccionPedido(value: unknown): value is DireccionPedido {
+  return (
+    typeof value === 'object' &&
+    value !== null &&
+    typeof (value as DireccionPedido).alias === 'string' &&
+    (value as DireccionPedido).alias.trim().length > 0 &&
+    typeof (value as DireccionPedido).detalle === 'string' &&
+    (value as DireccionPedido).detalle.trim().length > 0
+  );
+}
+
+function isMetodoPagoPedido(value: unknown): value is MetodoPagoPedido {
+  return (
+    typeof value === 'object' &&
+    value !== null &&
+    typeof (value as MetodoPagoPedido).tipo === 'string' &&
+    (value as MetodoPagoPedido).tipo.trim().length > 0 &&
+    typeof (value as MetodoPagoPedido).nombre === 'string' &&
+    (value as MetodoPagoPedido).nombre.trim().length > 0
+  );
 }
 
 const notificationWrites = new Map<string, Promise<void>>();
@@ -182,6 +216,28 @@ export const storage = {
   ): Promise<void> =>
     usuarioId.trim()
       ? write(preferencesKey(usuarioId), preferences)
+      : Promise.resolve(),
+  loadCheckoutAddress: (usuarioId: string): Promise<DireccionPedido | null> =>
+    usuarioId.trim()
+      ? read(checkoutAddressKey(usuarioId), isDireccionPedido)
+      : Promise.resolve(null),
+  saveCheckoutAddress: (
+    usuarioId: string,
+    address: DireccionPedido,
+  ): Promise<void> =>
+    usuarioId.trim() && isDireccionPedido(address)
+      ? write(checkoutAddressKey(usuarioId), address)
+      : Promise.resolve(),
+  loadCheckoutPayment: (usuarioId: string): Promise<MetodoPagoPedido | null> =>
+    usuarioId.trim()
+      ? read(checkoutPaymentKey(usuarioId), isMetodoPagoPedido)
+      : Promise.resolve(null),
+  saveCheckoutPayment: (
+    usuarioId: string,
+    payment: MetodoPagoPedido,
+  ): Promise<void> =>
+    usuarioId.trim() && isMetodoPagoPedido(payment)
+      ? write(checkoutPaymentKey(usuarioId), payment)
       : Promise.resolve(),
   loadNotifications: (usuarioId: string): Promise<Notificacion[]> => {
     if (!usuarioId.trim()) return Promise.resolve([]);

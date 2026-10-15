@@ -7,6 +7,7 @@ import { RootStackParamList } from '../navigation/RootStackParamList';
 import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
 import { crearPedido } from '../services/api';
+import { storage } from '../services/storage';
 import { confirm } from '../utils/confirm';
 import { ScreenHeader } from '../components/ScreenHeader';
 import { CantidadStepper } from '../components/CantidadStepper';
@@ -109,6 +110,18 @@ export default function CarritoScreen({ navigation }: Props) {
       setErrorMsg('El total del pedido no es válido.');
       return;
     }
+    const [direccion, metodoPago] = await Promise.all([
+      storage.loadCheckoutAddress(user.uid),
+      storage.loadCheckoutPayment(user.uid),
+    ]);
+    if (!direccion) {
+      setErrorMsg('Seleccioná una dirección antes de confirmar tu pedido.');
+      return;
+    }
+    if (!metodoPago) {
+      setErrorMsg('Seleccioná un método de pago antes de confirmar tu pedido.');
+      return;
+    }
     setEnviando(true);
     try {
       await crearPedido({
@@ -116,6 +129,8 @@ export default function CarritoScreen({ navigation }: Props) {
         negocioId,
         items,
         total,
+        direccion,
+        metodoPago,
       });
       clear();
       navigation.navigate('Tabs', { screen: 'PedidosTab' });
