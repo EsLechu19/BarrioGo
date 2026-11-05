@@ -1,157 +1,259 @@
-# BarrioGo — Avance de Proyecto Final 02
+# 🍽️ BarrioGo
 
-Aplicación móvil multiplataforma para pedidos directos entre negocios
-gastronómicos de barrio y sus clientes recurrentes. Esta rama (`feature/apf2-ui-unido`)
-combina la lógica funcional de APF2 con el sistema visual y la experiencia de
-usuario de `feature/ui-consistencia`.
+### Pedidos directos para negocios gastronómicos de barrio
 
-## Resultado del avance
+**BarrioGo** es una aplicación móvil multiplataforma que conecta a negocios gastronómicos locales con sus clientes. Permite explorar establecimientos y sus menús, organizar un carrito, realizar pedidos y consultar su estado; también incluye herramientas para que cada negocio administre su catálogo y su operación.
 
-BarrioGo cumple los objetivos principales de APF2:
+El proyecto se desarrolla con **React Native, Expo, TypeScript y Firebase**, con una arquitectura de componentes y servicios que separa la interfaz, el estado de la aplicación y el acceso a los datos.
 
-- Navegación tipada con Stack y Bottom Tabs.
-- Catálogo dinámico de negocios y productos mediante API local y JSON.
-- `FlatList`, estados de carga, estados vacíos y manejo de errores.
-- Login y registro con validaciones de formularios.
-- Detalle de negocio, favoritos y carrito de compras.
-- Persistencia local con AsyncStorage.
-- Ordenamiento de negocios por cercanía usando GPS, con fallback seguro.
-- Interfaz consistente con componentes reutilizables y diseño responsive.
+> **Estado:** proyecto académico en evolución. Incluye flujos funcionales y recursos de demostración; no se presenta como un servicio comercial desplegado.
 
-## Propuesta de valor
+**Stack principal:** React Native · Expo SDK 57 · TypeScript · Firebase Authentication · Firestore · AsyncStorage
 
-Las plataformas de delivery masivas cobran 25%–35% por pedido, incluso a
-clientes que el negocio ya tenía. BarrioGo es un canal directo con
-suscripción fija o comisión reducida (8%–12%): el negocio gestiona su
-catálogo y sus pedidos; el cliente pide y sigue su pedido en tiempo real.
+---
 
-> No competimos por captar clientes nuevos; optimizamos y rentabilizamos
-> la relación con los clientes que el negocio ya tenía.
+## 🎯 Problema y propuesta de valor
 
-## Stack y dependencias principales
+Los pequeños negocios gastronómicos suelen depender de canales externos o de una gestión manual para recibir y organizar pedidos. BarrioGo explora una alternativa de **contacto directo entre el establecimiento y sus clientes**, con catálogo digital y seguimiento del pedido en una misma aplicación.
 
-- React Native + Expo (SDK 57) + TypeScript estricto
-- React Navigation (Stack + Bottom Tabs, sin Expo Router)
-- Firebase (Auth + Firestore) como backend
-- AsyncStorage para persistencia local
-- Expo Location / Image Picker / Notifications para hardware
+La propuesta busca facilitar la experiencia de compra y ofrecer al negocio herramientas para gestionar pedidos y productos. **Los modelos de suscripción o comisión son ideas de negocio en evaluación, no funciones de cobro implementadas en esta versión.**
 
-Las dependencias se encuentran declaradas en `package.json` y se instalan con
-`npm install`. Para agregar una dependencia compatible con Expo se recomienda
-usar `npx expo install <paquete>`.
+---
 
-## Estructura
+## 📱 Demostración
 
+La aplicación incluye flujos de inicio de sesión, exploración de negocios, detalle de productos, carrito, seguimiento de pedidos y gestión de establecimientos.
+
+> **Capturas pendientes de incorporar:** inicio, detalle de negocio, carrito/seguimiento y panel del propietario. Para mostrar la interfaz real, añade imágenes del proyecto en una carpeta `docs/screenshots/` y enlázalas aquí.
+
+---
+
+## ✨ Funcionalidades
+
+### 👤 Experiencia del cliente
+
+- Registro e inicio de sesión mediante Firebase Authentication cuando el servicio está configurado.
+- Exploración de negocios y catálogos de productos.
+- Consulta del detalle de cada establecimiento y su menú.
+- Ordenamiento por cercanía mediante ubicación, con manejo de permisos y alternativas cuando el GPS no está disponible.
+- Gestión de favoritos y carrito de compras.
+- Confirmación de pedidos y consulta de su historial y estado.
+- Seguimiento de cambios de estado mediante suscripciones a Firestore.
+- Persistencia local de preferencias y otros datos de la experiencia móvil con AsyncStorage.
+- Direcciones y métodos de pago como parte del flujo de usuario; **esto no implica procesamiento de pagos en línea**.
+
+### 🏪 Experiencia del negocio
+
+- Registro de un establecimiento vinculado a la cuenta del propietario.
+- Consulta y edición de información del local.
+- Gestión de productos del menú.
+- Visualización de pedidos recibidos y actualización de sus estados.
+- Indicadores de pedidos y ventas calculados a partir de los registros disponibles.
+- Personalización con imágenes del negocio mediante la integración configurada para carga de fotos.
+
+> Algunas funciones requieren Firebase configurado y reglas de seguridad publicadas. La ejecución con catálogos de demostración no equivale a un flujo real de pedidos persistidos.
+
+---
+
+## 🏗️ Arquitectura y flujo de datos
+
+BarrioGo utiliza una aplicación React Native con navegación tipada mediante **React Navigation (Stack y Bottom Tabs)**. El estado de autenticación, carrito y favoritos se organiza en contextos; las operaciones de datos se concentran principalmente en `src/services/api.ts`.
+
+```text
+                 BARRIOGO (React Native + Expo)
+                              |
+             +----------------+----------------+
+             |                |                |
+         Pantallas        Contextos        Navegación
+             |                |                |
+             +----------------+----------------+
+                              |
+                       Capa de servicios
+                              |
+              +---------------+---------------+
+              |                               |
+       Firebase configurado             Entorno de demo
+              |                               |
+      Auth + Firestore                 API local / JSON
+              |
+       Pedidos y catálogo
+              |
+      Actualización en vivo
+
+       AsyncStorage: persistencia local de datos
 ```
-App.tsx                  Raíz: providers + navegación condicional por sesión
-src/screens/             Splash, Login, Register, Home, Detalle, Carrito,
-                         Pedidos, Favoritos, Perfil y pantallas auxiliares
-src/components/          Componentes visuales reutilizables y componentes
-                         específicos de detalle y negocio
-src/hooks/               Hooks reutilizables para GPS, fotos y negocio
-src/navigation/          AuthStack, AppNavigator (Tabs + Detalle/Carrito),
-                         RootStackParamList, TabParamList
-src/types/               Negocio, Producto, Pedido, EstadoPedido, Usuario
-src/services/            api.ts, firebase.ts, storage.ts, location.ts
-src/context/             AuthContext, CartContext, FavoritesContext
-src/data/                negocios.json, productos.json (fuente única)
-scripts/                 mock-server.js (API local), seed-firestore.js
-firestore.rules          Reglas de seguridad (pegar en consola)
-odd/tasks/               Seguimiento de avance por feature
+
+### Decisiones técnicas destacadas
+
+**Acceso a datos centralizado.** Las pantallas consumen funciones de la capa de servicios, evitando dispersar consultas a Firestore por toda la interfaz.
+
+**Tres fuentes para el catálogo.** Cuando corresponde, el catálogo se obtiene de Firestore; si no está disponible, puede recurrir a una API local y finalmente a datos de demostración incluidos en el proyecto. Este mecanismo permite explorar la interfaz sin depender siempre de una conexión remota. **No debe confundirse con un backend de pedidos offline.**
+
+**Pedidos en tiempo real.** Los pedidos se almacenan en Firestore y las pantallas interesadas pueden suscribirse a cambios con `onSnapshot`, de modo que el cliente visualice las actualizaciones del negocio.
+
+**Roles y reglas de acceso.** Firebase Authentication identifica a los usuarios; las reglas de Firestore contemplan accesos diferenciados entre clientes y propietarios, incluidos permisos sobre productos y cambios de estado de pedidos.
+
+**Notificaciones locales.** La aplicación contempla avisos locales sobre cambios de estado. No utiliza un servicio propio de notificaciones push remotas para este flujo. Su comportamiento nativo requiere una compilación compatible; en Expo Go no se ejecutan esas notificaciones.
+
+---
+
+## 🛠️ Tecnologías
+
+| Área | Herramientas |
+|---|---|
+| Aplicación móvil | React Native, Expo SDK 57, TypeScript |
+| Navegación | React Navigation, Native Stack, Bottom Tabs |
+| Autenticación | Firebase Authentication |
+| Datos y tiempo real | Cloud Firestore, suscripciones `onSnapshot` |
+| Persistencia local | AsyncStorage |
+| Ubicación | Expo Location |
+| Imágenes | Expo Image Picker e integración de carga de imágenes |
+| Notificaciones | Expo Notifications (avisos locales) |
+| Desarrollo | Git, GitHub, TypeScript, ODD |
+
+---
+
+## 📂 Organización del repositorio
+
+```text
+BarrioGo/
+├── App.tsx                 # Providers y navegación principal
+├── src/
+│   ├── screens/            # Pantallas de clientes y negocios
+│   ├── components/         # Componentes reutilizables
+│   ├── navigation/         # Stack, tabs y tipos de rutas
+│   ├── context/            # Auth, carrito, favoritos y tema
+│   ├── services/           # API, Firebase, ubicación, almacenamiento
+│   ├── hooks/              # Lógica reutilizable
+│   ├── types/              # Modelos del dominio
+│   ├── data/               # Datos para demostraciones
+│   └── utils/              # Utilidades
+├── scripts/
+│   ├── mock-server.js      # API de desarrollo
+│   └── seed-firestore.js   # Carga de datos de ejemplo
+├── odd/tasks/              # Especificaciones y tareas de desarrollo
+├── firestore.rules         # Reglas de acceso de Firestore
+├── storage.rules           # Reglas de Storage del proyecto
+├── .env.example
+└── package.json
 ```
 
-## Consumo de datos
+---
 
-`src/services/api.ts` resuelve cada lectura con el primer origen disponible:
+## 🚀 Instalación y ejecución
 
-1. **Firestore** — datos reales, cuando Firebase está configurado.
-2. **API local** — `npm run mock-api` → `GET http://localhost:3000/negocios`.
-3. **Fallback local** — JSON compilado; la demo no queda en blanco sin red.
+### Requisitos
 
-El catálogo vive en JSON como fuente única: la app, el mock-server y el
-seed leen `src/data/*.json`.
+- Node.js y npm compatibles con el proyecto.
+- Expo Go o un emulador para explorar las funciones compatibles.
+- Un proyecto Firebase configurado para probar autenticación y pedidos reales.
+- Un dispositivo o una compilación de desarrollo para validar funciones nativas específicas.
 
-## Puesta en marcha rápida
+### 1. Clonar e instalar
 
-```powershell
+```bash
+git clone https://github.com/EsLechu19/BarrioGo.git
+cd BarrioGo
 npm install
-npm run mock-api      # terminal 1: API local
-npx expo start -c     # terminal 2: app en Expo Go
 ```
 
-Para abrir la app en un teléfono físico, el teléfono y la computadora deben
-estar en la misma red Wi-Fi. También se puede usar un emulador Android.
+### 2. Ejecutar con el catálogo de demostración
 
-## Guion de demostración APF2
+En una terminal:
 
-1. Abrir la app y mostrar el Splash y el Login.
-2. Intentar enviar Login/Registro con campos vacíos para mostrar validaciones.
-3. Ingresar al Home y mostrar la carga del catálogo en un `FlatList`.
-4. Buscar o seleccionar un negocio y abrir su detalle.
-5. Agregar productos, cambiar cantidades y abrir el carrito.
-6. Confirmar el pedido y mostrar la navegación hacia Pedidos.
-7. Marcar productos como favoritos y comprobar su persistencia.
-8. Cerrar y abrir la app para comprobar la sesión y el carrito persistido.
-9. Mostrar la ubicación, el orden por cercanía y el fallback cuando el permiso
-   de GPS es rechazado.
+```bash
+npm run mock-api
+```
 
-## Verificación antes de presentar
+En otra terminal:
 
-```powershell
+```bash
+npx expo start -c
+```
+
+La aplicación dispone de datos locales para mostrar el catálogo si las fuentes remotas no están disponibles. En un teléfono físico, `localhost` hace referencia al propio teléfono: la API de desarrollo debe ser accesible desde el dispositivo o se utilizará el fallback disponible.
+
+### 3. Configurar Firebase
+
+Copiar `.env.example` a `.env` y completar las variables correspondientes:
+
+```dotenv
+EXPO_PUBLIC_FB_API_KEY=
+EXPO_PUBLIC_FB_AUTH_DOMAIN=
+EXPO_PUBLIC_FB_PROJECT_ID=
+EXPO_PUBLIC_FB_STORAGE_BUCKET=
+EXPO_PUBLIC_FB_SENDER_ID=
+EXPO_PUBLIC_FB_APP_ID=
+```
+
+Luego:
+
+1. Habilitar el método de inicio de sesión por correo y contraseña en Firebase Authentication.
+2. Crear la base de Cloud Firestore.
+3. Revisar y publicar las reglas incluidas en `firestore.rules` para el entorno de prueba.
+4. Si se necesitan datos iniciales, utilizar el script `npm run seed` con una cuenta de servicio autorizada y configurada localmente.
+
+**Seguridad:** no subir a GitHub el archivo `.env` ni credenciales de cuenta de servicio. Las variables públicas de Firebase no sustituyen las reglas de seguridad de Firestore.
+
+---
+
+## ✅ Verificación técnica
+
+El proyecto utiliza TypeScript para validar los tipos de las pantallas, los modelos y las operaciones entre componentes.
+
+```bash
 npx tsc --noEmit
 ```
 
-El comando debe terminar sin errores. Antes de presentar también conviene
-comprobar que la rama no contiene archivos sensibles:
+Además de la compilación de tipos, se recomienda comprobar manualmente estos recorridos:
 
-```powershell
-git status --short
-git ls-files .env service-account.json
-```
+- Registro e inicio de sesión con Firebase configurado.
+- Catálogo, búsqueda o navegación, detalle de negocio y carrito.
+- Confirmación del pedido y aparición en el historial del cliente.
+- Cambio de estado desde la vista del negocio y actualización en el cliente.
+- Ubicación con permiso concedido y denegado.
+- Aislamiento de datos según las reglas de Firestore.
 
-Los dos últimos archivos deben estar ignorados y no deben aparecer como
-archivos versionados.
+> No se publica una cifra de pruebas automatizadas porque el repositorio no documenta una suite de pruebas equivalente a la de otros proyectos. La verificación manual y el chequeo de tipos son evidencias distintas.
 
-## Configuración opcional de Firebase (APF3)
+---
 
-1. Crear proyecto, habilitar Auth Email/Password y Firestore (producción).
-2. Registrar app web `</>` y copiar `.env.example` a `.env` con los valores.
-3. Pegar `firestore.rules` en Firestore → Reglas → Publicar.
-4. Descargar `service-account.json` (Cuentas de servicio) a la raíz
-   (está en `.gitignore`, nunca se sube) y correr el seed:
+## 🧩 Proceso de desarrollo
 
-```powershell
-npm run seed   # 15 negocios + 48 productos
-```
+BarrioGo se desarrolla como proyecto académico colaborativo y utiliza especificaciones y tareas organizadas en [`odd/tasks/`](odd/tasks/).
 
-## Estado del proyecto y alcance de la presentación
+El trabajo contempla análisis de requisitos, definición de funcionalidades, implementación por etapas, revisión de comportamiento y validación técnica. Las herramientas de desarrollo asistido por IA se utilizan como apoyo dentro de este proceso, manteniendo la revisión de los resultados.
 
-- **APF1** — idea, mockups, pantallas base, tipos del dominio.
-- **APF2** (esta rama `feature/apf2-ui-unido`) — Tabs + Detalle + Carrito,
-  `FlatList`, consumo de API/mock, formularios validados, AsyncStorage, GPS
-  por cercanía y sistema visual consistente.
-- **APF3** (rama `feature/apf3-firebase-base`) — F1 Auth real con roles ✔,
-  F2 Firestore + seed (15 negocios, 48 productos) ✔, F3 pedidos con
-  tracking en tiempo real ✔, F4 panel negocio (estados + alta de menú) ✔,
-  F5 notificaciones locales ✔ (activas en dev build/APK; en Expo Go son
-  no-op desde SDK 53).
-- **F6** (misma rama) — cada cuenta registra su propio negocio ✔ (S1), edita
-  su local ✔ (S2), icono + portada por Cloudinary Free ✔ (S3, verificado en
-  físico), reglas solo-dueño ✔ (S4, campo `duenioId` sin eñe).
+---
 
-APF3 y F6 son avances posteriores y no reemplazan los criterios funcionales
-de APF2. Para esta presentación se debe priorizar el guion APF2 anterior.
+## 🚧 Estado y próximos pasos
 
-## Convenciones
+El repositorio reúne avances de varias etapas académicas, desde navegación y catálogo hasta integración con Firebase, pedidos y herramientas del negocio.
 
-- Ramas `feature/nombre`; nada directo a `master` sin revisión.
-- Commits en español, estilo convencional (`feat`, `fix`, `docs`, `chore`).
-- `npx tsc --noEmit` sin errores antes de cada commit.
-- `.env` y `service-account.json` jamás se suben al repo.
+**Prioridades para continuar:**
 
-## Equipo
+- Incorporar capturas actualizadas y una demostración reproducible.
+- Ampliar las pruebas automatizadas de lógica y flujos críticos.
+- Verificar de extremo a extremo los permisos y reglas de Firestore.
+- Mejorar el manejo de errores y los estados de carga.
+- Separar claramente las funciones demostrativas de las listas para uso real.
+- Evaluar despliegue, monitoreo y validación con usuarios antes de un lanzamiento público.
 
-- Lechuga Monge, Esaú Alexander – U23203849
-- Lavado Yañez, Jose – U23203374
+Las funciones descritas corresponden a funcionalidades presentes en el código y la documentación del proyecto; no implican una auditoría completa ni un despliegue comercial verificado.
 
-Docente: Cota Sencara, David William — Sección 32835 — 2026
+---
+
+## 👥 Equipo y contexto
+
+Proyecto académico colaborativo de la carrera de Ingeniería de Software, desarrollado por:
+
+- **Esaú Lechuga Monge**
+- **Jose Lavado Yañez**
+
+La documentación de las etapas del proyecto se conserva en el historial y las ramas del repositorio.
+
+---
+
+## 📫 Enlaces
+
+**[Repositorio](https://github.com/EsLechu19/BarrioGo)** · **[Perfil de GitHub](https://github.com/EsLechu19)** · **[LinkedIn](https://www.linkedin.com/in/esau-lechuga-monge-12b720362/)**
