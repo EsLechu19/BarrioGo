@@ -56,9 +56,14 @@ export function Pedidos({
           <Text style={[styles.statNum, { color: '#10B981' }]}>{stats.entregados}</Text>
           <Text style={styles.statLabel}>Entregados</Text>
         </View>
-        <View style={styles.statCard}>
-          <Text style={[styles.statNum, { color: colors.primary }]}>
-            S/{stats.ventas.toFixed(0)}
+        <View style={[styles.statCard, styles.statCardVentas]}>
+          <Text
+            style={[styles.statNum, { color: colors.primary }]}
+            numberOfLines={1}
+            adjustsFontSizeToFit
+            minimumFontScale={0.7}
+          >
+            S/{stats.ventas.toFixed(2)}
           </Text>
           <Text style={styles.statLabel}>Ventas</Text>
         </View>
@@ -195,6 +200,8 @@ function makeStyles(c: Colors) {
       borderRadius: 16,
       backgroundColor: c.surface,
     },
+    // Ventas lleva montos (ej. S/1000.00): doble de ancho que los conteos.
+    statCardVentas: { flex: 2 },
     statNum: { fontSize: 18, fontWeight: '900', color: c.textPrimary },
     statLabel: { color: c.textMuted, fontSize: 11, fontWeight: '600' },
 

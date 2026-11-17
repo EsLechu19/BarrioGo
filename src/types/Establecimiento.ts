@@ -1,6 +1,5 @@
-// Establecimiento / sede del negocio (SOLO DISEÑO por ahora).
-// TODO(back): subcolección `negocios/{id}/locales` o colección `locales`
-// con duenioId, y reemplazar LOCALES_MOCK en NegocioScreen.
+// Sede del negocio. Solo diseño: sin backend solo está el local principal.
+// TODO(back): colección `locales` con duenioId para la sección Locales.
 export interface Establecimiento {
   id: string;
   negocioId: string;

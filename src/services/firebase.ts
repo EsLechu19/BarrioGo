@@ -1,16 +1,17 @@
 import { initializeApp, getApps, FirebaseApp } from 'firebase/app';
 import { getAuth, initializeAuth, Auth } from 'firebase/auth';
-// getReactNativePersistence solo existe en los tipos RN de @firebase/auth
-// (Metro lo resuelve bien en runtime). El @ts-expect-error es por ese
-// desajuste de tipos web-vs-RN, no por código inseguro.
+// Existe solo en tipos RN: el @ts-expect-error de abajo es por esto.
 // @ts-expect-error - símbolo RN ausente en los .d.ts web, presente en runtime
 import { getReactNativePersistence } from 'firebase/auth';
-import { getFirestore, Firestore } from 'firebase/firestore';
+import {
+  getFirestore,
+  Firestore,
+} from 'firebase/firestore';
 import { getStorage, FirebaseStorage } from 'firebase/storage';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-// Config vía EXPO_PUBLIC_ (nunca commitear el .env real — ver .env.example).
-// Si falta config, firebaseReady = false y la app sigue con API local + Auth simulado.
+// Config por EXPO_PUBLIC_ (nunca commitear el .env). Sin config,
+// firebaseReady = false: la app sigue con datos demo y login inactivo.
 const firebaseConfig = {
   apiKey: process.env.EXPO_PUBLIC_FB_API_KEY ?? '',
   authDomain: process.env.EXPO_PUBLIC_FB_AUTH_DOMAIN ?? '',

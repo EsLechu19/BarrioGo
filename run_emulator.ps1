@@ -1,0 +1,1 @@
+& 'C:\Users\USER\AppData\Local\Android\Sdk\emulator\emulator.exe' -avd Pixel_9_Pro -gpu swiftshader_indirect -no-window 2>&1

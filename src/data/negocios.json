@@ -1,17 +1,5530 @@
 [
-  { "id": "1", "nombre": "Polleria Don Tito", "imagen": "https://img.magnific.com/vector-premium/plantilla-vector-diseno-logotipo-mascota-pollo_441059-165.jpg?semt=ais_hybrid&w=740&q=80", "rating": 4.6, "opiniones": 128, "tiempoEstimado": "15-20 min", "distancia": "0.8 km", "envioGratis": true, "lat": -11.9785, "lng": -77.0025 },
-  { "id": "2", "nombre": "Chifa El Dragón", "imagen": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTK7PL9nvCC4AO4q6M7QiYztfQWqIJAIXnmxNN8zz-ICQoed7ZJOEZ9lFAF&s=10", "rating": 4.5, "opiniones": 96, "tiempoEstimado": "20-30 min", "distancia": "1.2 km", "envioGratis": false, "envioMinimo": "Envío gratis desde S/25", "lat": -11.973, "lng": -76.991 },
-  { "id": "3", "nombre": "Sabor Criollo", "imagen": "https://images.rappi.pe/restaurants_logo/1871458496846096-1774365845062.jpg", "rating": 4.3, "opiniones": 78, "tiempoEstimado": "25-35 min", "distancia": "1.8 km", "envioGratis": false, "envioMinimo": "Envío gratis desde S/5", "lat": -11.968, "lng": -77.008 },
-  { "id": "4", "nombre": "Julitos Broaster Huarique", "imagen": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRgXNJgsPzLYm41MJPlizF__tQb5LYI6QvwebJ_toMCg6a0aj489CYRgkcu&s=10", "rating": 4.1, "opiniones": 138, "tiempoEstimado": "5-10 min", "distancia": "0.4 km", "envioGratis": true, "lat": -11.9805, "lng": -76.997 },
-  { "id": "5", "nombre": "Polleria El Corralito", "imagen": "https://images.rappi.pe/restaurants_logo/1871458496846096-1774365845062.jpg", "rating": 4.4, "opiniones": 203, "tiempoEstimado": "15-25 min", "distancia": "1.0 km", "envioGratis": true, "lat": -11.99, "lng": -77.004 },
-  { "id": "6", "nombre": "Chifa Mandarín", "imagen": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTK7PL9nvCC4AO4q6M7QiYztfQWqIJAIXnmxNN8zz-ICQoed7ZJOEZ9lFAF&s=10", "rating": 4.2, "opiniones": 64, "tiempoEstimado": "20-30 min", "distancia": "1.5 km", "envioGratis": false, "envioMinimo": "Envío gratis desde S/30", "lat": -11.97, "lng": -76.993 },
-  { "id": "7", "nombre": "Menú Doña Rosa", "imagen": "https://img.magnific.com/vector-premium/plantilla-vector-diseno-logotipo-mascota-pollo_441059-165.jpg?semt=ais_hybrid&w=740&q=80", "rating": 4.7, "opiniones": 312, "tiempoEstimado": "10-15 min", "distancia": "0.5 km", "envioGratis": true, "lat": -11.984, "lng": -77.003 },
-  { "id": "8", "nombre": "Broaster Kike", "imagen": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRgXNJgsPzLYm41MJPlizF__tQb5LYI6QvwebJ_toMCg6a0aj489CYRgkcu&s=10", "rating": 4.0, "opiniones": 45, "tiempoEstimado": "10-20 min", "distancia": "0.9 km", "envioGratis": false, "envioMinimo": "Envío S/3", "lat": -11.976, "lng": -76.994 },
-  { "id": "9", "nombre": "Chifa Sabor Oriental", "imagen": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTK7PL9nvCC4AO4q6M7QiYztfQWqIJAIXnmxNN8zz-ICQoed7ZJOEZ9lFAF&s=10", "rating": 4.5, "opiniones": 187, "tiempoEstimado": "25-35 min", "distancia": "2.1 km", "envioGratis": false, "envioMinimo": "Envío gratis desde S/35", "lat": -11.965, "lng": -77.01 },
-  { "id": "10", "nombre": "Polleria La Brasa Roja", "imagen": "https://images.rappi.pe/restaurants_logo/1871458496846096-1774365845062.jpg", "rating": 4.3, "opiniones": 156, "tiempoEstimado": "20-25 min", "distancia": "1.3 km", "envioGratis": true, "lat": -11.988, "lng": -76.99 },
-  { "id": "11", "nombre": "Anticuchos La Tía", "imagen": "https://images.rappi.pe/restaurants_logo/1871458496846096-1774365845062.jpg", "rating": 4.8, "opiniones": 421, "tiempoEstimado": "15-20 min", "distancia": "0.6 km", "envioGratis": true, "lat": -11.981, "lng": -77.005 },
-  { "id": "12", "nombre": "Ping Chung Long", "imagen": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTK7PL9nvCC4AO4q6M7QiYztfQWqIJAIXnmxNN8zz-ICQoed7ZJOEZ9lFAF&s=10", "rating": 4.9, "opiniones": 512, "tiempoEstimado": "15-20 min", "distancia": "0.9 km", "envioGratis": true, "lat": -11.986, "lng": -76.995 },
-  { "id": "13", "nombre": "Menú El Saborcito", "imagen": "https://images.rappi.pe/restaurants_logo/1871458496846096-1774365845062.jpg", "rating": 4.4, "opiniones": 98, "tiempoEstimado": "10-15 min", "distancia": "0.7 km", "envioGratis": false, "envioMinimo": "Envío gratis desde S/15", "lat": -11.979, "lng": -77.0005 },
-  { "id": "14", "nombre": "Polleria El Pechugón", "imagen": "https://img.magnific.com/vector-premium/plantilla-vector-diseno-logotipo-mascota-pollo_441059-165.jpg?semt=ais_hybrid&w=740&q=80", "rating": 4.2, "opiniones": 73, "tiempoEstimado": "15-20 min", "distancia": "1.1 km", "envioGratis": true, "lat": -11.993, "lng": -76.998 },
-  { "id": "15", "nombre": "Chifa Dragón Dorado", "imagen": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTK7PL9nvCC4AO4q6M7QiYztfQWqIJAIXnmxNN8zz-ICQoed7ZJOEZ9lFAF&s=10", "rating": 4.6, "opiniones": 234, "tiempoEstimado": "20-30 min", "distancia": "1.6 km", "envioGratis": false, "envioMinimo": "Envío gratis desde S/28", "lat": -11.971, "lng": -77.002 }
+  {
+    "id": "1",
+    "nombre": "El Huarochirano",
+    "imagen": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRVOTH7RH2F6DWhcxY4TGarCd_s_29BLeEE5hko503wP-UvRpQdfmAZCfdk&s=10",
+    "portada": "https://img.magnific.com/psd-premium/plantilla-portada-facebook-restaurante-comida_106176-755.jpg?semt=ais_hybrid&w=740&q=80",
+    "categoria": "polleria",
+    "categorias": [
+      "polleria",
+      "chifa",
+      "caldos"
+    ],
+    "rating": 4.6,
+    "opiniones": 128,
+    "tiempoEstimado": "15-20 min",
+    "distancia": "0.8 km",
+    "envioGratis": true,
+    "lat": -12.0617057,
+    "lng": -76.9939356,
+    "direccion": "Av. Melitón Carbajal 298, Lima 15019",
+    "horario": [
+      {
+        "dia": 1,
+        "apertura": "17:00",
+        "cierre": "00:00"
+      },
+      {
+        "dia": 2,
+        "apertura": "17:00",
+        "cierre": "00:00"
+      },
+      {
+        "dia": 3,
+        "apertura": "17:00",
+        "cierre": "00:00"
+      },
+      {
+        "dia": 4,
+        "apertura": "17:00",
+        "cierre": "00:00"
+      },
+      {
+        "dia": 5,
+        "apertura": "17:00",
+        "cierre": "00:00"
+      },
+      {
+        "dia": 6,
+        "apertura": "14:00",
+        "cierre": "00:00"
+      },
+      {
+        "dia": 0,
+        "apertura": "14:00",
+        "cierre": "00:00"
+      }
+    ]
+  },
+  {
+    "id": "2",
+    "nombre": "Yukita",
+    "imagen": "https://images.rappi.pe/restaurants_logo/d3b64a35-772b-45cd-aebc-55505ff41f77-1695407546569.png",
+    "portada": "https://img.magnific.com/psd-premium/plantilla-portada-facebook-restaurante-comida_106176-755.jpg?semt=ais_hybrid&w=740&q=80",
+    "categoria": "polleria",
+    "categorias": [
+      "polleria",
+      "chifa",
+      "caldos"
+    ],
+    "rating": 4.5,
+    "opiniones": 96,
+    "tiempoEstimado": "20-30 min",
+    "distancia": "1.2 km",
+    "envioGratis": false,
+    "costoEnvio": 5,
+    "lat": -12.0618356,
+    "lng": -76.9937291,
+    "direccion": "Los Rosales 258, Ate, Lima 15019",
+    "horario": [
+      {
+        "dia": 0,
+        "apertura": "18:00",
+        "cierre": "01:00"
+      },
+      {
+        "dia": 1,
+        "apertura": "18:00",
+        "cierre": "01:00"
+      },
+      {
+        "dia": 2,
+        "apertura": "18:00",
+        "cierre": "01:00"
+      },
+      {
+        "dia": 3,
+        "apertura": "18:00",
+        "cierre": "01:00"
+      },
+      {
+        "dia": 4,
+        "apertura": "18:00",
+        "cierre": "01:00"
+      },
+      {
+        "dia": 5,
+        "apertura": "18:00",
+        "cierre": "01:00"
+      },
+      {
+        "dia": 6,
+        "apertura": "18:00",
+        "cierre": "01:00"
+      }
+    ]
+  },
+  {
+    "id": "3",
+    "nombre": "CHICO PIZZA",
+    "imagen": "https://i.pinimg.com/736x/af/0d/2e/af0d2e58ef40f5b065595781d878e7f5.jpg",
+    "portada": "https://img.magnific.com/psd-gratis/menu-comida-pizza-deliciosa-plantilla-banner-portada-facebook_120329-4878.jpg?semt=ais_hybrid&w=740&q=80",
+    "categoria": "pizza",
+    "categorias": [
+      "pizza"
+    ],
+    "rating": 4.3,
+    "opiniones": 78,
+    "tiempoEstimado": "25-35 min",
+    "distancia": "1.8 km",
+    "envioGratis": false,
+    "costoEnvio": 3,
+    "lat": -12.0611007,
+    "lng": -76.9936466,
+    "direccion": "Av. Los Rosales 402, Ate 15019",
+    "horario": [
+      {
+        "dia": 0,
+        "apertura": "17:00",
+        "cierre": "22:00"
+      },
+      {
+        "dia": 1,
+        "apertura": "17:00",
+        "cierre": "22:00"
+      },
+      {
+        "dia": 2,
+        "apertura": "17:00",
+        "cierre": "22:00"
+      },
+      {
+        "dia": 3,
+        "apertura": "17:00",
+        "cierre": "22:00"
+      },
+      {
+        "dia": 4,
+        "apertura": "17:00",
+        "cierre": "22:00"
+      },
+      {
+        "dia": 5,
+        "apertura": "17:00",
+        "cierre": "22:00"
+      },
+      {
+        "dia": 6,
+        "apertura": "17:00",
+        "cierre": "22:00"
+      }
+    ]
+  },
+  {
+    "id": "4",
+    "nombre": "Delizia",
+    "imagen": "https://mir-s3-cdn-cf.behance.net/projects/808/bd50eb254587133.Y3JvcCwxNDAwLDEwOTUsMCwxMDc.jpeg",
+    "portada": "https://www.shutterstock.com/image-photo/birthday-cake-candlescover-banner-conceptdifferent-260nw-2212456441.jpg",
+    "categoria": "pasteleria",
+    "categorias": [
+      "pasteleria"
+    ],
+    "rating": 4.1,
+    "opiniones": 138,
+    "tiempoEstimado": "5-10 min",
+    "distancia": "0.4 km",
+    "envioGratis": true,
+    "lat": -12.0617263,
+    "lng": -76.9935018,
+    "direccion": "Av. Melitón Carbajal 306, Ate 15019",
+    "horario": [
+      {
+        "dia": 0,
+        "apertura": "11:00",
+        "cierre": "22:00"
+      },
+      {
+        "dia": 1,
+        "apertura": "11:00",
+        "cierre": "22:00"
+      },
+      {
+        "dia": 2,
+        "apertura": "11:00",
+        "cierre": "22:00"
+      },
+      {
+        "dia": 3,
+        "apertura": "11:00",
+        "cierre": "22:00"
+      },
+      {
+        "dia": 4,
+        "apertura": "11:00",
+        "cierre": "22:00"
+      },
+      {
+        "dia": 5,
+        "apertura": "11:00",
+        "cierre": "22:00"
+      },
+      {
+        "dia": 6,
+        "apertura": "11:00",
+        "cierre": "22:00"
+      }
+    ]
+  },
+  {
+    "id": "5",
+    "nombre": "Donde Tere",
+    "imagen": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcREo5ctplFonczCn7gushhGipU4I5J_XGRzds58Beh8d0gm8Uu099V1f1z_&s=10",
+    "portada": "https://img.magnific.com/psd-gratis/plantilla-banner-portada-facebook-menu-comida-restaurante_120329-5497.jpg?semt=ais_hybrid&w=740&q=80",
+    "categoria": "broaster",
+    "categorias": [
+      "broaster"
+    ],
+    "rating": 4.4,
+    "opiniones": 203,
+    "tiempoEstimado": "15-25 min",
+    "distancia": "1.0 km",
+    "envioGratis": true,
+    "lat": -12.0605087,
+    "lng": -76.9935477,
+    "direccion": "Av. Los Rosales 530, Ate 15019",
+    "horario": [
+      {
+        "dia": 0,
+        "apertura": "18:30",
+        "cierre": "00:00"
+      },
+      {
+        "dia": 1,
+        "apertura": "18:30",
+        "cierre": "00:00"
+      },
+      {
+        "dia": 2,
+        "apertura": "18:30",
+        "cierre": "00:00"
+      },
+      {
+        "dia": 3,
+        "apertura": "18:30",
+        "cierre": "00:00"
+      },
+      {
+        "dia": 4,
+        "apertura": "18:30",
+        "cierre": "00:00"
+      },
+      {
+        "dia": 5,
+        "apertura": "18:30",
+        "cierre": "00:00"
+      },
+      {
+        "dia": 6,
+        "apertura": "18:30",
+        "cierre": "00:00"
+      }
+    ]
+  },
+  {
+    "id": "6",
+    "nombre": "Sanguchón El Granbatería",
+    "imagen": "https://img.magnific.com/vector-premium/diseno-logo-sub-sandwich_1594-204.jpg?semt=ais_hybrid&w=740&q=80",
+    "portada": "https://img.eldefinido.cl/portadas/1200/2019-02-18-5593PHR8626.jpg",
+    "categoria": "sangucheria",
+    "categorias": [
+      "sangucheria",
+      "jugueria"
+    ],
+    "rating": 4.2,
+    "opiniones": 64,
+    "tiempoEstimado": "20-30 min",
+    "distancia": "1.5 km",
+    "envioGratis": false,
+    "costoEnvio": 6,
+    "lat": -12.0663534,
+    "lng": -77.0359134,
+    "direccion": "Av. Petit Thouars 281, Lima 15046",
+    "horario": [
+      {
+        "dia": 0,
+        "apertura": "10:00",
+        "cierre": "00:00"
+      },
+      {
+        "dia": 1,
+        "apertura": "10:00",
+        "cierre": "00:00"
+      },
+      {
+        "dia": 2,
+        "apertura": "10:00",
+        "cierre": "00:00"
+      },
+      {
+        "dia": 3,
+        "apertura": "10:00",
+        "cierre": "00:00"
+      },
+      {
+        "dia": 4,
+        "apertura": "10:00",
+        "cierre": "00:00"
+      },
+      {
+        "dia": 5,
+        "apertura": "10:00",
+        "cierre": "00:00"
+      },
+      {
+        "dia": 6,
+        "apertura": "10:00",
+        "cierre": "00:00"
+      }
+    ]
+  },
+  {
+    "id": "7",
+    "nombre": "La Gran Colombia",
+    "imagen": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQIiLuFj7Ekj4Z1oJBpxhqrPI_8eVGW0XM96Tvxv0ZS8BOQt9tv3GB5bijK&s=10",
+    "portada": "https://timelinecovers.pro/facebook-cover/download/art-latte-and-coffee-beans-facebook-cover.jpg",
+    "categoria": "cafeteria",
+    "categorias": [
+      "cafeteria"
+    ],
+    "rating": 4.7,
+    "opiniones": 312,
+    "tiempoEstimado": "10-15 min",
+    "distancia": "0.5 km",
+    "envioGratis": true,
+    "lat": -12.066156,
+    "lng": -77.0359383,
+    "direccion": "Av. Petit Thouars 261, Lima 15046",
+    "horario": [
+      {
+        "dia": 0,
+        "apertura": "07:00",
+        "cierre": "23:00"
+      },
+      {
+        "dia": 1,
+        "apertura": "07:00",
+        "cierre": "23:00"
+      },
+      {
+        "dia": 2,
+        "apertura": "07:00",
+        "cierre": "23:00"
+      },
+      {
+        "dia": 3,
+        "apertura": "07:00",
+        "cierre": "23:00"
+      },
+      {
+        "dia": 4,
+        "apertura": "07:00",
+        "cierre": "23:00"
+      },
+      {
+        "dia": 5,
+        "apertura": "07:00",
+        "cierre": "23:00"
+      },
+      {
+        "dia": 6,
+        "apertura": "07:00",
+        "cierre": "23:00"
+      }
+    ]
+  },
+  {
+    "id": "8",
+    "nombre": "Top Fries Perú",
+    "imagen": "https://www.shutterstock.com/image-vector/french-fries-logo-label-banner-260nw-2547414915.jpg",
+    "portada": "https://img.magnific.com/psd-gratis/plantilla-banner-portada-facebook-menu-comida-restaurante_120329-5497.jpg?semt=ais_hybrid&w=740&q=80",
+    "categoria": "broaster",
+    "categorias": [
+      "broaster",
+      "pizza"
+    ],
+    "rating": 4,
+    "opiniones": 45,
+    "tiempoEstimado": "10-20 min",
+    "distancia": "0.9 km",
+    "envioGratis": false,
+    "costoEnvio": 3,
+    "lat": -12.0670373,
+    "lng": -77.036869,
+    "direccion": "Av. Arequipa N° 305, Lima 15046",
+    "horario": [
+      {
+        "dia": 1,
+        "apertura": "17:00",
+        "cierre": "00:00"
+      },
+      {
+        "dia": 2,
+        "apertura": "17:00",
+        "cierre": "00:00"
+      },
+      {
+        "dia": 3,
+        "apertura": "17:00",
+        "cierre": "00:00"
+      },
+      {
+        "dia": 4,
+        "apertura": "17:00",
+        "cierre": "00:00"
+      },
+      {
+        "dia": 5,
+        "apertura": "17:00",
+        "cierre": "00:00"
+      },
+      {
+        "dia": 6,
+        "apertura": "17:00",
+        "cierre": "00:00"
+      }
+    ]
+  },
+  {
+    "id": "9",
+    "nombre": "Lauro's Pollería",
+    "imagen": "https://img.magnific.com/vector-premium/plantilla-vector-diseno-logotipo-mascota-pollo_441059-165.jpg?semt=ais_hybrid&w=740&q=80",
+    "portada": "https://img.magnific.com/psd-premium/plantilla-portada-facebook-restaurante-comida_106176-755.jpg?semt=ais_hybrid&w=740&q=80",
+    "categoria": "polleria",
+    "categorias": [
+      "polleria"
+    ],
+    "rating": 4.5,
+    "opiniones": 187,
+    "tiempoEstimado": "25-35 min",
+    "distancia": "2.1 km",
+    "envioGratis": false,
+    "costoEnvio": 6,
+    "lat": -12.0676484,
+    "lng": -77.0358712,
+    "direccion": "Av. Petit Thouars 388, Lima 15046",
+    "horario": [
+      {
+        "dia": 1,
+        "apertura": "08:00",
+        "cierre": "23:00"
+      },
+      {
+        "dia": 2,
+        "apertura": "08:00",
+        "cierre": "23:00"
+      },
+      {
+        "dia": 3,
+        "apertura": "08:00",
+        "cierre": "23:00"
+      },
+      {
+        "dia": 4,
+        "apertura": "08:00",
+        "cierre": "23:00"
+      },
+      {
+        "dia": 5,
+        "apertura": "08:00",
+        "cierre": "23:00"
+      },
+      {
+        "dia": 6,
+        "apertura": "08:00",
+        "cierre": "23:00"
+      },
+      {
+        "dia": 0,
+        "apertura": "11:00",
+        "cierre": "21:30"
+      }
+    ]
+  },
+  {
+    "id": "10",
+    "nombre": "Fruto",
+    "imagen": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcS6x-fx8EWSXZUlmzUTQ9Pf6xe_aFVq5bLIdImbJ6DQqDl6Mfll1ZpbLcYW&s=10",
+    "portada": "https://img.magnific.com/psd-premium/delicioso-jugo-fruta-diseno-plantilla-portada-facebook_440834-234.jpg?semt=ais_hybrid&w=740&q=80",
+    "categoria": "jugueria",
+    "categorias": [
+      "jugueria",
+      "cafeteria",
+      "sangucheria"
+    ],
+    "rating": 4.3,
+    "opiniones": 156,
+    "tiempoEstimado": "20-25 min",
+    "distancia": "1.3 km",
+    "envioGratis": true,
+    "lat": -12.0669626,
+    "lng": -77.0361328,
+    "direccion": "Av. Petit Thouars 398, Lima 15046",
+    "horario": [
+      {
+        "dia": 1,
+        "apertura": "07:30",
+        "cierre": "23:00"
+      },
+      {
+        "dia": 2,
+        "apertura": "07:30",
+        "cierre": "23:00"
+      },
+      {
+        "dia": 3,
+        "apertura": "07:30",
+        "cierre": "23:00"
+      },
+      {
+        "dia": 4,
+        "apertura": "07:30",
+        "cierre": "23:00"
+      },
+      {
+        "dia": 5,
+        "apertura": "07:30",
+        "cierre": "23:00"
+      },
+      {
+        "dia": 6,
+        "apertura": "07:30",
+        "cierre": "23:00"
+      },
+      {
+        "dia": 0,
+        "apertura": "09:00",
+        "cierre": "17:00"
+      }
+    ]
+  },
+  {
+    "id": "11",
+    "nombre": "Anticucheria Los Palitos",
+    "imagen": "https://images.rappi.pe/restaurants_logo/anti_-1597099475709-1704206316255.png",
+    "portada": "https://walac.pe/wp-content/uploads/2023/10/anticuchos.png",
+    "categoria": "anticuchos",
+    "categorias": [
+      "anticuchos"
+    ],
+    "rating": 4.8,
+    "opiniones": 421,
+    "tiempoEstimado": "15-20 min",
+    "distancia": "0.6 km",
+    "envioGratis": true,
+    "lat": -12.0478939,
+    "lng": -76.9990151,
+    "direccion": "Calle Manuel Polo Jiménez 480, El Agustino, Lima",
+    "horario": [
+      {
+        "dia": 0,
+        "apertura": "14:00",
+        "cierre": "22:00"
+      },
+      {
+        "dia": 1,
+        "apertura": "14:00",
+        "cierre": "22:00"
+      },
+      {
+        "dia": 2,
+        "apertura": "14:00",
+        "cierre": "22:00"
+      },
+      {
+        "dia": 3,
+        "apertura": "14:00",
+        "cierre": "22:00"
+      },
+      {
+        "dia": 4,
+        "apertura": "14:00",
+        "cierre": "22:00"
+      },
+      {
+        "dia": 5,
+        "apertura": "14:00",
+        "cierre": "22:00"
+      },
+      {
+        "dia": 6,
+        "apertura": "14:00",
+        "cierre": "22:00"
+      }
+    ]
+  },
+  {
+    "id": "12",
+    "nombre": "Ping Chung Long",
+    "imagen": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQAiTdN8D_X-epg7kHVodmux7lNzBq4T3tiUNXu91fC2rOJH0CWohCgloKi&s=10",
+    "portada": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQcXO1zbWwmR50BkV9fTifmFfaS-j8PCZcS4366T4KB8MLER8ZbxECCAXU&s=10",
+    "categoria": "chifa",
+    "categorias": [
+      "chifa"
+    ],
+    "rating": 4.9,
+    "opiniones": 512,
+    "tiempoEstimado": "15-20 min",
+    "distancia": "0.9 km",
+    "envioGratis": true,
+    "lat": -12.0459914,
+    "lng": -77.0015241,
+    "direccion": "C. Lourdes 290, El Agustino 15006",
+    "horario": [
+      {
+        "dia": 0,
+        "apertura": "12:00",
+        "cierre": "00:00"
+      },
+      {
+        "dia": 1,
+        "apertura": "12:00",
+        "cierre": "00:00"
+      },
+      {
+        "dia": 2,
+        "apertura": "12:00",
+        "cierre": "00:00"
+      },
+      {
+        "dia": 3,
+        "apertura": "12:00",
+        "cierre": "00:00"
+      },
+      {
+        "dia": 4,
+        "apertura": "12:00",
+        "cierre": "00:00"
+      },
+      {
+        "dia": 5,
+        "apertura": "12:00",
+        "cierre": "00:00"
+      },
+      {
+        "dia": 6,
+        "apertura": "12:00",
+        "cierre": "00:00"
+      }
+    ]
+  },
+  {
+    "id": "13",
+    "nombre": "El Buen Gusto",
+    "imagen": "https://template.canva.com/EAGMVm07W70/1/0/1600w-nOCO3J1zkVY.jpg",
+    "portada": "https://img.magnific.com/psd-premium/plantilla-portada-facebook-restaurante-comida_106176-755.jpg?semt=ais_hybrid&w=740&q=80",
+    "categoria": "polleria",
+    "categorias": [
+      "polleria"
+    ],
+    "rating": 4.4,
+    "opiniones": 98,
+    "tiempoEstimado": "10-15 min",
+    "distancia": "0.7 km",
+    "envioGratis": false,
+    "costoEnvio": 4,
+    "lat": -12.0490158,
+    "lng": -77.0012064,
+    "direccion": "Av. Riva Agüero 1300 esq. Hoyle Palacios, El Agustino 15006",
+    "horario": [
+      {
+        "dia": 1,
+        "apertura": "15:00",
+        "cierre": "22:00"
+      },
+      {
+        "dia": 2,
+        "apertura": "15:00",
+        "cierre": "22:00"
+      },
+      {
+        "dia": 3,
+        "apertura": "15:00",
+        "cierre": "22:00"
+      },
+      {
+        "dia": 4,
+        "apertura": "15:00",
+        "cierre": "22:00"
+      },
+      {
+        "dia": 5,
+        "apertura": "15:00",
+        "cierre": "22:00"
+      },
+      {
+        "dia": 6,
+        "apertura": "13:00",
+        "cierre": "22:00"
+      },
+      {
+        "dia": 0,
+        "apertura": "13:00",
+        "cierre": "22:00"
+      }
+    ]
+  },
+  {
+    "id": "14",
+    "nombre": "Polleria EL GORDO CARMELO",
+    "imagen": "https://t3.ftcdn.net/jpg/16/91/76/56/360_F_1691765603_Df7ksS7MwgypjbzfVHYEytQNZ7BJca4M.jpg",
+    "portada": "https://img.magnific.com/psd-premium/plantilla-portada-facebook-restaurante-comida_106176-755.jpg?semt=ais_hybrid&w=740&q=80",
+    "categoria": "polleria",
+    "categorias": [
+      "polleria"
+    ],
+    "rating": 4.2,
+    "opiniones": 73,
+    "tiempoEstimado": "15-20 min",
+    "distancia": "1.1 km",
+    "envioGratis": true,
+    "lat": -12.0552453,
+    "lng": -77.0046723,
+    "direccion": "Av. Riva Agüero 397, El Agustino 15003",
+    "horario": [
+      {
+        "dia": 0,
+        "apertura": "18:00",
+        "cierre": "23:00"
+      },
+      {
+        "dia": 1,
+        "apertura": "18:00",
+        "cierre": "23:00"
+      },
+      {
+        "dia": 2,
+        "apertura": "18:00",
+        "cierre": "23:00"
+      },
+      {
+        "dia": 3,
+        "apertura": "18:00",
+        "cierre": "23:00"
+      },
+      {
+        "dia": 4,
+        "apertura": "18:00",
+        "cierre": "23:00"
+      },
+      {
+        "dia": 5,
+        "apertura": "18:00",
+        "cierre": "23:00"
+      },
+      {
+        "dia": 6,
+        "apertura": "18:00",
+        "cierre": "23:00"
+      }
+    ]
+  },
+  {
+    "id": "15",
+    "nombre": "Chifa El Gran Char Lee",
+    "imagen": "https://images.rappi.pe/restaurants_logo/chifa-logo-1621093621092.png",
+    "portada": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQcXO1zbWwmR50BkV9fTifmFfaS-j8PCZcS4366T4KB8MLER8ZbxECCAXU&s=10",
+    "categoria": "chifa",
+    "categorias": [
+      "chifa"
+    ],
+    "rating": 4.6,
+    "opiniones": 234,
+    "tiempoEstimado": "20-30 min",
+    "distancia": "1.6 km",
+    "envioGratis": false,
+    "costoEnvio": 5,
+    "lat": -12.0517933,
+    "lng": -77.0031702,
+    "direccion": "Av. Riva Agüero 906, El Agustino 15003",
+    "horario": [
+      {
+        "dia": 0,
+        "apertura": "12:00",
+        "cierre": "23:00"
+      },
+      {
+        "dia": 1,
+        "apertura": "12:00",
+        "cierre": "23:00"
+      },
+      {
+        "dia": 2,
+        "apertura": "12:00",
+        "cierre": "23:00"
+      },
+      {
+        "dia": 3,
+        "apertura": "12:00",
+        "cierre": "23:00"
+      },
+      {
+        "dia": 4,
+        "apertura": "12:00",
+        "cierre": "23:00"
+      },
+      {
+        "dia": 5,
+        "apertura": "12:00",
+        "cierre": "23:00"
+      },
+      {
+        "dia": 6,
+        "apertura": "12:00",
+        "cierre": "23:00"
+      }
+    ]
+  },
+  {
+    "id": "16",
+    "nombre": "La olla del sur",
+    "imagen": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQm1YMk-nOsThQVntBFMjrWnR4Peopg9cWYJUsB7TJhB2MOWu7U2w0eC_w&s=10",
+    "portada": "https://buenazo.cronosmedia.glr.pe/original/2022/10/24/6356cbae2d0ad652087c5d15.jpg",
+    "categoria": "comida_criolla",
+    "categorias": [
+      "comida_criolla"
+    ],
+    "descripcion": "Comida criolla casera: menú del día con entrada, comida y extras.",
+    "rating": 4.7,
+    "opiniones": 84,
+    "tiempoEstimado": "20-30 min",
+    "distancia": "1.0 km",
+    "envioGratis": false,
+    "costoEnvio": 6,
+    "precioMenuDia": 10,
+    "precioExtra": 15,
+    "lat": -12.06163096254253,
+    "lng": -76.99308668909163,
+    "direccion": "Av. Melitón Carbajal 328, Ate, Lima 15019",
+    "horario": [
+      {
+        "dia": 1,
+        "apertura": "12:00",
+        "cierre": "15:00"
+      },
+      {
+        "dia": 2,
+        "apertura": "12:00",
+        "cierre": "15:00"
+      },
+      {
+        "dia": 3,
+        "apertura": "12:00",
+        "cierre": "15:00"
+      },
+      {
+        "dia": 4,
+        "apertura": "12:00",
+        "cierre": "15:00"
+      },
+      {
+        "dia": 5,
+        "apertura": "12:00",
+        "cierre": "15:00"
+      },
+      {
+        "dia": 6,
+        "apertura": "12:00",
+        "cierre": "15:00"
+      }
+    ]
+  },
+  {
+    "id": "17",
+    "nombre": "El Rinconcito Escondido",
+    "imagen": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTzhDZeMa6pt_355QkPYUJG4-QILqJaagCPhYhnSpLoTlSQxz3bvPsxCK0&s=10",
+    "portada": "https://buenazo.cronosmedia.glr.pe/original/2022/10/24/6356cbae2d0ad652087c5d15.jpg",
+    "categoria": "comida_criolla",
+    "categorias": [
+      "comida_criolla"
+    ],
+    "rating": 4.3,
+    "opiniones": 245,
+    "tiempoEstimado": "30-45 min",
+    "distancia": "",
+    "envioGratis": false,
+    "costoEnvio": 6,
+    "lat": -12.065074786799098,
+    "lng": -77.03468952573499,
+    "direccion": "Parque Hernan Velarde 71, Lima 15046",
+    "descripcion": "Restaurante de comida criolla y platos caseros.",
+    "horario": [
+      {
+        "dia": 0,
+        "apertura": "10:30",
+        "cierre": "16:00"
+      },
+      {
+        "dia": 1,
+        "apertura": "10:30",
+        "cierre": "16:00"
+      },
+      {
+        "dia": 2,
+        "apertura": "10:30",
+        "cierre": "16:00"
+      },
+      {
+        "dia": 3,
+        "apertura": "10:30",
+        "cierre": "16:00"
+      },
+      {
+        "dia": 4,
+        "apertura": "10:30",
+        "cierre": "16:00"
+      },
+      {
+        "dia": 5,
+        "apertura": "10:30",
+        "cierre": "16:00"
+      },
+      {
+        "dia": 6,
+        "apertura": "10:30",
+        "cierre": "16:00"
+      }
+    ],
+    "precioMenuDia": 10,
+    "precioExtra": 15
+  },
+  {
+    "id": "18",
+    "nombre": "RESTAURANTE BUENAZO",
+    "imagen": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSifcS3odkryn2mbNwxskNDqaJ2QuX1xPktECtLySn40lACCKGF2eHYVonx&s=10",
+    "portada": "https://buenazo.cronosmedia.glr.pe/original/2022/10/24/6356cbae2d0ad652087c5d15.jpg",
+    "categoria": "comida_criolla",
+    "categorias": [
+      "comida_criolla"
+    ],
+    "rating": 4.4,
+    "opiniones": 91,
+    "tiempoEstimado": "20-35 min",
+    "distancia": "",
+    "envioGratis": false,
+    "costoEnvio": 3,
+    "lat": -12.065802633876398,
+    "lng": -77.0362224082038,
+    "direccion": "Av. Petit Thouars 214, Lima 15046",
+    "descripcion": "Restaurante de comida criolla y platos caseros.",
+    "horario": [
+      {
+        "dia": 0,
+        "apertura": "11:00",
+        "cierre": "17:00"
+      },
+      {
+        "dia": 1,
+        "apertura": "11:00",
+        "cierre": "17:00"
+      },
+      {
+        "dia": 2,
+        "apertura": "11:00",
+        "cierre": "17:00"
+      },
+      {
+        "dia": 3,
+        "apertura": "11:00",
+        "cierre": "17:00"
+      },
+      {
+        "dia": 4,
+        "apertura": "11:00",
+        "cierre": "17:00"
+      },
+      {
+        "dia": 5,
+        "apertura": "11:00",
+        "cierre": "17:00"
+      },
+      {
+        "dia": 6,
+        "apertura": "11:00",
+        "cierre": "17:00"
+      }
+    ],
+    "precioMenuDia": 10,
+    "precioExtra": 15
+  },
+  {
+    "id": "19",
+    "nombre": "Restaurant Silvia",
+    "imagen": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRDQmwHOUCfnVHgzLrtJJaRxZ2gR_bzGI2h1hT5-s8Ga73X3S_zIv5F4ldh&s=10",
+    "portada": "https://buenazo.cronosmedia.glr.pe/original/2022/10/24/6356cbae2d0ad652087c5d15.jpg",
+    "categoria": "comida_criolla",
+    "categorias": [
+      "comida_criolla"
+    ],
+    "rating": 4.1,
+    "opiniones": 187,
+    "tiempoEstimado": "20-30 min",
+    "distancia": "",
+    "envioGratis": false,
+    "costoEnvio": 6,
+    "lat": -12.0677767499042,
+    "lng": -77.0356269113587,
+    "direccion": "Av. Petit Thouars, Lima 15046",
+    "descripcion": "Restaurante de comida criolla y platos caseros.",
+    "horario": [
+      {
+        "dia": 0,
+        "apertura": "11:30",
+        "cierre": "16:30"
+      },
+      {
+        "dia": 1,
+        "apertura": "11:30",
+        "cierre": "16:30"
+      },
+      {
+        "dia": 2,
+        "apertura": "11:30",
+        "cierre": "16:30"
+      },
+      {
+        "dia": 3,
+        "apertura": "11:30",
+        "cierre": "16:30"
+      },
+      {
+        "dia": 4,
+        "apertura": "11:30",
+        "cierre": "16:30"
+      },
+      {
+        "dia": 5,
+        "apertura": "11:30",
+        "cierre": "16:30"
+      },
+      {
+        "dia": 6,
+        "apertura": "11:30",
+        "cierre": "16:30"
+      }
+    ],
+    "precioMenuDia": 10,
+    "precioExtra": 15
+  },
+  {
+    "id": "20",
+    "nombre": "Chifa San Joy Lao",
+    "imagen": "https://www.rappi.com.pe/restaurantes/delivery/5836-san-joy-lao",
+    "portada": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQcXO1zbWwmR50BkV9fTifmFfaS-j8PCZcS4366T4KB8MLER8ZbxECCAXU&s=10",
+    "categoria": "chifa",
+    "categorias": [
+      "chifa"
+    ],
+    "rating": 4.6,
+    "opiniones": 121,
+    "tiempoEstimado": "30-45 min",
+    "distancia": "",
+    "envioGratis": true,
+    "costoEnvio": 0,
+    "lat": -12.051279349677998,
+    "lng": -77.02500230286971,
+    "direccion": "Jr. Ucayali 779, Lima 15001",
+    "descripcion": "Platos de cocina chifa, arroces y salteados.",
+    "horario": [
+      {
+        "dia": 0,
+        "apertura": "11:00",
+        "cierre": "23:00"
+      },
+      {
+        "dia": 1,
+        "apertura": "11:00",
+        "cierre": "22:00"
+      },
+      {
+        "dia": 2,
+        "apertura": "11:00",
+        "cierre": "22:00"
+      },
+      {
+        "dia": 3,
+        "apertura": "11:00",
+        "cierre": "22:00"
+      },
+      {
+        "dia": 4,
+        "apertura": "11:00",
+        "cierre": "22:00"
+      },
+      {
+        "dia": 5,
+        "apertura": "11:00",
+        "cierre": "22:00"
+      },
+      {
+        "dia": 6,
+        "apertura": "11:00",
+        "cierre": "23:00"
+      }
+    ]
+  },
+  {
+    "id": "21",
+    "nombre": "La Sazon de Julia",
+    "imagen": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcR9iM7MNkQTsP7UGSVHlo2b1GtzyNtf1Yd4cqDQsOq_nQ&s",
+    "portada": "https://buenazo.cronosmedia.glr.pe/original/2022/10/24/6356cbae2d0ad652087c5d15.jpg",
+    "categoria": "comida_criolla",
+    "categorias": [
+      "comida_criolla"
+    ],
+    "rating": 4,
+    "opiniones": 165,
+    "tiempoEstimado": "15-30 min",
+    "distancia": "",
+    "envioGratis": false,
+    "costoEnvio": 6,
+    "lat": -12.064000578249402,
+    "lng": -77.05856010322438,
+    "direccion": "Pedro Donofrio 247, Breña 15083",
+    "descripcion": "Restaurante de comida criolla y platos caseros.",
+    "horario": [
+      {
+        "dia": 0,
+        "apertura": "12:00",
+        "cierre": "16:00"
+      },
+      {
+        "dia": 1,
+        "apertura": "12:00",
+        "cierre": "16:00"
+      },
+      {
+        "dia": 2,
+        "apertura": "12:00",
+        "cierre": "16:00"
+      },
+      {
+        "dia": 3,
+        "apertura": "12:00",
+        "cierre": "16:00"
+      },
+      {
+        "dia": 4,
+        "apertura": "12:00",
+        "cierre": "16:00"
+      },
+      {
+        "dia": 5,
+        "apertura": "12:00",
+        "cierre": "16:00"
+      },
+      {
+        "dia": 6,
+        "apertura": "12:00",
+        "cierre": "16:00"
+      }
+    ],
+    "precioMenuDia": 10,
+    "precioExtra": 15
+  },
+  {
+    "id": "22",
+    "nombre": "EL POLLO ROJO",
+    "imagen": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRry_oSZokpkGGuK5oHeUgy1Ui5xCnMOZAq_PBdSMGMwMY9paE6FrHA1v8-&s=10",
+    "portada": "https://img.magnific.com/psd-premium/plantilla-portada-facebook-restaurante-comida_106176-755.jpg?semt=ais_hybrid&w=740&q=80",
+    "categoria": "polleria",
+    "categorias": [
+      "polleria",
+      "chifa"
+    ],
+    "rating": 4.1,
+    "opiniones": 226,
+    "tiempoEstimado": "30-40 min",
+    "distancia": "",
+    "envioGratis": true,
+    "costoEnvio": 0,
+    "lat": -12.066830057928499,
+    "lng": -77.0589620597959,
+    "direccion": "Av. Mariano H. Cornejo 956, Breña 15083",
+    "descripcion": "Pollos a la brasa, acompañamientos y opciones para compartir.",
+    "horario": [
+      {
+        "dia": 0,
+        "apertura": "11:30",
+        "cierre": "00:00"
+      },
+      {
+        "dia": 1,
+        "apertura": "11:30",
+        "cierre": "23:00"
+      },
+      {
+        "dia": 2,
+        "apertura": "11:30",
+        "cierre": "23:00"
+      },
+      {
+        "dia": 3,
+        "apertura": "11:30",
+        "cierre": "23:00"
+      },
+      {
+        "dia": 4,
+        "apertura": "11:30",
+        "cierre": "23:00"
+      },
+      {
+        "dia": 5,
+        "apertura": "11:30",
+        "cierre": "23:00"
+      },
+      {
+        "dia": 6,
+        "apertura": "11:30",
+        "cierre": "00:00"
+      }
+    ]
+  },
+  {
+    "id": "23",
+    "nombre": "Pollos A La Brasa Don Lucho",
+    "imagen": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTYI8tfpgTFtrBl7CI2WbsogHoE7ESr3TouEvHgUQQz4FsyN-1MevE1SQ8&s=10",
+    "portada": "https://img.magnific.com/psd-premium/plantilla-portada-facebook-restaurante-comida_106176-755.jpg?semt=ais_hybrid&w=740&q=80",
+    "categoria": "polleria",
+    "categorias": [
+      "polleria"
+    ],
+    "rating": 4,
+    "opiniones": 111,
+    "tiempoEstimado": "30-45 min",
+    "distancia": "",
+    "envioGratis": true,
+    "costoEnvio": 0,
+    "lat": -12.063497295069599,
+    "lng": -77.04952474685842,
+    "direccion": "Jr. Restauración 398, Breña 15083",
+    "descripcion": "Pollos a la brasa, acompañamientos y opciones para compartir.",
+    "horario": [
+      {
+        "dia": 0,
+        "apertura": "12:00",
+        "cierre": "00:30"
+      },
+      {
+        "dia": 1,
+        "apertura": "12:00",
+        "cierre": "23:30"
+      },
+      {
+        "dia": 2,
+        "apertura": "12:00",
+        "cierre": "23:30"
+      },
+      {
+        "dia": 3,
+        "apertura": "12:00",
+        "cierre": "23:30"
+      },
+      {
+        "dia": 4,
+        "apertura": "12:00",
+        "cierre": "23:30"
+      },
+      {
+        "dia": 5,
+        "apertura": "12:00",
+        "cierre": "23:30"
+      },
+      {
+        "dia": 6,
+        "apertura": "12:00",
+        "cierre": "00:30"
+      }
+    ]
+  },
+  {
+    "id": "24",
+    "nombre": "Liko's Restaurant",
+    "imagen": "https://images.rappi.pe/restaurants_logo/1-1732314451892.png",
+    "portada": "https://buenazo.cronosmedia.glr.pe/original/2022/10/24/6356cbae2d0ad652087c5d15.jpg",
+    "categoria": "comida_criolla",
+    "categorias": [
+      "comida_criolla"
+    ],
+    "rating": 4,
+    "opiniones": 118,
+    "tiempoEstimado": "30-45 min",
+    "distancia": "",
+    "envioGratis": true,
+    "costoEnvio": 0,
+    "lat": -12.059358533817502,
+    "lng": -77.0434391499695,
+    "direccion": "Av. Arica 280, Breña 15083",
+    "descripcion": "Restaurante de comida criolla y platos caseros.",
+    "horario": [
+      {
+        "dia": 0,
+        "apertura": "10:00",
+        "cierre": "18:00"
+      },
+      {
+        "dia": 1,
+        "apertura": "10:00",
+        "cierre": "18:00"
+      },
+      {
+        "dia": 2,
+        "apertura": "10:00",
+        "cierre": "18:00"
+      },
+      {
+        "dia": 3,
+        "apertura": "10:00",
+        "cierre": "18:00"
+      },
+      {
+        "dia": 4,
+        "apertura": "10:00",
+        "cierre": "18:00"
+      },
+      {
+        "dia": 5,
+        "apertura": "10:00",
+        "cierre": "18:00"
+      },
+      {
+        "dia": 6,
+        "apertura": "10:00",
+        "cierre": "18:00"
+      }
+    ],
+    "precioMenuDia": 10,
+    "precioExtra": 15
+  },
+  {
+    "id": "25",
+    "nombre": "Restaurant La Sazón De Doña Leo",
+    "imagen": "https://cazvid-assets.s3.amazonaws.com/companyLogo/2023/689d63a95fd3a3a4b0e18c10.jpeg",
+    "portada": "https://buenazo.cronosmedia.glr.pe/original/2022/10/24/6356cbae2d0ad652087c5d15.jpg",
+    "categoria": "comida_criolla",
+    "categorias": [
+      "comida_criolla"
+    ],
+    "rating": 4.7,
+    "opiniones": 89,
+    "tiempoEstimado": "30-40 min",
+    "distancia": "",
+    "envioGratis": true,
+    "costoEnvio": 0,
+    "lat": -12.060279567533003,
+    "lng": -77.04733537043079,
+    "direccion": "Jr, Jr. Varela 1234, Breña 15082",
+    "descripcion": "Restaurante de comida criolla y platos caseros.",
+    "horario": [
+      {
+        "dia": 0,
+        "apertura": "10:30",
+        "cierre": "16:00"
+      },
+      {
+        "dia": 1,
+        "apertura": "10:30",
+        "cierre": "16:00"
+      },
+      {
+        "dia": 2,
+        "apertura": "10:30",
+        "cierre": "16:00"
+      },
+      {
+        "dia": 3,
+        "apertura": "10:30",
+        "cierre": "16:00"
+      },
+      {
+        "dia": 4,
+        "apertura": "10:30",
+        "cierre": "16:00"
+      },
+      {
+        "dia": 5,
+        "apertura": "10:30",
+        "cierre": "16:00"
+      },
+      {
+        "dia": 6,
+        "apertura": "10:30",
+        "cierre": "16:00"
+      }
+    ],
+    "precioMenuDia": 10,
+    "precioExtra": 15
+  },
+  {
+    "id": "26",
+    "nombre": "Jardín de Loto",
+    "imagen": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcS6hAWXF9x1MUY9sHd-QqkN501-c6Fnh2X-5kN48es3jfnOiy-jDk4fQEQ&s=10",
+    "portada": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQcXO1zbWwmR50BkV9fTifmFfaS-j8PCZcS4366T4KB8MLER8ZbxECCAXU&s=10",
+    "categoria": "chifa",
+    "categorias": [
+      "chifa"
+    ],
+    "rating": 4.5,
+    "opiniones": 164,
+    "tiempoEstimado": "25-40 min",
+    "distancia": "",
+    "envioGratis": false,
+    "costoEnvio": 3,
+    "lat": -12.0588631394145,
+    "lng": -77.0447068056546,
+    "direccion": "Av. Arica 420, Breña 15082",
+    "descripcion": "Platos de cocina chifa, arroces y salteados.",
+    "horario": [
+      {
+        "dia": 0,
+        "apertura": "11:30",
+        "cierre": "00:00"
+      },
+      {
+        "dia": 1,
+        "apertura": "11:30",
+        "cierre": "23:00"
+      },
+      {
+        "dia": 2,
+        "apertura": "11:30",
+        "cierre": "23:00"
+      },
+      {
+        "dia": 3,
+        "apertura": "11:30",
+        "cierre": "23:00"
+      },
+      {
+        "dia": 4,
+        "apertura": "11:30",
+        "cierre": "23:00"
+      },
+      {
+        "dia": 5,
+        "apertura": "11:30",
+        "cierre": "23:00"
+      },
+      {
+        "dia": 6,
+        "apertura": "11:30",
+        "cierre": "00:00"
+      }
+    ]
+  },
+  {
+    "id": "27",
+    "nombre": "La Choza Náutica Breña",
+    "imagen": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcS6hAWXF9x1MUY9sHd-QqkN501-c6Fnh2X-5kN48es3jfnOiy-jDk4fQEQ&s=10",
+    "portada": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcS058LWcPqbD4vH6ElaZx6vefIv3K-1QJCfC_b9rKoJI93By0d8nmxQU2U8&s=10",
+    "categoria": "cevicheria",
+    "categorias": [
+      "cevicheria"
+    ],
+    "rating": 4.5,
+    "opiniones": 69,
+    "tiempoEstimado": "30-40 min",
+    "distancia": "",
+    "envioGratis": false,
+    "costoEnvio": 6,
+    "lat": -12.058627474891098,
+    "lng": -77.04244178477609,
+    "direccion": "Jr. Breña 204, Breña 15082",
+    "descripcion": "Ceviches y platos marinos preparados al momento.",
+    "horario": [
+      {
+        "dia": 0,
+        "apertura": "10:00",
+        "cierre": "17:00"
+      },
+      {
+        "dia": 1,
+        "apertura": "10:00",
+        "cierre": "17:00"
+      },
+      {
+        "dia": 2,
+        "apertura": "10:00",
+        "cierre": "17:00"
+      },
+      {
+        "dia": 3,
+        "apertura": "10:00",
+        "cierre": "17:00"
+      },
+      {
+        "dia": 4,
+        "apertura": "10:00",
+        "cierre": "17:00"
+      },
+      {
+        "dia": 5,
+        "apertura": "10:00",
+        "cierre": "17:00"
+      },
+      {
+        "dia": 6,
+        "apertura": "10:00",
+        "cierre": "17:00"
+      }
+    ]
+  },
+  {
+    "id": "28",
+    "nombre": "El Rincón Marino",
+    "imagen": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTUGHzNp2MZ9Ife1O4PBwsbiVzdvHEDAfzL2bK9UpZc5WNlo6leaqXBZ9Q&s=10",
+    "portada": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcS058LWcPqbD4vH6ElaZx6vefIv3K-1QJCfC_b9rKoJI93By0d8nmxQU2U8&s=10",
+    "categoria": "cevicheria",
+    "categorias": [
+      "cevicheria"
+    ],
+    "rating": 4.7,
+    "opiniones": 96,
+    "tiempoEstimado": "30-45 min",
+    "distancia": "",
+    "envioGratis": true,
+    "costoEnvio": 0,
+    "lat": -12.060500307713399,
+    "lng": -77.04211455534781,
+    "direccion": "Av. Brasil 128, Breña 15083",
+    "descripcion": "Ceviches y platos marinos preparados al momento.",
+    "horario": [
+      {
+        "dia": 0,
+        "apertura": "10:30",
+        "cierre": "17:30"
+      },
+      {
+        "dia": 1,
+        "apertura": "10:30",
+        "cierre": "17:30"
+      },
+      {
+        "dia": 2,
+        "apertura": "10:30",
+        "cierre": "17:30"
+      },
+      {
+        "dia": 3,
+        "apertura": "10:30",
+        "cierre": "17:30"
+      },
+      {
+        "dia": 4,
+        "apertura": "10:30",
+        "cierre": "17:30"
+      },
+      {
+        "dia": 5,
+        "apertura": "10:30",
+        "cierre": "17:30"
+      },
+      {
+        "dia": 6,
+        "apertura": "10:30",
+        "cierre": "17:30"
+      }
+    ]
+  },
+  {
+    "id": "29",
+    "nombre": "Doña Lolita Restaurante",
+    "imagen": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTWHLxJGh5sO9fUL9mXrABHEM_6tOX1DuXKPXCeFe6uinvgDzkXjq7csoE&s=10",
+    "portada": "https://buenazo.cronosmedia.glr.pe/original/2022/10/24/6356cbae2d0ad652087c5d15.jpg",
+    "categoria": "comida_criolla",
+    "categorias": [
+      "comida_criolla"
+    ],
+    "rating": 4.2,
+    "opiniones": 140,
+    "tiempoEstimado": "25-35 min",
+    "distancia": "",
+    "envioGratis": false,
+    "costoEnvio": 3,
+    "lat": -12.056292973116403,
+    "lng": -77.04605203799989,
+    "direccion": "Av. Bolivia 776, Breña 15082",
+    "descripcion": "Restaurante de comida criolla y platos caseros.",
+    "horario": [
+      {
+        "dia": 0,
+        "apertura": "11:00",
+        "cierre": "17:00"
+      },
+      {
+        "dia": 1,
+        "apertura": "11:00",
+        "cierre": "17:00"
+      },
+      {
+        "dia": 2,
+        "apertura": "11:00",
+        "cierre": "17:00"
+      },
+      {
+        "dia": 3,
+        "apertura": "11:00",
+        "cierre": "17:00"
+      },
+      {
+        "dia": 4,
+        "apertura": "11:00",
+        "cierre": "17:00"
+      },
+      {
+        "dia": 5,
+        "apertura": "11:00",
+        "cierre": "17:00"
+      },
+      {
+        "dia": 6,
+        "apertura": "11:00",
+        "cierre": "17:00"
+      }
+    ],
+    "precioMenuDia": 10,
+    "precioExtra": 15
+  },
+  {
+    "id": "30",
+    "nombre": "Chifa Xing Fa",
+    "imagen": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSJyUkQZc_ht06QplUXHuVTsoY19H5S1w_R0Vp0OsWb62kvDTt6AEd9dTUy&s=10",
+    "portada": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQcXO1zbWwmR50BkV9fTifmFfaS-j8PCZcS4366T4KB8MLER8ZbxECCAXU&s=10",
+    "categoria": "chifa",
+    "categorias": [
+      "chifa"
+    ],
+    "rating": 4,
+    "opiniones": 129,
+    "tiempoEstimado": "20-35 min",
+    "distancia": "",
+    "envioGratis": true,
+    "costoEnvio": 0,
+    "lat": -12.054703401831002,
+    "lng": -77.0440135592847,
+    "direccion": "Av. Venezuela 713, Breña 15082",
+    "descripcion": "Platos de cocina chifa, arroces y salteados.",
+    "horario": [
+      {
+        "dia": 0,
+        "apertura": "12:00",
+        "cierre": "23:30"
+      },
+      {
+        "dia": 1,
+        "apertura": "12:00",
+        "cierre": "22:30"
+      },
+      {
+        "dia": 2,
+        "apertura": "12:00",
+        "cierre": "22:30"
+      },
+      {
+        "dia": 3,
+        "apertura": "12:00",
+        "cierre": "22:30"
+      },
+      {
+        "dia": 4,
+        "apertura": "12:00",
+        "cierre": "22:30"
+      },
+      {
+        "dia": 5,
+        "apertura": "12:00",
+        "cierre": "22:30"
+      },
+      {
+        "dia": 6,
+        "apertura": "12:00",
+        "cierre": "23:30"
+      }
+    ]
+  },
+  {
+    "id": "31",
+    "nombre": "Chifa El chino del Rimac",
+    "imagen": "https://images.rappi.pe/restaurants_logo/c19bbc94-bb79-48b6-a3a1-23083d889859-1649223353501.png",
+    "portada": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQcXO1zbWwmR50BkV9fTifmFfaS-j8PCZcS4366T4KB8MLER8ZbxECCAXU&s=10",
+    "categoria": "chifa",
+    "categorias": [
+      "chifa"
+    ],
+    "rating": 4.7,
+    "opiniones": 237,
+    "tiempoEstimado": "25-40 min",
+    "distancia": "",
+    "envioGratis": false,
+    "costoEnvio": 3,
+    "lat": -12.032175858137698,
+    "lng": -77.03296500698771,
+    "direccion": "Av. Guardia Republicana 548, Rímac 15093",
+    "descripcion": "Platos de cocina chifa, arroces y salteados.",
+    "horario": [
+      {
+        "dia": 0,
+        "apertura": "12:30",
+        "cierre": "00:30"
+      },
+      {
+        "dia": 1,
+        "apertura": "12:30",
+        "cierre": "23:30"
+      },
+      {
+        "dia": 2,
+        "apertura": "12:30",
+        "cierre": "23:30"
+      },
+      {
+        "dia": 3,
+        "apertura": "12:30",
+        "cierre": "23:30"
+      },
+      {
+        "dia": 4,
+        "apertura": "12:30",
+        "cierre": "23:30"
+      },
+      {
+        "dia": 5,
+        "apertura": "12:30",
+        "cierre": "23:30"
+      },
+      {
+        "dia": 6,
+        "apertura": "12:30",
+        "cierre": "00:30"
+      }
+    ]
+  },
+  {
+    "id": "32",
+    "nombre": "Polleria Valentina",
+    "imagen": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQ1y8pjHoj0aehtlEKJ39Znc0dEH2oDn1DDOSk4Igyz_g&s=10",
+    "portada": "https://img.magnific.com/psd-premium/plantilla-portada-facebook-restaurante-comida_106176-755.jpg?semt=ais_hybrid&w=740&q=80",
+    "categoria": "polleria",
+    "categorias": [
+      "polleria"
+    ],
+    "rating": 4.1,
+    "opiniones": 84,
+    "tiempoEstimado": "25-35 min",
+    "distancia": "",
+    "envioGratis": true,
+    "costoEnvio": 0,
+    "lat": -12.032445194301097,
+    "lng": -77.0267758665343,
+    "direccion": "Av. Samuel Alcázar 100, Rímac 15093",
+    "descripcion": "Pollos a la brasa, acompañamientos y opciones para compartir.",
+    "horario": [
+      {
+        "dia": 0,
+        "apertura": "16:00",
+        "cierre": "01:00"
+      },
+      {
+        "dia": 1,
+        "apertura": "16:00",
+        "cierre": "00:00"
+      },
+      {
+        "dia": 2,
+        "apertura": "16:00",
+        "cierre": "00:00"
+      },
+      {
+        "dia": 3,
+        "apertura": "16:00",
+        "cierre": "00:00"
+      },
+      {
+        "dia": 4,
+        "apertura": "16:00",
+        "cierre": "00:00"
+      },
+      {
+        "dia": 5,
+        "apertura": "16:00",
+        "cierre": "00:00"
+      },
+      {
+        "dia": 6,
+        "apertura": "16:00",
+        "cierre": "01:00"
+      }
+    ]
+  },
+  {
+    "id": "33",
+    "nombre": "La Cocina del Virrey",
+    "imagen": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTxqLDnI2zBEc_uN-vFmNWzRI5lazvNboXoaaZ2H3WITw&s=10",
+    "portada": "https://buenazo.cronosmedia.glr.pe/original/2022/10/24/6356cbae2d0ad652087c5d15.jpg",
+    "categoria": "comida_criolla",
+    "categorias": [
+      "comida_criolla"
+    ],
+    "rating": 4,
+    "opiniones": 103,
+    "tiempoEstimado": "25-40 min",
+    "distancia": "",
+    "envioGratis": false,
+    "costoEnvio": 4,
+    "lat": -12.0374319105051,
+    "lng": -77.0273035542343,
+    "direccion": "Jr. Atahualpa 145, Rímac 15093",
+    "descripcion": "Restaurante de comida criolla y platos caseros.",
+    "horario": [
+      {
+        "dia": 0,
+        "apertura": "11:30",
+        "cierre": "16:30"
+      },
+      {
+        "dia": 2,
+        "apertura": "11:30",
+        "cierre": "16:30"
+      },
+      {
+        "dia": 3,
+        "apertura": "11:30",
+        "cierre": "16:30"
+      },
+      {
+        "dia": 4,
+        "apertura": "11:30",
+        "cierre": "16:30"
+      },
+      {
+        "dia": 5,
+        "apertura": "11:30",
+        "cierre": "16:30"
+      },
+      {
+        "dia": 6,
+        "apertura": "11:30",
+        "cierre": "16:30"
+      }
+    ],
+    "precioMenuDia": 10,
+    "precioExtra": 15
+  },
+  {
+    "id": "34",
+    "nombre": "¡ Habla Causa !",
+    "imagen": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSnkdrOx9x9nIkKRhxX8sgFODwPc_HihActwTP5-OO8FUwSRbMloaffHX7X&s=10",
+    "portada": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcS058LWcPqbD4vH6ElaZx6vefIv3K-1QJCfC_b9rKoJI93By0d8nmxQU2U8&s=10",
+    "categoria": "cevicheria",
+    "categorias": [
+      "cevicheria"
+    ],
+    "rating": 3.8,
+    "opiniones": 136,
+    "tiempoEstimado": "25-35 min",
+    "distancia": "",
+    "envioGratis": false,
+    "costoEnvio": 6,
+    "lat": -12.0364718060719,
+    "lng": -77.02963707604098,
+    "direccion": "Jr. Loreto 193, Rímac 15093",
+    "descripcion": "Ceviches y platos marinos preparados al momento.",
+    "horario": [
+      {
+        "dia": 0,
+        "apertura": "11:00",
+        "cierre": "18:00"
+      },
+      {
+        "dia": 1,
+        "apertura": "11:00",
+        "cierre": "18:00"
+      },
+      {
+        "dia": 2,
+        "apertura": "11:00",
+        "cierre": "18:00"
+      },
+      {
+        "dia": 3,
+        "apertura": "11:00",
+        "cierre": "18:00"
+      },
+      {
+        "dia": 4,
+        "apertura": "11:00",
+        "cierre": "18:00"
+      },
+      {
+        "dia": 5,
+        "apertura": "11:00",
+        "cierre": "18:00"
+      },
+      {
+        "dia": 6,
+        "apertura": "11:00",
+        "cierre": "18:00"
+      }
+    ]
+  },
+  {
+    "id": "35",
+    "nombre": "Corralito",
+    "imagen": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTkPPejDjBF_LrtlMKeHiFDL-L8mAokBEdgnAIUBJHgcg&s=10",
+    "portada": "https://img.magnific.com/psd-premium/plantilla-portada-facebook-restaurante-comida_106176-755.jpg?semt=ais_hybrid&w=740&q=80",
+    "categoria": "polleria",
+    "categorias": [
+      "polleria"
+    ],
+    "rating": 4.4,
+    "opiniones": 149,
+    "tiempoEstimado": "20-30 min",
+    "distancia": "",
+    "envioGratis": false,
+    "costoEnvio": 4,
+    "lat": -12.0294572094926,
+    "lng": -77.03564274581021,
+    "direccion": "Av. Felipe Arancibia 537, Rímac 15094",
+    "descripcion": "Pollos a la brasa, acompañamientos y opciones para compartir.",
+    "horario": [
+      {
+        "dia": 0,
+        "apertura": "17:00",
+        "cierre": "02:00"
+      },
+      {
+        "dia": 1,
+        "apertura": "17:00",
+        "cierre": "01:00"
+      },
+      {
+        "dia": 2,
+        "apertura": "17:00",
+        "cierre": "01:00"
+      },
+      {
+        "dia": 3,
+        "apertura": "17:00",
+        "cierre": "01:00"
+      },
+      {
+        "dia": 4,
+        "apertura": "17:00",
+        "cierre": "01:00"
+      },
+      {
+        "dia": 5,
+        "apertura": "17:00",
+        "cierre": "01:00"
+      },
+      {
+        "dia": 6,
+        "apertura": "17:00",
+        "cierre": "02:00"
+      }
+    ]
+  },
+  {
+    "id": "36",
+    "nombre": "Pihuichos",
+    "imagen": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQBZ6jB2TNGuGKFBlH-I1lK_zMnUVR9ge5OHQnvxXxwkmW6_1vQc3UqARY&s=10",
+    "portada": "https://img.magnific.com/psd-premium/plantilla-portada-facebook-restaurante-comida_106176-755.jpg?semt=ais_hybrid&w=740&q=80",
+    "categoria": "polleria",
+    "categorias": [
+      "polleria"
+    ],
+    "rating": 4,
+    "opiniones": 56,
+    "tiempoEstimado": "30-45 min",
+    "distancia": "",
+    "envioGratis": false,
+    "costoEnvio": 3,
+    "lat": -12.0736762032931,
+    "lng": -77.03710349873191,
+    "direccion": "Av. Gral. Juan Antonio Álvarez de Arenales 901, Jesús María 15072",
+    "descripcion": "Pollos a la brasa, acompañamientos y opciones para compartir.",
+    "horario": [
+      {
+        "dia": 0,
+        "apertura": "12:30",
+        "cierre": "23:30"
+      },
+      {
+        "dia": 1,
+        "apertura": "12:30",
+        "cierre": "22:30"
+      },
+      {
+        "dia": 2,
+        "apertura": "12:30",
+        "cierre": "22:30"
+      },
+      {
+        "dia": 3,
+        "apertura": "12:30",
+        "cierre": "22:30"
+      },
+      {
+        "dia": 4,
+        "apertura": "12:30",
+        "cierre": "22:30"
+      },
+      {
+        "dia": 5,
+        "apertura": "12:30",
+        "cierre": "22:30"
+      },
+      {
+        "dia": 6,
+        "apertura": "12:30",
+        "cierre": "23:30"
+      }
+    ]
+  },
+  {
+    "id": "37",
+    "nombre": "Pachanka Restaurant",
+    "imagen": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTrOz2Y9_BeUhlgkSeKYMkU3wh_yg5Eu5wKrpPxgjLJ9KV9yF-EFW69S3M&s=10",
+    "portada": "https://buenazo.cronosmedia.glr.pe/original/2022/10/24/6356cbae2d0ad652087c5d15.jpg",
+    "categoria": "comida_criolla",
+    "categorias": [
+      "comida_criolla"
+    ],
+    "rating": 4.8,
+    "opiniones": 71,
+    "tiempoEstimado": "30-45 min",
+    "distancia": "",
+    "envioGratis": true,
+    "costoEnvio": 0,
+    "lat": -12.073758183419098,
+    "lng": -77.037924025259,
+    "direccion": "Jr, Jirón Coronel Camilo Carrillo 169, Jesús María 15076",
+    "descripcion": "Restaurante de comida criolla y platos caseros.",
+    "horario": [
+      {
+        "dia": 0,
+        "apertura": "12:00",
+        "cierre": "16:00"
+      },
+      {
+        "dia": 1,
+        "apertura": "12:00",
+        "cierre": "16:00"
+      },
+      {
+        "dia": 2,
+        "apertura": "12:00",
+        "cierre": "16:00"
+      },
+      {
+        "dia": 3,
+        "apertura": "12:00",
+        "cierre": "16:00"
+      },
+      {
+        "dia": 4,
+        "apertura": "12:00",
+        "cierre": "16:00"
+      },
+      {
+        "dia": 5,
+        "apertura": "12:00",
+        "cierre": "16:00"
+      },
+      {
+        "dia": 6,
+        "apertura": "12:00",
+        "cierre": "16:00"
+      }
+    ],
+    "precioMenuDia": 10,
+    "precioExtra": 15
+  },
+  {
+    "id": "38",
+    "nombre": "Chifa Won Sen",
+    "imagen": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcS3mji8VcM_DlTzlLusLlicLHpNs5LHBfuj1Caoyv0JOmA7t9GBM87_xks&s=10",
+    "portada": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQcXO1zbWwmR50BkV9fTifmFfaS-j8PCZcS4366T4KB8MLER8ZbxECCAXU&s=10",
+    "categoria": "chifa",
+    "categorias": [
+      "chifa"
+    ],
+    "rating": 4.1,
+    "opiniones": 192,
+    "tiempoEstimado": "25-40 min",
+    "distancia": "",
+    "envioGratis": false,
+    "costoEnvio": 3,
+    "lat": -12.072327649358598,
+    "lng": -77.0386649431019,
+    "direccion": "Jirón Pablo Bermudez 288, Jesús María 15072",
+    "descripcion": "Platos de cocina chifa, arroces y salteados.",
+    "horario": [
+      {
+        "dia": 0,
+        "apertura": "11:00",
+        "cierre": "01:00"
+      },
+      {
+        "dia": 1,
+        "apertura": "11:00",
+        "cierre": "00:00"
+      },
+      {
+        "dia": 2,
+        "apertura": "11:00",
+        "cierre": "00:00"
+      },
+      {
+        "dia": 3,
+        "apertura": "11:00",
+        "cierre": "00:00"
+      },
+      {
+        "dia": 4,
+        "apertura": "11:00",
+        "cierre": "00:00"
+      },
+      {
+        "dia": 5,
+        "apertura": "11:00",
+        "cierre": "00:00"
+      },
+      {
+        "dia": 6,
+        "apertura": "11:00",
+        "cierre": "01:00"
+      }
+    ]
+  },
+  {
+    "id": "39",
+    "nombre": "Anticuchos Bran",
+    "imagen": "https://images.rappi.pe/restaurants_logo/a95a5259-8224-46df-afd3-b29bb1a4ffe1-1780764417853.png",
+    "portada": "https://walac.pe/wp-content/uploads/2023/10/anticuchos.png",
+    "categoria": "anticuchos",
+    "categorias": [
+      "anticuchos"
+    ],
+    "rating": 4.1,
+    "opiniones": 159,
+    "tiempoEstimado": "30-45 min",
+    "distancia": "",
+    "envioGratis": false,
+    "costoEnvio": 4,
+    "lat": -12.075146940331802,
+    "lng": -77.04478451366779,
+    "direccion": "Av. Cuba 979, Jesús María 15072",
+    "descripcion": "Anticuchos, parrillas y acompañamientos.",
+    "horario": [
+      {
+        "dia": 0,
+        "apertura": "16:00",
+        "cierre": "00:00"
+      },
+      {
+        "dia": 1,
+        "apertura": "16:00",
+        "cierre": "23:00"
+      },
+      {
+        "dia": 2,
+        "apertura": "16:00",
+        "cierre": "23:00"
+      },
+      {
+        "dia": 3,
+        "apertura": "16:00",
+        "cierre": "23:00"
+      },
+      {
+        "dia": 4,
+        "apertura": "16:00",
+        "cierre": "23:00"
+      },
+      {
+        "dia": 5,
+        "apertura": "16:00",
+        "cierre": "23:00"
+      },
+      {
+        "dia": 6,
+        "apertura": "16:00",
+        "cierre": "00:00"
+      }
+    ]
+  },
+  {
+    "id": "40",
+    "nombre": "Pizzería Amore e Villano",
+    "imagen": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQhZqXA-mBdE24t1FlRsZnxwlF2INpkpniehy5I_kGx0e6pfq9Vw9AG1eE&s=10",
+    "portada": "https://img.magnific.com/psd-gratis/menu-comida-pizza-deliciosa-plantilla-banner-portada-facebook_120329-4878.jpg?semt=ais_hybrid&w=740&q=80",
+    "categoria": "pizza",
+    "categorias": [
+      "pizza"
+    ],
+    "rating": 4.1,
+    "opiniones": 157,
+    "tiempoEstimado": "25-40 min",
+    "distancia": "",
+    "envioGratis": false,
+    "costoEnvio": 5,
+    "lat": -12.076153026922498,
+    "lng": -77.0481046907987,
+    "direccion": "Jr. Huiracocha 1398, Jesús María 15072",
+    "descripcion": "Pizzas y opciones para compartir.",
+    "horario": [
+      {
+        "dia": 0,
+        "apertura": "16:00",
+        "cierre": "00:00"
+      },
+      {
+        "dia": 1,
+        "apertura": "16:00",
+        "cierre": "23:00"
+      },
+      {
+        "dia": 2,
+        "apertura": "16:00",
+        "cierre": "23:00"
+      },
+      {
+        "dia": 3,
+        "apertura": "16:00",
+        "cierre": "23:00"
+      },
+      {
+        "dia": 4,
+        "apertura": "16:00",
+        "cierre": "23:00"
+      },
+      {
+        "dia": 5,
+        "apertura": "16:00",
+        "cierre": "23:00"
+      },
+      {
+        "dia": 6,
+        "apertura": "16:00",
+        "cierre": "00:00"
+      }
+    ]
+  },
+  {
+    "id": "41",
+    "nombre": "Villa Chicken",
+    "imagen": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRDvQDZMxdKx0uibiOX9dWTiIjgjTe6uk6fT4xZ5jz_tA&s=10",
+    "portada": "https://img.magnific.com/psd-premium/plantilla-portada-facebook-restaurante-comida_106176-755.jpg?semt=ais_hybrid&w=740&q=80",
+    "categoria": "polleria",
+    "categorias": [
+      "polleria"
+    ],
+    "rating": 4.3,
+    "opiniones": 131,
+    "tiempoEstimado": "25-35 min",
+    "distancia": "",
+    "envioGratis": true,
+    "costoEnvio": 0,
+    "lat": -12.076756269807,
+    "lng": -77.0445695444678,
+    "direccion": "Av. Francisco Javier Mariátegui 912, Jesús María 15072",
+    "descripcion": "Pollos a la brasa, acompañamientos y opciones para compartir.",
+    "horario": [
+      {
+        "dia": 0,
+        "apertura": "11:30",
+        "cierre": "00:00"
+      },
+      {
+        "dia": 1,
+        "apertura": "11:30",
+        "cierre": "23:00"
+      },
+      {
+        "dia": 2,
+        "apertura": "11:30",
+        "cierre": "23:00"
+      },
+      {
+        "dia": 3,
+        "apertura": "11:30",
+        "cierre": "23:00"
+      },
+      {
+        "dia": 4,
+        "apertura": "11:30",
+        "cierre": "23:00"
+      },
+      {
+        "dia": 5,
+        "apertura": "11:30",
+        "cierre": "23:00"
+      },
+      {
+        "dia": 6,
+        "apertura": "11:30",
+        "cierre": "00:00"
+      }
+    ]
+  },
+  {
+    "id": "42",
+    "nombre": "Chifa Lui Lei",
+    "imagen": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSH3BSMbWWOHYVk2LM-U8Aw6xa3kDx1_vsfOryXABmVgcvVXMzHBlbtAv4&s=10",
+    "portada": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQcXO1zbWwmR50BkV9fTifmFfaS-j8PCZcS4366T4KB8MLER8ZbxECCAXU&s=10",
+    "categoria": "chifa",
+    "categorias": [
+      "chifa"
+    ],
+    "rating": 3.8,
+    "opiniones": 33,
+    "tiempoEstimado": "15-30 min",
+    "distancia": "",
+    "envioGratis": true,
+    "costoEnvio": 0,
+    "lat": -12.076649233154301,
+    "lng": -77.05061472954222,
+    "direccion": "Av Horacio Urteaga 1531, Jesús María 15072",
+    "descripcion": "Platos de cocina chifa, arroces y salteados.",
+    "horario": [
+      {
+        "dia": 0,
+        "apertura": "11:00",
+        "cierre": "23:00"
+      },
+      {
+        "dia": 1,
+        "apertura": "11:00",
+        "cierre": "22:00"
+      },
+      {
+        "dia": 2,
+        "apertura": "11:00",
+        "cierre": "22:00"
+      },
+      {
+        "dia": 3,
+        "apertura": "11:00",
+        "cierre": "22:00"
+      },
+      {
+        "dia": 4,
+        "apertura": "11:00",
+        "cierre": "22:00"
+      },
+      {
+        "dia": 5,
+        "apertura": "11:00",
+        "cierre": "22:00"
+      },
+      {
+        "dia": 6,
+        "apertura": "11:00",
+        "cierre": "23:00"
+      }
+    ]
+  },
+  {
+    "id": "43",
+    "nombre": "Don Bosco Restaurante",
+    "imagen": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQdUC2rV2fxUbUAS81Io1UUj8oRlEMRuAEx3GVHr4fYUiPKeSdgTyZ8v64&s=10",
+    "portada": "https://buenazo.cronosmedia.glr.pe/original/2022/10/24/6356cbae2d0ad652087c5d15.jpg",
+    "categoria": "comida_criolla",
+    "categorias": [
+      "comida_criolla"
+    ],
+    "rating": 4.7,
+    "opiniones": 159,
+    "tiempoEstimado": "25-40 min",
+    "distancia": "",
+    "envioGratis": false,
+    "costoEnvio": 5,
+    "lat": -12.0752590093819,
+    "lng": -77.0474157450929,
+    "direccion": "Av. Cuba 1265, Jesús María 15072",
+    "descripcion": "Restaurante de comida criolla y platos caseros.",
+    "horario": [
+      {
+        "dia": 0,
+        "apertura": "10:00",
+        "cierre": "18:00"
+      },
+      {
+        "dia": 1,
+        "apertura": "10:00",
+        "cierre": "18:00"
+      },
+      {
+        "dia": 2,
+        "apertura": "10:00",
+        "cierre": "18:00"
+      },
+      {
+        "dia": 3,
+        "apertura": "10:00",
+        "cierre": "18:00"
+      },
+      {
+        "dia": 4,
+        "apertura": "10:00",
+        "cierre": "18:00"
+      },
+      {
+        "dia": 5,
+        "apertura": "10:00",
+        "cierre": "18:00"
+      },
+      {
+        "dia": 6,
+        "apertura": "10:00",
+        "cierre": "18:00"
+      }
+    ],
+    "precioMenuDia": 10,
+    "precioExtra": 15
+  },
+  {
+    "id": "44",
+    "nombre": "China Town",
+    "imagen": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSjbGuAb_oO1oT1WSUTFaXg2ihlnmgcDuNxuwWehbJi6Q&s=10",
+    "portada": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQcXO1zbWwmR50BkV9fTifmFfaS-j8PCZcS4366T4KB8MLER8ZbxECCAXU&s=10",
+    "categoria": "chifa",
+    "categorias": [
+      "chifa"
+    ],
+    "rating": 4.5,
+    "opiniones": 149,
+    "tiempoEstimado": "15-30 min",
+    "distancia": "",
+    "envioGratis": false,
+    "costoEnvio": 6,
+    "lat": -12.074653848639302,
+    "lng": -77.04159088214222,
+    "direccion": "Jr. Capac Yupanqui 973, Jesús María 15072",
+    "descripcion": "Platos de cocina chifa, arroces y salteados.",
+    "horario": [
+      {
+        "dia": 0,
+        "apertura": "11:30",
+        "cierre": "00:00"
+      },
+      {
+        "dia": 1,
+        "apertura": "11:30",
+        "cierre": "23:00"
+      },
+      {
+        "dia": 2,
+        "apertura": "11:30",
+        "cierre": "23:00"
+      },
+      {
+        "dia": 3,
+        "apertura": "11:30",
+        "cierre": "23:00"
+      },
+      {
+        "dia": 4,
+        "apertura": "11:30",
+        "cierre": "23:00"
+      },
+      {
+        "dia": 5,
+        "apertura": "11:30",
+        "cierre": "23:00"
+      },
+      {
+        "dia": 6,
+        "apertura": "11:30",
+        "cierre": "00:00"
+      }
+    ]
+  },
+  {
+    "id": "45",
+    "nombre": "Pizzería Bob esponja",
+    "imagen": "https://static.wikia.nocookie.net/spongebob/images/e/e4/Pizza_Delivery_136.png/revision/latest?cb=20211231101127",
+    "portada": "https://img.magnific.com/psd-gratis/menu-comida-pizza-deliciosa-plantilla-banner-portada-facebook_120329-4878.jpg?semt=ais_hybrid&w=740&q=80",
+    "categoria": "pizza",
+    "categorias": [
+      "pizza"
+    ],
+    "rating": 3.9,
+    "opiniones": 145,
+    "tiempoEstimado": "30-45 min",
+    "distancia": "",
+    "envioGratis": false,
+    "costoEnvio": 6,
+    "lat": -12.068990778449699,
+    "lng": -77.02831908942092,
+    "direccion": "Av. Manco Cápac 901, La Victoria 15033",
+    "descripcion": "Pizzas y opciones para compartir.",
+    "horario": [
+      {
+        "dia": 0,
+        "apertura": "17:00",
+        "cierre": "01:00"
+      },
+      {
+        "dia": 1,
+        "apertura": "17:00",
+        "cierre": "00:00"
+      },
+      {
+        "dia": 2,
+        "apertura": "17:00",
+        "cierre": "00:00"
+      },
+      {
+        "dia": 3,
+        "apertura": "17:00",
+        "cierre": "00:00"
+      },
+      {
+        "dia": 4,
+        "apertura": "17:00",
+        "cierre": "00:00"
+      },
+      {
+        "dia": 5,
+        "apertura": "17:00",
+        "cierre": "00:00"
+      },
+      {
+        "dia": 6,
+        "apertura": "17:00",
+        "cierre": "01:00"
+      }
+    ]
+  },
+  {
+    "id": "46",
+    "nombre": "Restaurante Punto de Encuentro",
+    "imagen": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRMTuQqCfSHAwoGRI4YaotmAhw5ScH2lsy0F1BXznrbjA&s=10",
+    "portada": "https://buenazo.cronosmedia.glr.pe/original/2022/10/24/6356cbae2d0ad652087c5d15.jpg",
+    "categoria": "comida_criolla",
+    "categorias": [
+      "comida_criolla"
+    ],
+    "rating": 4.2,
+    "opiniones": 70,
+    "tiempoEstimado": "30-45 min",
+    "distancia": "",
+    "envioGratis": false,
+    "costoEnvio": 5,
+    "lat": -12.0777648748237,
+    "lng": -77.02483175640761,
+    "direccion": "Av. de las Américas 379, La Victoria 15034",
+    "descripcion": "Restaurante de comida criolla y platos caseros.",
+    "horario": [
+      {
+        "dia": 0,
+        "apertura": "10:30",
+        "cierre": "16:00"
+      },
+      {
+        "dia": 1,
+        "apertura": "10:30",
+        "cierre": "16:00"
+      },
+      {
+        "dia": 2,
+        "apertura": "10:30",
+        "cierre": "16:00"
+      },
+      {
+        "dia": 3,
+        "apertura": "10:30",
+        "cierre": "16:00"
+      },
+      {
+        "dia": 4,
+        "apertura": "10:30",
+        "cierre": "16:00"
+      },
+      {
+        "dia": 5,
+        "apertura": "10:30",
+        "cierre": "16:00"
+      },
+      {
+        "dia": 6,
+        "apertura": "10:30",
+        "cierre": "16:00"
+      }
+    ],
+    "precioMenuDia": 10,
+    "precioExtra": 15
+  },
+  {
+    "id": "47",
+    "nombre": "Restaurante Donde Amanda",
+    "imagen": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTVI3wCtyOeyV3UZYAOtqTcRtUvYuf2bFDkYaD3VSbHrw&s=10",
+    "portada": "https://buenazo.cronosmedia.glr.pe/original/2022/10/24/6356cbae2d0ad652087c5d15.jpg",
+    "categoria": "comida_criolla",
+    "categorias": [
+      "comida_criolla"
+    ],
+    "rating": 3.8,
+    "opiniones": 224,
+    "tiempoEstimado": "30-45 min",
+    "distancia": "",
+    "envioGratis": false,
+    "costoEnvio": 5,
+    "lat": -12.076915074301496,
+    "lng": -77.0234155500624,
+    "direccion": "Parque Unión Panamericana 185, La Victoria 15034",
+    "descripcion": "Restaurante de comida criolla y platos caseros.",
+    "horario": [
+      {
+        "dia": 0,
+        "apertura": "11:00",
+        "cierre": "17:00"
+      },
+      {
+        "dia": 1,
+        "apertura": "11:00",
+        "cierre": "17:00"
+      },
+      {
+        "dia": 2,
+        "apertura": "11:00",
+        "cierre": "17:00"
+      },
+      {
+        "dia": 3,
+        "apertura": "11:00",
+        "cierre": "17:00"
+      },
+      {
+        "dia": 4,
+        "apertura": "11:00",
+        "cierre": "17:00"
+      },
+      {
+        "dia": 5,
+        "apertura": "11:00",
+        "cierre": "17:00"
+      },
+      {
+        "dia": 6,
+        "apertura": "11:00",
+        "cierre": "17:00"
+      }
+    ],
+    "precioMenuDia": 10,
+    "precioExtra": 15
+  },
+  {
+    "id": "48",
+    "nombre": "Cevichería Mi Barrunto",
+    "imagen": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRJKFBURFl_25pgXS6iDPdXoBdCGH-a13--ilnRqKlY9qeNKNz3qk4hAB8&s=10",
+    "portada": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcS058LWcPqbD4vH6ElaZx6vefIv3K-1QJCfC_b9rKoJI93By0d8nmxQU2U8&s=10",
+    "categoria": "cevicheria",
+    "categorias": [
+      "cevicheria"
+    ],
+    "rating": 4.3,
+    "opiniones": 229,
+    "tiempoEstimado": "20-30 min",
+    "distancia": "",
+    "envioGratis": true,
+    "costoEnvio": 0,
+    "lat": -12.067465987729001,
+    "lng": -77.02150738536302,
+    "direccion": "Jr. Sebastián Barranca 935, La Victoria 15018",
+    "descripcion": "Ceviches y platos marinos preparados al momento.",
+    "horario": [
+      {
+        "dia": 0,
+        "apertura": "11:30",
+        "cierre": "17:00"
+      },
+      {
+        "dia": 1,
+        "apertura": "11:30",
+        "cierre": "17:00"
+      },
+      {
+        "dia": 2,
+        "apertura": "11:30",
+        "cierre": "17:00"
+      },
+      {
+        "dia": 3,
+        "apertura": "11:30",
+        "cierre": "17:00"
+      },
+      {
+        "dia": 4,
+        "apertura": "11:30",
+        "cierre": "17:00"
+      },
+      {
+        "dia": 5,
+        "apertura": "11:30",
+        "cierre": "17:00"
+      },
+      {
+        "dia": 6,
+        "apertura": "11:30",
+        "cierre": "17:00"
+      }
+    ]
+  },
+  {
+    "id": "49",
+    "nombre": "Brosteria Matute",
+    "imagen": "https://img.magnific.com/vector-gratis/pollo-frito-volador-dibujos-animados-cubo_138676-2081.jpg?semt=ais_hybrid&w=740&q=80",
+    "portada": "https://img.magnific.com/psd-gratis/plantilla-banner-portada-facebook-menu-comida-restaurante_120329-5497.jpg?semt=ais_hybrid&w=740&q=80",
+    "categoria": "broaster",
+    "categorias": [
+      "broaster"
+    ],
+    "rating": 4.2,
+    "opiniones": 247,
+    "tiempoEstimado": "15-30 min",
+    "distancia": "",
+    "envioGratis": false,
+    "costoEnvio": 3,
+    "lat": -12.0695958047537,
+    "lng": -77.02171123323629,
+    "direccion": "Jr. Abtao, La Victoria 15033",
+    "descripcion": "Pollo broaster, papas y acompañamientos.",
+    "horario": [
+      {
+        "dia": 0,
+        "apertura": "16:30",
+        "cierre": "00:30"
+      },
+      {
+        "dia": 1,
+        "apertura": "16:30",
+        "cierre": "23:30"
+      },
+      {
+        "dia": 2,
+        "apertura": "16:30",
+        "cierre": "23:30"
+      },
+      {
+        "dia": 3,
+        "apertura": "16:30",
+        "cierre": "23:30"
+      },
+      {
+        "dia": 4,
+        "apertura": "16:30",
+        "cierre": "23:30"
+      },
+      {
+        "dia": 5,
+        "apertura": "16:30",
+        "cierre": "23:30"
+      },
+      {
+        "dia": 6,
+        "apertura": "16:30",
+        "cierre": "00:30"
+      }
+    ]
+  },
+  {
+    "id": "50",
+    "nombre": "El Huarique de la Tia Sofi",
+    "imagen": "https://dynamic-media-cdn.tripadvisor.com/media/photo-o/1b/d9/89/1e/estamos-para-servirles.jpg?w=1000&h=1000&s=1",
+    "portada": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcS058LWcPqbD4vH6ElaZx6vefIv3K-1QJCfC_b9rKoJI93By0d8nmxQU2U8&s=10",
+    "categoria": "cevicheria",
+    "categorias": [
+      "cevicheria"
+    ],
+    "rating": 4.2,
+    "opiniones": 152,
+    "tiempoEstimado": "30-45 min",
+    "distancia": "",
+    "envioGratis": false,
+    "costoEnvio": 4,
+    "lat": -12.0679066408774,
+    "lng": -77.01599276373592,
+    "direccion": "Jr. Luis Giribaldi 851, La Victoria 15018",
+    "descripcion": "Ceviches y platos marinos preparados al momento.",
+    "horario": [
+      {
+        "dia": 0,
+        "apertura": "09:30",
+        "cierre": "16:30"
+      },
+      {
+        "dia": 1,
+        "apertura": "09:30",
+        "cierre": "16:30"
+      },
+      {
+        "dia": 2,
+        "apertura": "09:30",
+        "cierre": "16:30"
+      },
+      {
+        "dia": 3,
+        "apertura": "09:30",
+        "cierre": "16:30"
+      },
+      {
+        "dia": 4,
+        "apertura": "09:30",
+        "cierre": "16:30"
+      },
+      {
+        "dia": 5,
+        "apertura": "09:30",
+        "cierre": "16:30"
+      },
+      {
+        "dia": 6,
+        "apertura": "09:30",
+        "cierre": "16:30"
+      }
+    ]
+  },
+  {
+    "id": "51",
+    "nombre": "El Chino Brasa",
+    "imagen": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcS6JhWm7b7x2hvM-BNj0LPEV5t_pb9OvkFw9Hfi2_nQJDrixl77m45MaJ0&s=10",
+    "portada": "https://img.magnific.com/psd-premium/plantilla-portada-facebook-restaurante-comida_106176-755.jpg?semt=ais_hybrid&w=740&q=80",
+    "categoria": "polleria",
+    "categorias": [
+      "polleria"
+    ],
+    "rating": 4.4,
+    "opiniones": 43,
+    "tiempoEstimado": "30-45 min",
+    "distancia": "",
+    "envioGratis": false,
+    "costoEnvio": 5,
+    "lat": -12.06994440865,
+    "lng": -77.00875551236228,
+    "direccion": "Av. México 1904, La Victoria 15019",
+    "descripcion": "Pollos a la brasa, acompañamientos y opciones para compartir.",
+    "horario": [
+      {
+        "dia": 0,
+        "apertura": "12:00",
+        "cierre": "00:30"
+      },
+      {
+        "dia": 1,
+        "apertura": "12:00",
+        "cierre": "23:30"
+      },
+      {
+        "dia": 2,
+        "apertura": "12:00",
+        "cierre": "23:30"
+      },
+      {
+        "dia": 3,
+        "apertura": "12:00",
+        "cierre": "23:30"
+      },
+      {
+        "dia": 4,
+        "apertura": "12:00",
+        "cierre": "23:30"
+      },
+      {
+        "dia": 5,
+        "apertura": "12:00",
+        "cierre": "23:30"
+      },
+      {
+        "dia": 6,
+        "apertura": "12:00",
+        "cierre": "00:30"
+      }
+    ]
+  },
+  {
+    "id": "52",
+    "nombre": "CHEPIZZA Expres",
+    "imagen": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQ52QxGFSS0ygF9DNhxcimg4jkWLBaK2qKahKU81Eo7AlQ1otUUKXkiUYQM&s=10",
+    "portada": "https://img.magnific.com/psd-gratis/menu-comida-pizza-deliciosa-plantilla-banner-portada-facebook_120329-4878.jpg?semt=ais_hybrid&w=740&q=80",
+    "categoria": "pizza",
+    "categorias": [
+      "pizza"
+    ],
+    "rating": 4.7,
+    "opiniones": 117,
+    "tiempoEstimado": "30-45 min",
+    "distancia": "",
+    "envioGratis": false,
+    "costoEnvio": 5,
+    "lat": -12.0735640049197,
+    "lng": -77.01034338015202,
+    "direccion": "Jr. Mario Urteaga 124, La Victoria 15018",
+    "descripcion": "Pizzas y opciones para compartir.",
+    "horario": [
+      {
+        "dia": 0,
+        "apertura": "17:30",
+        "cierre": "00:30"
+      },
+      {
+        "dia": 1,
+        "apertura": "17:30",
+        "cierre": "23:30"
+      },
+      {
+        "dia": 2,
+        "apertura": "17:30",
+        "cierre": "23:30"
+      },
+      {
+        "dia": 3,
+        "apertura": "17:30",
+        "cierre": "23:30"
+      },
+      {
+        "dia": 4,
+        "apertura": "17:30",
+        "cierre": "23:30"
+      },
+      {
+        "dia": 5,
+        "apertura": "17:30",
+        "cierre": "23:30"
+      },
+      {
+        "dia": 6,
+        "apertura": "17:30",
+        "cierre": "00:30"
+      }
+    ]
+  },
+  {
+    "id": "53",
+    "nombre": "Rinconcito Chinchano",
+    "imagen": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRZf4tT2aZk_G1m1K4rH0xX-pal5OVOa-tf4WrZvAxP57_JWMhGtcNCV0pG&s=10",
+    "portada": "https://buenazo.cronosmedia.glr.pe/original/2022/10/24/6356cbae2d0ad652087c5d15.jpg",
+    "categoria": "comida_criolla",
+    "categorias": [
+      "comida_criolla"
+    ],
+    "rating": 4,
+    "opiniones": 180,
+    "tiempoEstimado": "20-30 min",
+    "distancia": "",
+    "envioGratis": false,
+    "costoEnvio": 3,
+    "lat": -12.0762003838499,
+    "lng": -77.02071149595311,
+    "direccion": "Los Corales 501, La Victoria 15034",
+    "descripcion": "Restaurante de comida criolla y platos caseros.",
+    "horario": [
+      {
+        "dia": 0,
+        "apertura": "11:30",
+        "cierre": "16:30"
+      },
+      {
+        "dia": 1,
+        "apertura": "11:30",
+        "cierre": "16:30"
+      },
+      {
+        "dia": 2,
+        "apertura": "11:30",
+        "cierre": "16:30"
+      },
+      {
+        "dia": 3,
+        "apertura": "11:30",
+        "cierre": "16:30"
+      },
+      {
+        "dia": 4,
+        "apertura": "11:30",
+        "cierre": "16:30"
+      },
+      {
+        "dia": 5,
+        "apertura": "11:30",
+        "cierre": "16:30"
+      },
+      {
+        "dia": 6,
+        "apertura": "11:30",
+        "cierre": "16:30"
+      }
+    ],
+    "precioMenuDia": 10,
+    "precioExtra": 15
+  },
+  {
+    "id": "54",
+    "nombre": "Anticucheria Samara",
+    "imagen": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSJDG5fgBl2RNCT9rQ5wYFu8RVHr4qUWcHDp546j98DhpsCs9ctN9fvGt4&s=10",
+    "portada": "https://walac.pe/wp-content/uploads/2023/10/anticuchos.png",
+    "categoria": "anticuchos",
+    "categorias": [
+      "anticuchos"
+    ],
+    "rating": 4.8,
+    "opiniones": 155,
+    "tiempoEstimado": "30-40 min",
+    "distancia": "",
+    "envioGratis": false,
+    "costoEnvio": 4,
+    "lat": -12.0790278037375,
+    "lng": -77.0166935470327,
+    "direccion": "juan Pablo 509, La Victoria 15034",
+    "descripcion": "Anticuchos, parrillas y acompañamientos.",
+    "horario": [
+      {
+        "dia": 0,
+        "apertura": "16:30",
+        "cierre": "01:00"
+      },
+      {
+        "dia": 1,
+        "apertura": "16:30",
+        "cierre": "00:00"
+      },
+      {
+        "dia": 2,
+        "apertura": "16:30",
+        "cierre": "00:00"
+      },
+      {
+        "dia": 3,
+        "apertura": "16:30",
+        "cierre": "00:00"
+      },
+      {
+        "dia": 4,
+        "apertura": "16:30",
+        "cierre": "00:00"
+      },
+      {
+        "dia": 5,
+        "apertura": "16:30",
+        "cierre": "00:00"
+      },
+      {
+        "dia": 6,
+        "apertura": "16:30",
+        "cierre": "01:00"
+      }
+    ]
+  },
+  {
+    "id": "55",
+    "nombre": "Chifa Wong",
+    "imagen": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTQtyLLm-VSZjAm0TK5ffqFp1yJtiO6Ah7v6BQoSk-rpw&s=10",
+    "portada": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQcXO1zbWwmR50BkV9fTifmFfaS-j8PCZcS4366T4KB8MLER8ZbxECCAXU&s=10",
+    "categoria": "chifa",
+    "categorias": [
+      "chifa"
+    ],
+    "rating": 4.2,
+    "opiniones": 97,
+    "tiempoEstimado": "20-35 min",
+    "distancia": "",
+    "envioGratis": true,
+    "costoEnvio": 0,
+    "lat": -12.0745640223778,
+    "lng": -77.06292048373368,
+    "direccion": "Av Antonio José de Sucre 341, Pueblo Libre 15084",
+    "descripcion": "Platos de cocina chifa, arroces y salteados.",
+    "horario": [
+      {
+        "dia": 0,
+        "apertura": "12:00",
+        "cierre": "23:30"
+      },
+      {
+        "dia": 2,
+        "apertura": "12:00",
+        "cierre": "22:30"
+      },
+      {
+        "dia": 3,
+        "apertura": "12:00",
+        "cierre": "22:30"
+      },
+      {
+        "dia": 4,
+        "apertura": "12:00",
+        "cierre": "22:30"
+      },
+      {
+        "dia": 5,
+        "apertura": "12:00",
+        "cierre": "22:30"
+      },
+      {
+        "dia": 6,
+        "apertura": "12:00",
+        "cierre": "23:30"
+      }
+    ]
+  },
+  {
+    "id": "56",
+    "nombre": "Kalua Restaurante",
+    "imagen": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcS6SobdZEGDGXIXgLBk8ZwVZJ5U_6NuHgVzz6vle_JWqvEMA4Pnep3fxZc&s=10",
+    "portada": "https://buenazo.cronosmedia.glr.pe/original/2022/10/24/6356cbae2d0ad652087c5d15.jpg",
+    "categoria": "comida_criolla",
+    "categorias": [
+      "comida_criolla"
+    ],
+    "rating": 4.6,
+    "opiniones": 31,
+    "tiempoEstimado": "25-40 min",
+    "distancia": "",
+    "envioGratis": false,
+    "costoEnvio": 4,
+    "lat": -12.0790246427099,
+    "lng": -77.07760712089309,
+    "direccion": "Av. de la Marina 1400, Pueblo Libre 15084",
+    "descripcion": "Restaurante de comida criolla y platos caseros.",
+    "horario": [
+      {
+        "dia": 0,
+        "apertura": "12:00",
+        "cierre": "16:00"
+      },
+      {
+        "dia": 1,
+        "apertura": "12:00",
+        "cierre": "16:00"
+      },
+      {
+        "dia": 2,
+        "apertura": "12:00",
+        "cierre": "16:00"
+      },
+      {
+        "dia": 3,
+        "apertura": "12:00",
+        "cierre": "16:00"
+      },
+      {
+        "dia": 4,
+        "apertura": "12:00",
+        "cierre": "16:00"
+      },
+      {
+        "dia": 5,
+        "apertura": "12:00",
+        "cierre": "16:00"
+      },
+      {
+        "dia": 6,
+        "apertura": "12:00",
+        "cierre": "16:00"
+      }
+    ],
+    "precioMenuDia": 10,
+    "precioExtra": 15
+  },
+  {
+    "id": "57",
+    "nombre": "Caldo de gallina Anita",
+    "imagen": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQhy3U0ShUAqGgVY-KddT0_DIXMecj2sW2WXtDIILTMiw&s=10",
+    "portada": "https://origin.cronosmedia.glr.pe/large/2021/08/03/lg_61097bcbb6df8e0fdc17c059.jpg",
+    "categoria": "caldos",
+    "categorias": [
+      "caldos"
+    ],
+    "rating": 4,
+    "opiniones": 85,
+    "tiempoEstimado": "20-30 min",
+    "distancia": "",
+    "envioGratis": false,
+    "costoEnvio": 4,
+    "lat": -12.077879711535202,
+    "lng": -77.07544631484869,
+    "direccion": "Pje. Los Pinos mz A, Pueblo Libre 15084",
+    "descripcion": "Caldos y sopas tradicionales.",
+    "horario": [
+      {
+        "dia": 0,
+        "apertura": "06:00",
+        "cierre": "12:00"
+      },
+      {
+        "dia": 1,
+        "apertura": "06:00",
+        "cierre": "12:00"
+      },
+      {
+        "dia": 2,
+        "apertura": "06:00",
+        "cierre": "12:00"
+      },
+      {
+        "dia": 3,
+        "apertura": "06:00",
+        "cierre": "12:00"
+      },
+      {
+        "dia": 4,
+        "apertura": "06:00",
+        "cierre": "12:00"
+      },
+      {
+        "dia": 5,
+        "apertura": "06:00",
+        "cierre": "12:00"
+      },
+      {
+        "dia": 6,
+        "apertura": "06:00",
+        "cierre": "12:00"
+      }
+    ]
+  },
+  {
+    "id": "58",
+    "nombre": "Casa Del Ceviche",
+    "imagen": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSmBx6a_jAQNyCkwcwKMaCfEweicC8PZGP42Nv-2a3otg&s=10",
+    "portada": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcS058LWcPqbD4vH6ElaZx6vefIv3K-1QJCfC_b9rKoJI93By0d8nmxQU2U8&s=10",
+    "categoria": "cevicheria",
+    "categorias": [
+      "cevicheria"
+    ],
+    "rating": 4.2,
+    "opiniones": 196,
+    "tiempoEstimado": "15-30 min",
+    "distancia": "",
+    "envioGratis": false,
+    "costoEnvio": 3,
+    "lat": -12.0761652066998,
+    "lng": -77.0724986422197,
+    "direccion": "Jiron Mariscal Luzuriaga 337, Pueblo Libre 15084",
+    "descripcion": "Ceviches y platos marinos preparados al momento.",
+    "horario": [
+      {
+        "dia": 0,
+        "apertura": "10:00",
+        "cierre": "17:00"
+      },
+      {
+        "dia": 1,
+        "apertura": "10:00",
+        "cierre": "17:00"
+      },
+      {
+        "dia": 2,
+        "apertura": "10:00",
+        "cierre": "17:00"
+      },
+      {
+        "dia": 3,
+        "apertura": "10:00",
+        "cierre": "17:00"
+      },
+      {
+        "dia": 4,
+        "apertura": "10:00",
+        "cierre": "17:00"
+      },
+      {
+        "dia": 5,
+        "apertura": "10:00",
+        "cierre": "17:00"
+      },
+      {
+        "dia": 6,
+        "apertura": "10:00",
+        "cierre": "17:00"
+      }
+    ]
+  },
+  {
+    "id": "59",
+    "nombre": "Chifa Brillo El Sol",
+    "imagen": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRkE7VucRyy0d8n5lAqrIYERmcgXFHQV22xVYHJYhwCdg&s=10",
+    "portada": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQcXO1zbWwmR50BkV9fTifmFfaS-j8PCZcS4366T4KB8MLER8ZbxECCAXU&s=10",
+    "categoria": "chifa",
+    "categorias": [
+      "chifa"
+    ],
+    "rating": 3.9,
+    "opiniones": 104,
+    "tiempoEstimado": "25-40 min",
+    "distancia": "",
+    "envioGratis": false,
+    "costoEnvio": 3,
+    "lat": -12.076168087841598,
+    "lng": -77.0653724413662,
+    "direccion": "Rosa Toledo, Pueblo Libre 15084",
+    "descripcion": "Platos de cocina chifa, arroces y salteados.",
+    "horario": [
+      {
+        "dia": 0,
+        "apertura": "12:30",
+        "cierre": "00:30"
+      },
+      {
+        "dia": 1,
+        "apertura": "12:30",
+        "cierre": "23:30"
+      },
+      {
+        "dia": 2,
+        "apertura": "12:30",
+        "cierre": "23:30"
+      },
+      {
+        "dia": 3,
+        "apertura": "12:30",
+        "cierre": "23:30"
+      },
+      {
+        "dia": 4,
+        "apertura": "12:30",
+        "cierre": "23:30"
+      },
+      {
+        "dia": 5,
+        "apertura": "12:30",
+        "cierre": "23:30"
+      },
+      {
+        "dia": 6,
+        "apertura": "12:30",
+        "cierre": "00:30"
+      }
+    ]
+  },
+  {
+    "id": "60",
+    "nombre": "Anticuchería Doña Pochita",
+    "imagen": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcR0yT9ARQ9htHgiNXSjNPQffj25opAj2f-lsfamPW_5a6_-rvPs9GlCTS0&s=10",
+    "portada": "https://walac.pe/wp-content/uploads/2023/10/anticuchos.png",
+    "categoria": "anticuchos",
+    "categorias": [
+      "anticuchos"
+    ],
+    "rating": 4.1,
+    "opiniones": 268,
+    "tiempoEstimado": "20-35 min",
+    "distancia": "",
+    "envioGratis": false,
+    "costoEnvio": 6,
+    "lat": -12.0869417512683,
+    "lng": -77.0322191564533,
+    "direccion": "Av. Ignacio Merino 2328, Lince 15046",
+    "descripcion": "Anticuchos, parrillas y acompañamientos.",
+    "horario": [
+      {
+        "dia": 0,
+        "apertura": "17:00",
+        "cierre": "00:30"
+      },
+      {
+        "dia": 1,
+        "apertura": "17:00",
+        "cierre": "23:30"
+      },
+      {
+        "dia": 2,
+        "apertura": "17:00",
+        "cierre": "23:30"
+      },
+      {
+        "dia": 3,
+        "apertura": "17:00",
+        "cierre": "23:30"
+      },
+      {
+        "dia": 4,
+        "apertura": "17:00",
+        "cierre": "23:30"
+      },
+      {
+        "dia": 5,
+        "apertura": "17:00",
+        "cierre": "23:30"
+      },
+      {
+        "dia": 6,
+        "apertura": "17:00",
+        "cierre": "00:30"
+      }
+    ]
+  },
+  {
+    "id": "61",
+    "nombre": "Chifa Felicidad",
+    "imagen": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTirUvaQBS1uRuqIw97OQY7C1qUGAYv_yMyoZ-LnYSpX0qyF_MFX6-WiyI&s=10",
+    "portada": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQcXO1zbWwmR50BkV9fTifmFfaS-j8PCZcS4366T4KB8MLER8ZbxECCAXU&s=10",
+    "categoria": "chifa",
+    "categorias": [
+      "chifa"
+    ],
+    "rating": 3.8,
+    "opiniones": 209,
+    "tiempoEstimado": "30-45 min",
+    "distancia": "",
+    "envioGratis": true,
+    "costoEnvio": 0,
+    "lat": -12.0864329378508,
+    "lng": -77.0320716349456,
+    "direccion": "Av. Ignacio Merino 2283, Lince 15046",
+    "descripcion": "Platos de cocina chifa, arroces y salteados.",
+    "horario": [
+      {
+        "dia": 0,
+        "apertura": "11:00",
+        "cierre": "01:00"
+      },
+      {
+        "dia": 1,
+        "apertura": "11:00",
+        "cierre": "00:00"
+      },
+      {
+        "dia": 2,
+        "apertura": "11:00",
+        "cierre": "00:00"
+      },
+      {
+        "dia": 3,
+        "apertura": "11:00",
+        "cierre": "00:00"
+      },
+      {
+        "dia": 4,
+        "apertura": "11:00",
+        "cierre": "00:00"
+      },
+      {
+        "dia": 5,
+        "apertura": "11:00",
+        "cierre": "00:00"
+      },
+      {
+        "dia": 6,
+        "apertura": "11:00",
+        "cierre": "01:00"
+      }
+    ]
+  },
+  {
+    "id": "62",
+    "nombre": "Polleria La Fogata",
+    "imagen": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRNvyEOpmQzHBFCX9EB7-exkt4kB--8c4y9jOu9Cdbbvt2XssTOabZf-1w&s=10",
+    "portada": "https://img.magnific.com/psd-premium/plantilla-portada-facebook-restaurante-comida_106176-755.jpg?semt=ais_hybrid&w=740&q=80",
+    "categoria": "polleria",
+    "categorias": [
+      "polleria"
+    ],
+    "rating": 3.9,
+    "opiniones": 185,
+    "tiempoEstimado": "30-45 min",
+    "distancia": "",
+    "envioGratis": false,
+    "costoEnvio": 3,
+    "lat": -12.085682829708698,
+    "lng": -77.031063124353,
+    "direccion": "Av. Militar 2179, Lince 15046",
+    "descripcion": "Pollos a la brasa, acompañamientos y opciones para compartir.",
+    "horario": [
+      {
+        "dia": 0,
+        "apertura": "16:00",
+        "cierre": "01:00"
+      },
+      {
+        "dia": 2,
+        "apertura": "16:00",
+        "cierre": "00:00"
+      },
+      {
+        "dia": 3,
+        "apertura": "16:00",
+        "cierre": "00:00"
+      },
+      {
+        "dia": 4,
+        "apertura": "16:00",
+        "cierre": "00:00"
+      },
+      {
+        "dia": 5,
+        "apertura": "16:00",
+        "cierre": "00:00"
+      },
+      {
+        "dia": 6,
+        "apertura": "16:00",
+        "cierre": "01:00"
+      }
+    ]
+  },
+  {
+    "id": "63",
+    "nombre": "Cevicheria Pica Y Pasa",
+    "imagen": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRYk_VKlWnqNtUx4im_OPP9hQCWOTLamjdOxyEqoWHnj0IM0yAXuj2Ys8SX&s=10",
+    "portada": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcS058LWcPqbD4vH6ElaZx6vefIv3K-1QJCfC_b9rKoJI93By0d8nmxQU2U8&s=10",
+    "categoria": "cevicheria",
+    "categorias": [
+      "cevicheria"
+    ],
+    "rating": 4.8,
+    "opiniones": 147,
+    "tiempoEstimado": "15-30 min",
+    "distancia": "",
+    "envioGratis": false,
+    "costoEnvio": 5,
+    "lat": -12.085444158499303,
+    "lng": -77.03108994644178,
+    "direccion": "Jr. Mariscal Juan Gregorio de las Heras 243, Lince 15046",
+    "descripcion": "Ceviches y platos marinos preparados al momento.",
+    "horario": [
+      {
+        "dia": 0,
+        "apertura": "10:30",
+        "cierre": "17:30"
+      },
+      {
+        "dia": 1,
+        "apertura": "10:30",
+        "cierre": "17:30"
+      },
+      {
+        "dia": 2,
+        "apertura": "10:30",
+        "cierre": "17:30"
+      },
+      {
+        "dia": 3,
+        "apertura": "10:30",
+        "cierre": "17:30"
+      },
+      {
+        "dia": 4,
+        "apertura": "10:30",
+        "cierre": "17:30"
+      },
+      {
+        "dia": 5,
+        "apertura": "10:30",
+        "cierre": "17:30"
+      },
+      {
+        "dia": 6,
+        "apertura": "10:30",
+        "cierre": "17:30"
+      }
+    ]
+  },
+  {
+    "id": "64",
+    "nombre": "Chifa Grulla",
+    "imagen": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRZ3a5PhfLbT-OOor4HKI1SmMr77RhL615ln9VW6-aKng&s",
+    "portada": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQcXO1zbWwmR50BkV9fTifmFfaS-j8PCZcS4366T4KB8MLER8ZbxECCAXU&s=10",
+    "categoria": "chifa",
+    "categorias": [
+      "chifa"
+    ],
+    "rating": 4.4,
+    "opiniones": 182,
+    "tiempoEstimado": "20-35 min",
+    "distancia": "",
+    "envioGratis": false,
+    "costoEnvio": 4,
+    "lat": -12.087892445007196,
+    "lng": -77.032710899753,
+    "direccion": "Av. Petit Thouars 2401, Lince 15046",
+    "descripcion": "Platos de cocina chifa, arroces y salteados.",
+    "horario": [
+      {
+        "dia": 0,
+        "apertura": "11:00",
+        "cierre": "23:00"
+      },
+      {
+        "dia": 1,
+        "apertura": "11:00",
+        "cierre": "22:00"
+      },
+      {
+        "dia": 2,
+        "apertura": "11:00",
+        "cierre": "22:00"
+      },
+      {
+        "dia": 3,
+        "apertura": "11:00",
+        "cierre": "22:00"
+      },
+      {
+        "dia": 4,
+        "apertura": "11:00",
+        "cierre": "22:00"
+      },
+      {
+        "dia": 5,
+        "apertura": "11:00",
+        "cierre": "22:00"
+      },
+      {
+        "dia": 6,
+        "apertura": "11:00",
+        "cierre": "23:00"
+      }
+    ]
+  },
+  {
+    "id": "65",
+    "nombre": "Restaurante Lucy",
+    "imagen": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcS6jnjLMG69Du9hJqvV_HYqXpDGBw8mI114FzgAiBLtGw&s",
+    "portada": "https://buenazo.cronosmedia.glr.pe/original/2022/10/24/6356cbae2d0ad652087c5d15.jpg",
+    "categoria": "comida_criolla",
+    "categorias": [
+      "comida_criolla"
+    ],
+    "rating": 4.4,
+    "opiniones": 206,
+    "tiempoEstimado": "30-40 min",
+    "distancia": "",
+    "envioGratis": false,
+    "costoEnvio": 3,
+    "lat": -12.090607409851698,
+    "lng": -77.0329141828266,
+    "direccion": "Jirón Soledad 244, Lince 15046",
+    "descripcion": "Restaurante de comida criolla y platos caseros.",
+    "horario": [
+      {
+        "dia": 0,
+        "apertura": "10:00",
+        "cierre": "18:00"
+      },
+      {
+        "dia": 1,
+        "apertura": "10:00",
+        "cierre": "18:00"
+      },
+      {
+        "dia": 2,
+        "apertura": "10:00",
+        "cierre": "18:00"
+      },
+      {
+        "dia": 3,
+        "apertura": "10:00",
+        "cierre": "18:00"
+      },
+      {
+        "dia": 4,
+        "apertura": "10:00",
+        "cierre": "18:00"
+      },
+      {
+        "dia": 5,
+        "apertura": "10:00",
+        "cierre": "18:00"
+      },
+      {
+        "dia": 6,
+        "apertura": "10:00",
+        "cierre": "18:00"
+      }
+    ],
+    "precioMenuDia": 10,
+    "precioExtra": 15
+  },
+  {
+    "id": "66",
+    "nombre": "Restaurante Dina",
+    "imagen": "https://tofuu.getjusto.com/orioneat-local/resized2/DmdD444ucgZ65j62Z-300-x.webp",
+    "portada": "https://buenazo.cronosmedia.glr.pe/original/2022/10/24/6356cbae2d0ad652087c5d15.jpg",
+    "categoria": "comida_criolla",
+    "categorias": [
+      "comida_criolla"
+    ],
+    "rating": 3.9,
+    "opiniones": 106,
+    "tiempoEstimado": "30-45 min",
+    "distancia": "",
+    "envioGratis": false,
+    "costoEnvio": 5,
+    "lat": -12.090680845752305,
+    "lng": -77.03253867358292,
+    "direccion": "Av. Petit Thouars 2720, Lince 15046",
+    "descripcion": "Restaurante de comida criolla y platos caseros.",
+    "horario": [
+      {
+        "dia": 0,
+        "apertura": "10:30",
+        "cierre": "16:00"
+      },
+      {
+        "dia": 1,
+        "apertura": "10:30",
+        "cierre": "16:00"
+      },
+      {
+        "dia": 2,
+        "apertura": "10:30",
+        "cierre": "16:00"
+      },
+      {
+        "dia": 3,
+        "apertura": "10:30",
+        "cierre": "16:00"
+      },
+      {
+        "dia": 4,
+        "apertura": "10:30",
+        "cierre": "16:00"
+      },
+      {
+        "dia": 5,
+        "apertura": "10:30",
+        "cierre": "16:00"
+      },
+      {
+        "dia": 6,
+        "apertura": "10:30",
+        "cierre": "16:00"
+      }
+    ],
+    "precioMenuDia": 10,
+    "precioExtra": 15
+  },
+  {
+    "id": "67",
+    "nombre": "R' Sabroso",
+    "imagen": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRBQ7qeGlwoOWNO7UGEV5UDWqFWWVE2jD09PF9QU90lXXgoLvTDQxIHApo&s=10",
+    "portada": "https://img.magnific.com/psd-gratis/plantilla-banner-portada-facebook-menu-comida-restaurante_120329-5497.jpg?semt=ais_hybrid&w=740&q=80",
+    "categoria": "broaster",
+    "categorias": [
+      "broaster"
+    ],
+    "rating": 4.6,
+    "opiniones": 117,
+    "tiempoEstimado": "15-30 min",
+    "distancia": "",
+    "envioGratis": true,
+    "costoEnvio": 0,
+    "lat": -12.090093887087301,
+    "lng": -77.03081805714729,
+    "direccion": "Jirón Soledad 477, Lince 15046",
+    "descripcion": "Pollo broaster, papas y acompañamientos.",
+    "horario": [
+      {
+        "dia": 0,
+        "apertura": "17:00",
+        "cierre": "01:30"
+      },
+      {
+        "dia": 1,
+        "apertura": "17:00",
+        "cierre": "00:30"
+      },
+      {
+        "dia": 2,
+        "apertura": "17:00",
+        "cierre": "00:30"
+      },
+      {
+        "dia": 3,
+        "apertura": "17:00",
+        "cierre": "00:30"
+      },
+      {
+        "dia": 4,
+        "apertura": "17:00",
+        "cierre": "00:30"
+      },
+      {
+        "dia": 5,
+        "apertura": "17:00",
+        "cierre": "00:30"
+      },
+      {
+        "dia": 6,
+        "apertura": "17:00",
+        "cierre": "01:30"
+      }
+    ]
+  },
+  {
+    "id": "68",
+    "nombre": "Anticucheria Lolita",
+    "imagen": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQ9UVc6TnIqdmB9VDwPOHLcqboRaXI2KzfAMlNCTGP4-48xlUDKG7ijpBC_&s=10",
+    "portada": "https://walac.pe/wp-content/uploads/2023/10/anticuchos.png",
+    "categoria": "anticuchos",
+    "categorias": [
+      "anticuchos"
+    ],
+    "rating": 4.1,
+    "opiniones": 66,
+    "tiempoEstimado": "15-30 min",
+    "distancia": "",
+    "envioGratis": false,
+    "costoEnvio": 6,
+    "lat": -12.081708932069201,
+    "lng": -77.0285140396191,
+    "direccion": "Av. Prol. Iquitos 1814, Lince 15046",
+    "descripcion": "Anticuchos, parrillas y acompañamientos.",
+    "horario": [
+      {
+        "dia": 0,
+        "apertura": "17:30",
+        "cierre": "02:00"
+      },
+      {
+        "dia": 1,
+        "apertura": "17:30",
+        "cierre": "01:00"
+      },
+      {
+        "dia": 2,
+        "apertura": "17:30",
+        "cierre": "01:00"
+      },
+      {
+        "dia": 3,
+        "apertura": "17:30",
+        "cierre": "01:00"
+      },
+      {
+        "dia": 4,
+        "apertura": "17:30",
+        "cierre": "01:00"
+      },
+      {
+        "dia": 5,
+        "apertura": "17:30",
+        "cierre": "01:00"
+      },
+      {
+        "dia": 6,
+        "apertura": "17:30",
+        "cierre": "02:00"
+      }
+    ]
+  },
+  {
+    "id": "69",
+    "nombre": "LA CHINITA FAST FOOD",
+    "imagen": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSqEnLd9v2Ce95uq1v9DCxBw_CW6rNN0J4HD_db88v8S8SXDplqsMCQ20Hb&s=10",
+    "portada": "https://buenazo.cronosmedia.glr.pe/original/2022/10/24/6356cbae2d0ad652087c5d15.jpg",
+    "categoria": "comida_criolla",
+    "categorias": [
+      "comida_criolla"
+    ],
+    "rating": 4.1,
+    "opiniones": 239,
+    "tiempoEstimado": "15-25 min",
+    "distancia": "",
+    "envioGratis": true,
+    "costoEnvio": 0,
+    "lat": -12.048812256801,
+    "lng": -77.0024757782399,
+    "direccion": "Calle Cesar Vallejo 227, El Agustino 15003",
+    "descripcion": "Restaurante de comida criolla y platos caseros.",
+    "horario": [
+      {
+        "dia": 0,
+        "apertura": "11:00",
+        "cierre": "17:00"
+      },
+      {
+        "dia": 2,
+        "apertura": "11:00",
+        "cierre": "17:00"
+      },
+      {
+        "dia": 3,
+        "apertura": "11:00",
+        "cierre": "17:00"
+      },
+      {
+        "dia": 4,
+        "apertura": "11:00",
+        "cierre": "17:00"
+      },
+      {
+        "dia": 5,
+        "apertura": "11:00",
+        "cierre": "17:00"
+      },
+      {
+        "dia": 6,
+        "apertura": "11:00",
+        "cierre": "17:00"
+      }
+    ],
+    "precioMenuDia": 10,
+    "precioExtra": 15
+  },
+  {
+    "id": "70",
+    "nombre": "CARBONERITO CHICKEN",
+    "imagen": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRYM3tKuwczLunkdTwIS4GE7xdAU2YcJceTthpxHOHG76vRxF2iq-HvxFfb&s=10",
+    "portada": "https://img.magnific.com/psd-premium/plantilla-portada-facebook-restaurante-comida_106176-755.jpg?semt=ais_hybrid&w=740&q=80",
+    "categoria": "polleria",
+    "categorias": [
+      "polleria"
+    ],
+    "rating": 4,
+    "opiniones": 119,
+    "tiempoEstimado": "30-40 min",
+    "distancia": "",
+    "envioGratis": false,
+    "costoEnvio": 4,
+    "lat": -12.052315251781497,
+    "lng": -77.00425407784232,
+    "direccion": "Av. Tupac Amaru 184, El Agustino 15003",
+    "descripcion": "Pollos a la brasa, acompañamientos y opciones para compartir.",
+    "horario": [
+      {
+        "dia": 0,
+        "apertura": "17:00",
+        "cierre": "02:00"
+      },
+      {
+        "dia": 1,
+        "apertura": "17:00",
+        "cierre": "01:00"
+      },
+      {
+        "dia": 2,
+        "apertura": "17:00",
+        "cierre": "01:00"
+      },
+      {
+        "dia": 3,
+        "apertura": "17:00",
+        "cierre": "01:00"
+      },
+      {
+        "dia": 4,
+        "apertura": "17:00",
+        "cierre": "01:00"
+      },
+      {
+        "dia": 5,
+        "apertura": "17:00",
+        "cierre": "01:00"
+      },
+      {
+        "dia": 6,
+        "apertura": "17:00",
+        "cierre": "02:00"
+      }
+    ]
+  },
+  {
+    "id": "71",
+    "nombre": "CEVICHERIA GOURMET REAL PEZ",
+    "imagen": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRnrT4XD4idMYoAHFGDbUlcr55zacAu1FQ1RFTgT3nyvRGXCj6Uvso_hwM&s=10",
+    "portada": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcS058LWcPqbD4vH6ElaZx6vefIv3K-1QJCfC_b9rKoJI93By0d8nmxQU2U8&s=10",
+    "categoria": "cevicheria",
+    "categorias": [
+      "cevicheria"
+    ],
+    "rating": 4.8,
+    "opiniones": 218,
+    "tiempoEstimado": "15-30 min",
+    "distancia": "",
+    "envioGratis": true,
+    "costoEnvio": 0,
+    "lat": -12.049496589876599,
+    "lng": -77.00152336285689,
+    "direccion": "Av. Riva Agüero 1270, El Agustino 15004",
+    "descripcion": "Ceviches y platos marinos preparados al momento.",
+    "horario": [
+      {
+        "dia": 0,
+        "apertura": "11:00",
+        "cierre": "18:00"
+      },
+      {
+        "dia": 2,
+        "apertura": "11:00",
+        "cierre": "18:00"
+      },
+      {
+        "dia": 3,
+        "apertura": "11:00",
+        "cierre": "18:00"
+      },
+      {
+        "dia": 4,
+        "apertura": "11:00",
+        "cierre": "18:00"
+      },
+      {
+        "dia": 5,
+        "apertura": "11:00",
+        "cierre": "18:00"
+      },
+      {
+        "dia": 6,
+        "apertura": "11:00",
+        "cierre": "18:00"
+      }
+    ]
+  },
+  {
+    "id": "72",
+    "nombre": "Anticuchería Don Camilo",
+    "imagen": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRLvBYvaxLPSZspnrVbIMd_nnlGGo_A9F1l2q1umWI__JW1CD7ARZxcV66S&s=10",
+    "portada": "https://walac.pe/wp-content/uploads/2023/10/anticuchos.png",
+    "categoria": "anticuchos",
+    "categorias": [
+      "anticuchos"
+    ],
+    "rating": 4.2,
+    "opiniones": 242,
+    "tiempoEstimado": "25-40 min",
+    "distancia": "",
+    "envioGratis": true,
+    "costoEnvio": 0,
+    "lat": -12.056138231264999,
+    "lng": -77.00413047011,
+    "direccion": "Ca. la Granada 241, El Agustino 15004",
+    "descripcion": "Anticuchos, parrillas y acompañamientos.",
+    "horario": [
+      {
+        "dia": 0,
+        "apertura": "15:30",
+        "cierre": "23:30"
+      },
+      {
+        "dia": 1,
+        "apertura": "15:30",
+        "cierre": "22:30"
+      },
+      {
+        "dia": 2,
+        "apertura": "15:30",
+        "cierre": "22:30"
+      },
+      {
+        "dia": 3,
+        "apertura": "15:30",
+        "cierre": "22:30"
+      },
+      {
+        "dia": 4,
+        "apertura": "15:30",
+        "cierre": "22:30"
+      },
+      {
+        "dia": 5,
+        "apertura": "15:30",
+        "cierre": "22:30"
+      },
+      {
+        "dia": 6,
+        "apertura": "15:30",
+        "cierre": "23:30"
+      }
+    ]
+  },
+  {
+    "id": "73",
+    "nombre": "EL POINT CEVICHERO COCOLISO",
+    "imagen": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQcqFx8nyancVf8Nkn6nXHjrnhoHZ2vSkQl-ynFbqrvlMGjE3d3HBJ3m5VY&s=10",
+    "portada": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcS058LWcPqbD4vH6ElaZx6vefIv3K-1QJCfC_b9rKoJI93By0d8nmxQU2U8&s=10",
+    "categoria": "cevicheria",
+    "categorias": [
+      "cevicheria"
+    ],
+    "rating": 3.8,
+    "opiniones": 72,
+    "tiempoEstimado": "30-40 min",
+    "distancia": "",
+    "envioGratis": false,
+    "costoEnvio": 3,
+    "lat": -12.054060768686297,
+    "lng": -77.00664101777521,
+    "direccion": "Calle San Vicente de Paul 152, El Agustino 15003",
+    "descripcion": "Ceviches y platos marinos preparados al momento.",
+    "horario": [
+      {
+        "dia": 0,
+        "apertura": "11:30",
+        "cierre": "17:00"
+      },
+      {
+        "dia": 1,
+        "apertura": "11:30",
+        "cierre": "17:00"
+      },
+      {
+        "dia": 2,
+        "apertura": "11:30",
+        "cierre": "17:00"
+      },
+      {
+        "dia": 3,
+        "apertura": "11:30",
+        "cierre": "17:00"
+      },
+      {
+        "dia": 4,
+        "apertura": "11:30",
+        "cierre": "17:00"
+      },
+      {
+        "dia": 5,
+        "apertura": "11:30",
+        "cierre": "17:00"
+      },
+      {
+        "dia": 6,
+        "apertura": "11:30",
+        "cierre": "17:00"
+      }
+    ]
+  },
+  {
+    "id": "74",
+    "nombre": "Restaurante Delicias Criollas",
+    "imagen": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTyHES4Xc4WN6ioU_0m7Xo1hq5Cm5zWz6ilXYi6tj8sTSao5D2wzZ3i3Ic&s=10",
+    "portada": "https://buenazo.cronosmedia.glr.pe/original/2022/10/24/6356cbae2d0ad652087c5d15.jpg",
+    "categoria": "comida_criolla",
+    "categorias": [
+      "comida_criolla"
+    ],
+    "rating": 4.2,
+    "opiniones": 193,
+    "tiempoEstimado": "25-35 min",
+    "distancia": "",
+    "envioGratis": false,
+    "costoEnvio": 4,
+    "lat": -12.056913214900899,
+    "lng": -76.9571109118866,
+    "direccion": "Vulcano 329, Ate 15012",
+    "descripcion": "Restaurante de comida criolla y platos caseros.",
+    "horario": [
+      {
+        "dia": 0,
+        "apertura": "11:30",
+        "cierre": "16:30"
+      },
+      {
+        "dia": 1,
+        "apertura": "11:30",
+        "cierre": "16:30"
+      },
+      {
+        "dia": 2,
+        "apertura": "11:30",
+        "cierre": "16:30"
+      },
+      {
+        "dia": 3,
+        "apertura": "11:30",
+        "cierre": "16:30"
+      },
+      {
+        "dia": 4,
+        "apertura": "11:30",
+        "cierre": "16:30"
+      },
+      {
+        "dia": 5,
+        "apertura": "11:30",
+        "cierre": "16:30"
+      },
+      {
+        "dia": 6,
+        "apertura": "11:30",
+        "cierre": "16:30"
+      }
+    ],
+    "precioMenuDia": 10,
+    "precioExtra": 15
+  },
+  {
+    "id": "75",
+    "nombre": "Cevicheria Pa Bravo Yo",
+    "imagen": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTtY0WaOBh8QL4vAJ8PPylU-XWs7klpqVsG7owPrx9Mwj9EC-A-_eKNlyQ&s=10",
+    "portada": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcS058LWcPqbD4vH6ElaZx6vefIv3K-1QJCfC_b9rKoJI93By0d8nmxQU2U8&s=10",
+    "categoria": "cevicheria",
+    "categorias": [
+      "cevicheria"
+    ],
+    "rating": 3.8,
+    "opiniones": 179,
+    "tiempoEstimado": "15-25 min",
+    "distancia": "",
+    "envioGratis": false,
+    "costoEnvio": 4,
+    "lat": -12.054584945793197,
+    "lng": -76.9539041543421,
+    "direccion": "Av. Los Ingenieros, Ate 15012",
+    "descripcion": "Ceviches y platos marinos preparados al momento.",
+    "horario": [
+      {
+        "dia": 0,
+        "apertura": "09:30",
+        "cierre": "16:30"
+      },
+      {
+        "dia": 1,
+        "apertura": "09:30",
+        "cierre": "16:30"
+      },
+      {
+        "dia": 2,
+        "apertura": "09:30",
+        "cierre": "16:30"
+      },
+      {
+        "dia": 3,
+        "apertura": "09:30",
+        "cierre": "16:30"
+      },
+      {
+        "dia": 4,
+        "apertura": "09:30",
+        "cierre": "16:30"
+      },
+      {
+        "dia": 5,
+        "apertura": "09:30",
+        "cierre": "16:30"
+      },
+      {
+        "dia": 6,
+        "apertura": "09:30",
+        "cierre": "16:30"
+      }
+    ]
+  },
+  {
+    "id": "76",
+    "nombre": "Villa Escondida",
+    "imagen": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTrSLKOpLaRfIKTcMwPPCkHW0OMuJg67WsQho12iZ9fXrHPHR8ue3QG5Gw&s=https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTrSLKOpLaRfIKTcMwPPCkHW0OMuJg67WsQho12iZ9fXrHPHR8ue3QG5Gw&s=10",
+    "portada": "https://origin.cronosmedia.glr.pe/large/2021/08/03/lg_61097bcbb6df8e0fdc17c059.jpg",
+    "categoria": "caldos",
+    "categorias": [
+      "caldos"
+    ],
+    "rating": 4.6,
+    "opiniones": 58,
+    "tiempoEstimado": "25-35 min",
+    "distancia": "",
+    "envioGratis": true,
+    "costoEnvio": 0,
+    "lat": -12.0529084427067,
+    "lng": -76.95177526272371,
+    "direccion": "Jr. Junín Lt. 2O, Ate",
+    "descripcion": "Caldos y sopas tradicionales.",
+    "horario": [
+      {
+        "dia": 0,
+        "apertura": "06:30",
+        "cierre": "13:00"
+      },
+      {
+        "dia": 1,
+        "apertura": "06:30",
+        "cierre": "13:00"
+      },
+      {
+        "dia": 2,
+        "apertura": "06:30",
+        "cierre": "13:00"
+      },
+      {
+        "dia": 3,
+        "apertura": "06:30",
+        "cierre": "13:00"
+      },
+      {
+        "dia": 4,
+        "apertura": "06:30",
+        "cierre": "13:00"
+      },
+      {
+        "dia": 5,
+        "apertura": "06:30",
+        "cierre": "13:00"
+      },
+      {
+        "dia": 6,
+        "apertura": "06:30",
+        "cierre": "13:00"
+      }
+    ]
+  },
+  {
+    "id": "77",
+    "nombre": "Pio's Chicken",
+    "imagen": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSayur1XEBJEXMBHRD-JEamR-WivQri0I2NZ-udh-h04F_OHRo5XzbFpQs&s=10",
+    "portada": "https://img.magnific.com/psd-premium/plantilla-portada-facebook-restaurante-comida_106176-755.jpg?semt=ais_hybrid&w=740&q=80",
+    "categoria": "polleria",
+    "categorias": [
+      "polleria"
+    ],
+    "rating": 4.7,
+    "opiniones": 146,
+    "tiempoEstimado": "25-40 min",
+    "distancia": "",
+    "envioGratis": true,
+    "costoEnvio": 0,
+    "lat": -12.0419199685965,
+    "lng": -76.9350514533453,
+    "direccion": "Km 4.5, Ctra. Central, Ate 15012",
+    "descripcion": "Pollos a la brasa, acompañamientos y opciones para compartir.",
+    "horario": [
+      {
+        "dia": 0,
+        "apertura": "12:30",
+        "cierre": "23:30"
+      },
+      {
+        "dia": 1,
+        "apertura": "12:30",
+        "cierre": "22:30"
+      },
+      {
+        "dia": 2,
+        "apertura": "12:30",
+        "cierre": "22:30"
+      },
+      {
+        "dia": 3,
+        "apertura": "12:30",
+        "cierre": "22:30"
+      },
+      {
+        "dia": 4,
+        "apertura": "12:30",
+        "cierre": "22:30"
+      },
+      {
+        "dia": 5,
+        "apertura": "12:30",
+        "cierre": "22:30"
+      },
+      {
+        "dia": 6,
+        "apertura": "12:30",
+        "cierre": "23:30"
+      }
+    ]
+  },
+  {
+    "id": "78",
+    "nombre": "Anticucheria Las Leñitas",
+    "imagen": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTv7yDUHXCt6wUT1W4UFZWE9NMsUv-ho1Zc2Cr8DbwejqgI-RtsuUGbw_hX&s=10",
+    "portada": "https://walac.pe/wp-content/uploads/2023/10/anticuchos.png",
+    "categoria": "anticuchos",
+    "categorias": [
+      "anticuchos"
+    ],
+    "rating": 3.8,
+    "opiniones": 61,
+    "tiempoEstimado": "30-40 min",
+    "distancia": "",
+    "envioGratis": false,
+    "costoEnvio": 4,
+    "lat": -12.0767206964365,
+    "lng": -77.0072893683345,
+    "direccion": "Av. San Juan 355, San Luis 15021",
+    "descripcion": "Anticuchos, parrillas y acompañamientos.",
+    "horario": [
+      {
+        "dia": 0,
+        "apertura": "16:00",
+        "cierre": "00:00"
+      },
+      {
+        "dia": 1,
+        "apertura": "16:00",
+        "cierre": "23:00"
+      },
+      {
+        "dia": 2,
+        "apertura": "16:00",
+        "cierre": "23:00"
+      },
+      {
+        "dia": 3,
+        "apertura": "16:00",
+        "cierre": "23:00"
+      },
+      {
+        "dia": 4,
+        "apertura": "16:00",
+        "cierre": "23:00"
+      },
+      {
+        "dia": 5,
+        "apertura": "16:00",
+        "cierre": "23:00"
+      },
+      {
+        "dia": 6,
+        "apertura": "16:00",
+        "cierre": "00:00"
+      }
+    ]
+  },
+  {
+    "id": "79",
+    "nombre": "Chifa MENACHO",
+    "imagen": "https://images.rappi.pe/restaurants_logo/123-1740849588743.png",
+    "portada": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQcXO1zbWwmR50BkV9fTifmFfaS-j8PCZcS4366T4KB8MLER8ZbxECCAXU&s=10",
+    "categoria": "chifa",
+    "categorias": [
+      "chifa"
+    ],
+    "rating": 4.1,
+    "opiniones": 191,
+    "tiempoEstimado": "25-35 min",
+    "distancia": "",
+    "envioGratis": true,
+    "costoEnvio": 0,
+    "lat": -12.076737305962903,
+    "lng": -77.0060818966974,
+    "direccion": "Av. San Juan 440, San Luis 15021",
+    "descripcion": "Platos de cocina chifa, arroces y salteados.",
+    "horario": [
+      {
+        "dia": 0,
+        "apertura": "11:30",
+        "cierre": "00:00"
+      },
+      {
+        "dia": 1,
+        "apertura": "11:30",
+        "cierre": "23:00"
+      },
+      {
+        "dia": 2,
+        "apertura": "11:30",
+        "cierre": "23:00"
+      },
+      {
+        "dia": 3,
+        "apertura": "11:30",
+        "cierre": "23:00"
+      },
+      {
+        "dia": 4,
+        "apertura": "11:30",
+        "cierre": "23:00"
+      },
+      {
+        "dia": 5,
+        "apertura": "11:30",
+        "cierre": "23:00"
+      },
+      {
+        "dia": 6,
+        "apertura": "11:30",
+        "cierre": "00:00"
+      }
+    ]
+  },
+  {
+    "id": "80",
+    "nombre": "La Cuchara Brava",
+    "imagen": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQrRIcyVKfVJppKKEuXzgOa7oEvEy1C043Obk-1UmhHaF04xwJV3iFD9Mk&s=10",
+    "portada": "https://buenazo.cronosmedia.glr.pe/original/2022/10/24/6356cbae2d0ad652087c5d15.jpg",
+    "categoria": "comida_criolla",
+    "categorias": [
+      "comida_criolla"
+    ],
+    "rating": 4.6,
+    "opiniones": 192,
+    "tiempoEstimado": "30-45 min",
+    "distancia": "",
+    "envioGratis": false,
+    "costoEnvio": 3,
+    "lat": -12.076324207232096,
+    "lng": -77.00524102419729,
+    "direccion": "Av. San Juan 545, San Luis 15021",
+    "descripcion": "Restaurante de comida criolla y platos caseros.",
+    "horario": [
+      {
+        "dia": 0,
+        "apertura": "12:00",
+        "cierre": "16:00"
+      },
+      {
+        "dia": 1,
+        "apertura": "12:00",
+        "cierre": "16:00"
+      },
+      {
+        "dia": 2,
+        "apertura": "12:00",
+        "cierre": "16:00"
+      },
+      {
+        "dia": 3,
+        "apertura": "12:00",
+        "cierre": "16:00"
+      },
+      {
+        "dia": 4,
+        "apertura": "12:00",
+        "cierre": "16:00"
+      },
+      {
+        "dia": 5,
+        "apertura": "12:00",
+        "cierre": "16:00"
+      },
+      {
+        "dia": 6,
+        "apertura": "12:00",
+        "cierre": "16:00"
+      }
+    ],
+    "precioMenuDia": 10,
+    "precioExtra": 15
+  },
+  {
+    "id": "81",
+    "nombre": "La italiana Pizzería",
+    "imagen": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSTnUFqT4F6JHlVGLqcV3GJgdqbNBmwbM81m1CQ4P8WAQjBCovX2zN54mUE&s=10",
+    "portada": "https://img.magnific.com/psd-gratis/menu-comida-pizza-deliciosa-plantilla-banner-portada-facebook_120329-4878.jpg?semt=ais_hybrid&w=740&q=80",
+    "categoria": "pizza",
+    "categorias": [
+      "pizza"
+    ],
+    "rating": 4.8,
+    "opiniones": 261,
+    "tiempoEstimado": "20-30 min",
+    "distancia": "",
+    "envioGratis": true,
+    "costoEnvio": 0,
+    "lat": -12.075638598560598,
+    "lng": -77.00050085516871,
+    "direccion": "Av. San Luis 917, San Luis 15021",
+    "descripcion": "Pizzas y opciones para compartir.",
+    "horario": [
+      {
+        "dia": 0,
+        "apertura": "18:00",
+        "cierre": "02:00"
+      },
+      {
+        "dia": 1,
+        "apertura": "18:00",
+        "cierre": "01:00"
+      },
+      {
+        "dia": 2,
+        "apertura": "18:00",
+        "cierre": "01:00"
+      },
+      {
+        "dia": 3,
+        "apertura": "18:00",
+        "cierre": "01:00"
+      },
+      {
+        "dia": 4,
+        "apertura": "18:00",
+        "cierre": "01:00"
+      },
+      {
+        "dia": 5,
+        "apertura": "18:00",
+        "cierre": "01:00"
+      },
+      {
+        "dia": 6,
+        "apertura": "18:00",
+        "cierre": "02:00"
+      }
+    ]
+  },
+  {
+    "id": "82",
+    "nombre": "Cevichería Estrella del mar",
+    "imagen": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQysGJd8Z53YE9U1fu78ZPcGuO-9ndsMPCukaxLn8DLg2zzh8b-HYd7Fpg&s=10",
+    "portada": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcS058LWcPqbD4vH6ElaZx6vefIv3K-1QJCfC_b9rKoJI93By0d8nmxQU2U8&s=10",
+    "categoria": "cevicheria",
+    "categorias": [
+      "cevicheria"
+    ],
+    "rating": 3.9,
+    "opiniones": 107,
+    "tiempoEstimado": "25-40 min",
+    "distancia": "",
+    "envioGratis": false,
+    "costoEnvio": 4,
+    "lat": -12.075903507065501,
+    "lng": -77.00031846496621,
+    "direccion": "Av. San Luis 933, Lima 15021",
+    "descripcion": "Ceviches y platos marinos preparados al momento.",
+    "horario": [
+      {
+        "dia": 0,
+        "apertura": "10:00",
+        "cierre": "17:00"
+      },
+      {
+        "dia": 1,
+        "apertura": "10:00",
+        "cierre": "17:00"
+      },
+      {
+        "dia": 2,
+        "apertura": "10:00",
+        "cierre": "17:00"
+      },
+      {
+        "dia": 3,
+        "apertura": "10:00",
+        "cierre": "17:00"
+      },
+      {
+        "dia": 4,
+        "apertura": "10:00",
+        "cierre": "17:00"
+      },
+      {
+        "dia": 5,
+        "apertura": "10:00",
+        "cierre": "17:00"
+      },
+      {
+        "dia": 6,
+        "apertura": "10:00",
+        "cierre": "17:00"
+      }
+    ]
+  },
+  {
+    "id": "83",
+    "nombre": "Rocket broaster",
+    "imagen": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQ5Iot0X6gsIoILrWa2X_1m8ckIhyqP1rTT6AkoStI3UC3qyDgP7E1A8YPM&s=10",
+    "portada": "https://img.magnific.com/psd-gratis/plantilla-banner-portada-facebook-menu-comida-restaurante_120329-5497.jpg?semt=ais_hybrid&w=740&q=80",
+    "categoria": "broaster",
+    "categorias": [
+      "broaster"
+    ],
+    "rating": 4.8,
+    "opiniones": 266,
+    "tiempoEstimado": "20-30 min",
+    "distancia": "",
+    "envioGratis": false,
+    "costoEnvio": 3,
+    "lat": -12.078165836911198,
+    "lng": -77.00620922171511,
+    "direccion": "Jr. Tomás Catari 473, San Luis 15021",
+    "descripcion": "Pollo broaster, papas y acompañamientos.",
+    "horario": [
+      {
+        "dia": 0,
+        "apertura": "18:00",
+        "cierre": "02:00"
+      },
+      {
+        "dia": 1,
+        "apertura": "18:00",
+        "cierre": "01:00"
+      },
+      {
+        "dia": 2,
+        "apertura": "18:00",
+        "cierre": "01:00"
+      },
+      {
+        "dia": 3,
+        "apertura": "18:00",
+        "cierre": "01:00"
+      },
+      {
+        "dia": 4,
+        "apertura": "18:00",
+        "cierre": "01:00"
+      },
+      {
+        "dia": 5,
+        "apertura": "18:00",
+        "cierre": "01:00"
+      },
+      {
+        "dia": 6,
+        "apertura": "18:00",
+        "cierre": "02:00"
+      }
+    ]
+  },
+  {
+    "id": "84",
+    "nombre": "Chavito's Broaster",
+    "imagen": "https://images.rappi.pe/restaurants_logo/4659f05c-3909-4a79-8615-4d3b77c498d5-1755355060423.png",
+    "portada": "https://img.magnific.com/psd-gratis/plantilla-banner-portada-facebook-menu-comida-restaurante_120329-5497.jpg?semt=ais_hybrid&w=740&q=80",
+    "categoria": "broaster",
+    "categorias": [
+      "broaster"
+    ],
+    "rating": 4.4,
+    "opiniones": 116,
+    "tiempoEstimado": "20-30 min",
+    "distancia": "",
+    "envioGratis": false,
+    "costoEnvio": 5,
+    "lat": -12.074142852890498,
+    "lng": -76.99905337205271,
+    "direccion": "José Orengo 987, San Luis 15021",
+    "descripcion": "Pollo broaster, papas y acompañamientos.",
+    "horario": [
+      {
+        "dia": 0,
+        "apertura": "17:30",
+        "cierre": "01:00"
+      },
+      {
+        "dia": 1,
+        "apertura": "17:30",
+        "cierre": "00:00"
+      },
+      {
+        "dia": 2,
+        "apertura": "17:30",
+        "cierre": "00:00"
+      },
+      {
+        "dia": 3,
+        "apertura": "17:30",
+        "cierre": "00:00"
+      },
+      {
+        "dia": 4,
+        "apertura": "17:30",
+        "cierre": "00:00"
+      },
+      {
+        "dia": 5,
+        "apertura": "17:30",
+        "cierre": "00:00"
+      },
+      {
+        "dia": 6,
+        "apertura": "17:30",
+        "cierre": "01:00"
+      }
+    ]
+  },
+  {
+    "id": "85",
+    "nombre": "La Tia Delia",
+    "imagen": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQEJzoP7q3iljrKoTTzKrtcaxbhqfmuO8bLJGpxdXJD8g&s=10",
+    "portada": "https://walac.pe/wp-content/uploads/2023/10/anticuchos.png",
+    "categoria": "anticuchos",
+    "categorias": [
+      "anticuchos"
+    ],
+    "rating": 4.4,
+    "opiniones": 266,
+    "tiempoEstimado": "25-35 min",
+    "distancia": "",
+    "envioGratis": false,
+    "costoEnvio": 4,
+    "lat": -12.078636856887503,
+    "lng": -76.99867208643772,
+    "direccion": "Jr. Palma de Mallorca 105, San Luis 15021",
+    "descripcion": "Anticuchos, parrillas y acompañamientos.",
+    "horario": [
+      {
+        "dia": 0,
+        "apertura": "16:30",
+        "cierre": "01:00"
+      },
+      {
+        "dia": 1,
+        "apertura": "16:30",
+        "cierre": "00:00"
+      },
+      {
+        "dia": 2,
+        "apertura": "16:30",
+        "cierre": "00:00"
+      },
+      {
+        "dia": 3,
+        "apertura": "16:30",
+        "cierre": "00:00"
+      },
+      {
+        "dia": 4,
+        "apertura": "16:30",
+        "cierre": "00:00"
+      },
+      {
+        "dia": 5,
+        "apertura": "16:30",
+        "cierre": "00:00"
+      },
+      {
+        "dia": 6,
+        "apertura": "16:30",
+        "cierre": "01:00"
+      }
+    ]
+  },
+  {
+    "id": "86",
+    "nombre": "Puro Tumbes Y Punto",
+    "imagen": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQnhZ5EIRIcR4S2W0QiZbb5qsQ8BSE1XWtWUBNqNTZOJ413hybMHt9qvMw&s=10",
+    "portada": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcS058LWcPqbD4vH6ElaZx6vefIv3K-1QJCfC_b9rKoJI93By0d8nmxQU2U8&s=10",
+    "categoria": "cevicheria",
+    "categorias": [
+      "cevicheria"
+    ],
+    "rating": 4.2,
+    "opiniones": 126,
+    "tiempoEstimado": "15-25 min",
+    "distancia": "",
+    "envioGratis": false,
+    "costoEnvio": 5,
+    "lat": -12.076248561643402,
+    "lng": -77.00014666449631,
+    "direccion": "Av. San Luis 959, San Luis 15021",
+    "descripcion": "Ceviches y platos marinos preparados al momento.",
+    "horario": [
+      {
+        "dia": 0,
+        "apertura": "10:30",
+        "cierre": "17:30"
+      },
+      {
+        "dia": 1,
+        "apertura": "10:30",
+        "cierre": "17:30"
+      },
+      {
+        "dia": 2,
+        "apertura": "10:30",
+        "cierre": "17:30"
+      },
+      {
+        "dia": 3,
+        "apertura": "10:30",
+        "cierre": "17:30"
+      },
+      {
+        "dia": 4,
+        "apertura": "10:30",
+        "cierre": "17:30"
+      },
+      {
+        "dia": 5,
+        "apertura": "10:30",
+        "cierre": "17:30"
+      },
+      {
+        "dia": 6,
+        "apertura": "10:30",
+        "cierre": "17:30"
+      }
+    ]
+  },
+  {
+    "id": "87",
+    "nombre": "Sabor y Tradición",
+    "imagen": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTpr8FRjlAJzrpNF2ziTUp1MSZMg8wisOz2oxB-A_A9wArbjKTF05XBsT_k&s=10",
+    "portada": "https://buenazo.cronosmedia.glr.pe/original/2022/10/24/6356cbae2d0ad652087c5d15.jpg",
+    "categoria": "comida_criolla",
+    "categorias": [
+      "comida_criolla"
+    ],
+    "rating": 4.4,
+    "opiniones": 75,
+    "tiempoEstimado": "15-30 min",
+    "distancia": "",
+    "envioGratis": true,
+    "costoEnvio": 0,
+    "lat": -12.0759896347742,
+    "lng": -77.0025145138155,
+    "direccion": "Av. San Juan 732, San Luis 15021",
+    "descripcion": "Restaurante de comida criolla y platos caseros.",
+    "horario": [
+      {
+        "dia": 0,
+        "apertura": "10:00",
+        "cierre": "18:00"
+      },
+      {
+        "dia": 1,
+        "apertura": "10:00",
+        "cierre": "18:00"
+      },
+      {
+        "dia": 2,
+        "apertura": "10:00",
+        "cierre": "18:00"
+      },
+      {
+        "dia": 3,
+        "apertura": "10:00",
+        "cierre": "18:00"
+      },
+      {
+        "dia": 4,
+        "apertura": "10:00",
+        "cierre": "18:00"
+      },
+      {
+        "dia": 5,
+        "apertura": "10:00",
+        "cierre": "18:00"
+      },
+      {
+        "dia": 6,
+        "apertura": "10:00",
+        "cierre": "18:00"
+      }
+    ],
+    "precioMenuDia": 10,
+    "precioExtra": 15
+  },
+  {
+    "id": "88",
+    "nombre": "Pollería Kely's",
+    "imagen": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQRB72OutAnuCOTbKg9MuHJ3BlsDD-g-wK-OY7U8BLCpnkMD5_Y2yOq9Yw&s=10",
+    "portada": "https://img.magnific.com/psd-premium/plantilla-portada-facebook-restaurante-comida_106176-755.jpg?semt=ais_hybrid&w=740&q=80",
+    "categoria": "polleria",
+    "categorias": [
+      "polleria"
+    ],
+    "rating": 4.6,
+    "opiniones": 251,
+    "tiempoEstimado": "30-45 min",
+    "distancia": "",
+    "envioGratis": true,
+    "costoEnvio": 0,
+    "lat": -12.035257437080801,
+    "lng": -76.9589308363763,
+    "direccion": "Av. Los Chancas, Santa Anita 15009",
+    "descripcion": "Pollos a la brasa, acompañamientos y opciones para compartir.",
+    "horario": [
+      {
+        "dia": 0,
+        "apertura": "11:30",
+        "cierre": "00:00"
+      },
+      {
+        "dia": 1,
+        "apertura": "11:30",
+        "cierre": "23:00"
+      },
+      {
+        "dia": 2,
+        "apertura": "11:30",
+        "cierre": "23:00"
+      },
+      {
+        "dia": 3,
+        "apertura": "11:30",
+        "cierre": "23:00"
+      },
+      {
+        "dia": 4,
+        "apertura": "11:30",
+        "cierre": "23:00"
+      },
+      {
+        "dia": 5,
+        "apertura": "11:30",
+        "cierre": "23:00"
+      },
+      {
+        "dia": 6,
+        "apertura": "11:30",
+        "cierre": "00:00"
+      }
+    ]
+  },
+  {
+    "id": "89",
+    "nombre": "Caldos Doris",
+    "imagen": "https://images.rappi.pe/restaurants_logo/1-1712693944939.png",
+    "portada": "https://origin.cronosmedia.glr.pe/large/2021/08/03/lg_61097bcbb6df8e0fdc17c059.jpg",
+    "categoria": "caldos",
+    "categorias": [
+      "caldos"
+    ],
+    "rating": 4.1,
+    "opiniones": 170,
+    "tiempoEstimado": "25-40 min",
+    "distancia": "",
+    "envioGratis": true,
+    "costoEnvio": 0,
+    "lat": -12.035939481891898,
+    "lng": -76.95150648225291,
+    "direccion": "Coop. Benjamín Doig, C. 8 Mz A, Santa Anita 15023",
+    "descripcion": "Caldos y sopas tradicionales.",
+    "horario": [
+      {
+        "dia": 0,
+        "apertura": "07:00",
+        "cierre": "14:00"
+      },
+      {
+        "dia": 1,
+        "apertura": "07:00",
+        "cierre": "14:00"
+      },
+      {
+        "dia": 2,
+        "apertura": "07:00",
+        "cierre": "14:00"
+      },
+      {
+        "dia": 3,
+        "apertura": "07:00",
+        "cierre": "14:00"
+      },
+      {
+        "dia": 4,
+        "apertura": "07:00",
+        "cierre": "14:00"
+      },
+      {
+        "dia": 5,
+        "apertura": "07:00",
+        "cierre": "14:00"
+      },
+      {
+        "dia": 6,
+        "apertura": "07:00",
+        "cierre": "14:00"
+      }
+    ]
+  },
+  {
+    "id": "90",
+    "nombre": "CEVICHERIA EL RICO LOPEZ",
+    "imagen": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQjVpP6xJynF0veHSgI7x3VB8pN66Dep0yrsJfLGyukQfC8QJJ_7z7c020&s=10",
+    "portada": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcS058LWcPqbD4vH6ElaZx6vefIv3K-1QJCfC_b9rKoJI93By0d8nmxQU2U8&s=10",
+    "categoria": "cevicheria",
+    "categorias": [
+      "cevicheria"
+    ],
+    "rating": 4.2,
+    "opiniones": 135,
+    "tiempoEstimado": "25-40 min",
+    "distancia": "",
+    "envioGratis": true,
+    "costoEnvio": 0,
+    "lat": -12.0396347508408,
+    "lng": -76.9696237487977,
+    "direccion": "Av. Los Chancas 211, Santa Anita 15009",
+    "descripcion": "Ceviches y platos marinos preparados al momento.",
+    "horario": [
+      {
+        "dia": 0,
+        "apertura": "11:00",
+        "cierre": "18:00"
+      },
+      {
+        "dia": 1,
+        "apertura": "11:00",
+        "cierre": "18:00"
+      },
+      {
+        "dia": 2,
+        "apertura": "11:00",
+        "cierre": "18:00"
+      },
+      {
+        "dia": 3,
+        "apertura": "11:00",
+        "cierre": "18:00"
+      },
+      {
+        "dia": 4,
+        "apertura": "11:00",
+        "cierre": "18:00"
+      },
+      {
+        "dia": 5,
+        "apertura": "11:00",
+        "cierre": "18:00"
+      },
+      {
+        "dia": 6,
+        "apertura": "11:00",
+        "cierre": "18:00"
+      }
+    ]
+  },
+  {
+    "id": "91",
+    "nombre": "Restaurante Vilma",
+    "imagen": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSkQJoYh0cd9Wgihw5qy44aO9JxbUHFYNS5LRmQn_-TiL8q9T_rbn9FvM_5&s=10",
+    "portada": "https://buenazo.cronosmedia.glr.pe/original/2022/10/24/6356cbae2d0ad652087c5d15.jpg",
+    "categoria": "comida_criolla",
+    "categorias": [
+      "comida_criolla"
+    ],
+    "rating": 3.8,
+    "opiniones": 260,
+    "tiempoEstimado": "25-35 min",
+    "distancia": "",
+    "envioGratis": false,
+    "costoEnvio": 3,
+    "lat": -12.0421721769107,
+    "lng": -76.9484247830393,
+    "direccion": "Mercado Productores, Psje Huancayo, Santa Anita 15011",
+    "descripcion": "Restaurante de comida criolla y platos caseros.",
+    "horario": [
+      {
+        "dia": 0,
+        "apertura": "10:30",
+        "cierre": "16:00"
+      },
+      {
+        "dia": 1,
+        "apertura": "10:30",
+        "cierre": "16:00"
+      },
+      {
+        "dia": 2,
+        "apertura": "10:30",
+        "cierre": "16:00"
+      },
+      {
+        "dia": 3,
+        "apertura": "10:30",
+        "cierre": "16:00"
+      },
+      {
+        "dia": 4,
+        "apertura": "10:30",
+        "cierre": "16:00"
+      },
+      {
+        "dia": 5,
+        "apertura": "10:30",
+        "cierre": "16:00"
+      },
+      {
+        "dia": 6,
+        "apertura": "10:30",
+        "cierre": "16:00"
+      }
+    ],
+    "precioMenuDia": 10,
+    "precioExtra": 15
+  },
+  {
+    "id": "92",
+    "nombre": "Restaurante Punto y Coma",
+    "imagen": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRhyMSyydqAazBJffsBqg-rZdJQNIDmE6JbE3Y3H5P7hyxlmFQzQNbxidRO&s=10",
+    "portada": "https://buenazo.cronosmedia.glr.pe/original/2022/10/24/6356cbae2d0ad652087c5d15.jpg",
+    "categoria": "comida_criolla",
+    "categorias": [
+      "comida_criolla"
+    ],
+    "rating": 4.4,
+    "opiniones": 129,
+    "tiempoEstimado": "20-30 min",
+    "distancia": "",
+    "envioGratis": false,
+    "costoEnvio": 4,
+    "lat": -12.045956154732998,
+    "lng": -76.95367879668959,
+    "direccion": "Av. Cascanueces Mz D-14 Lt 5, Santa Anita 15011",
+    "descripcion": "Restaurante de comida criolla y platos caseros.",
+    "horario": [
+      {
+        "dia": 0,
+        "apertura": "11:00",
+        "cierre": "17:00"
+      },
+      {
+        "dia": 1,
+        "apertura": "11:00",
+        "cierre": "17:00"
+      },
+      {
+        "dia": 2,
+        "apertura": "11:00",
+        "cierre": "17:00"
+      },
+      {
+        "dia": 3,
+        "apertura": "11:00",
+        "cierre": "17:00"
+      },
+      {
+        "dia": 4,
+        "apertura": "11:00",
+        "cierre": "17:00"
+      },
+      {
+        "dia": 5,
+        "apertura": "11:00",
+        "cierre": "17:00"
+      },
+      {
+        "dia": 6,
+        "apertura": "11:00",
+        "cierre": "17:00"
+      }
+    ],
+    "precioMenuDia": 10,
+    "precioExtra": 15
+  },
+  {
+    "id": "93",
+    "nombre": "CEVICHERIA ASU MARE",
+    "imagen": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQsvqwla3QA9aAqGRCOO3nrOeHuQUcGaWjgplZGg0XbhWFzwSvziYCMbnfl&s=10",
+    "portada": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcS058LWcPqbD4vH6ElaZx6vefIv3K-1QJCfC_b9rKoJI93By0d8nmxQU2U8&s=10",
+    "categoria": "cevicheria",
+    "categorias": [
+      "cevicheria"
+    ],
+    "rating": 4.1,
+    "opiniones": 260,
+    "tiempoEstimado": "30-40 min",
+    "distancia": "",
+    "envioGratis": false,
+    "costoEnvio": 4,
+    "lat": -12.045620391566803,
+    "lng": -76.9569215874159,
+    "direccion": "Azaleas Mz.Q - Lt.7, Santa Anita 15011",
+    "descripcion": "Ceviches y platos marinos preparados al momento.",
+    "horario": [
+      {
+        "dia": 0,
+        "apertura": "11:30",
+        "cierre": "17:00"
+      },
+      {
+        "dia": 1,
+        "apertura": "11:30",
+        "cierre": "17:00"
+      },
+      {
+        "dia": 2,
+        "apertura": "11:30",
+        "cierre": "17:00"
+      },
+      {
+        "dia": 3,
+        "apertura": "11:30",
+        "cierre": "17:00"
+      },
+      {
+        "dia": 4,
+        "apertura": "11:30",
+        "cierre": "17:00"
+      },
+      {
+        "dia": 5,
+        "apertura": "11:30",
+        "cierre": "17:00"
+      },
+      {
+        "dia": 6,
+        "apertura": "11:30",
+        "cierre": "17:00"
+      }
+    ]
+  },
+  {
+    "id": "94",
+    "nombre": "Restaurante A Fuego",
+    "imagen": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQzH2U7LbnMTX7PW2km02_OzEhpQcFx0l9XBa6OIvv64M5JQcVE1oCJ11g&s=10",
+    "portada": "https://buenazo.cronosmedia.glr.pe/original/2022/10/24/6356cbae2d0ad652087c5d15.jpg",
+    "categoria": "comida_criolla",
+    "categorias": [
+      "comida_criolla"
+    ],
+    "rating": 4.5,
+    "opiniones": 45,
+    "tiempoEstimado": "25-35 min",
+    "distancia": "",
+    "envioGratis": true,
+    "costoEnvio": 0,
+    "lat": -12.0498491705055,
+    "lng": -76.97574136222529,
+    "direccion": "Cedros 401, Santa Anita 15008",
+    "descripcion": "Restaurante de comida criolla y platos caseros.",
+    "horario": [
+      {
+        "dia": 0,
+        "apertura": "11:30",
+        "cierre": "16:30"
+      },
+      {
+        "dia": 1,
+        "apertura": "11:30",
+        "cierre": "16:30"
+      },
+      {
+        "dia": 2,
+        "apertura": "11:30",
+        "cierre": "16:30"
+      },
+      {
+        "dia": 3,
+        "apertura": "11:30",
+        "cierre": "16:30"
+      },
+      {
+        "dia": 4,
+        "apertura": "11:30",
+        "cierre": "16:30"
+      },
+      {
+        "dia": 5,
+        "apertura": "11:30",
+        "cierre": "16:30"
+      },
+      {
+        "dia": 6,
+        "apertura": "11:30",
+        "cierre": "16:30"
+      }
+    ],
+    "precioMenuDia": 10,
+    "precioExtra": 15
+  },
+  {
+    "id": "95",
+    "nombre": "Festín Brasas Y Leña",
+    "imagen": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSY2hbfXo54UtDnsV_mjJbhVDrbwtMPuSfsVkinZf6b_LaLkd6_nrDXUOY&s=10",
+    "portada": "https://img.magnific.com/psd-premium/plantilla-portada-facebook-restaurante-comida_106176-755.jpg?semt=ais_hybrid&w=740&q=80",
+    "categoria": "polleria",
+    "categorias": [
+      "polleria"
+    ],
+    "rating": 4,
+    "opiniones": 157,
+    "tiempoEstimado": "20-35 min",
+    "distancia": "",
+    "envioGratis": false,
+    "costoEnvio": 4,
+    "lat": -12.0477716592744,
+    "lng": -76.96295258970319,
+    "direccion": "Av Sta Rosa 404, Santa Anita 15008",
+    "descripcion": "Pollos a la brasa, acompañamientos y opciones para compartir.",
+    "horario": [
+      {
+        "dia": 0,
+        "apertura": "12:00",
+        "cierre": "00:30"
+      },
+      {
+        "dia": 1,
+        "apertura": "12:00",
+        "cierre": "23:30"
+      },
+      {
+        "dia": 2,
+        "apertura": "12:00",
+        "cierre": "23:30"
+      },
+      {
+        "dia": 3,
+        "apertura": "12:00",
+        "cierre": "23:30"
+      },
+      {
+        "dia": 4,
+        "apertura": "12:00",
+        "cierre": "23:30"
+      },
+      {
+        "dia": 5,
+        "apertura": "12:00",
+        "cierre": "23:30"
+      },
+      {
+        "dia": 6,
+        "apertura": "12:00",
+        "cierre": "00:30"
+      }
+    ]
+  },
+  {
+    "id": "96",
+    "nombre": "La Finka: Pizzas ARTESANALES",
+    "imagen": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRbL0j5K8Ps5QiF-mM2KVgvfwwp2Ca72oG83joRrHzEzVjF4nK6DBQUgOI&s=10",
+    "portada": "https://img.magnific.com/psd-gratis/menu-comida-pizza-deliciosa-plantilla-banner-portada-facebook_120329-4878.jpg?semt=ais_hybrid&w=740&q=80",
+    "categoria": "pizza",
+    "categorias": [
+      "pizza"
+    ],
+    "rating": 4.7,
+    "opiniones": 234,
+    "tiempoEstimado": "15-30 min",
+    "distancia": "",
+    "envioGratis": false,
+    "costoEnvio": 3,
+    "lat": -12.039575549840603,
+    "lng": -76.96926265314183,
+    "direccion": "Av. Los Chancas 229, Santa Anita 15009",
+    "descripcion": "Pizzas y opciones para compartir.",
+    "horario": [
+      {
+        "dia": 0,
+        "apertura": "16:00",
+        "cierre": "00:00"
+      },
+      {
+        "dia": 1,
+        "apertura": "16:00",
+        "cierre": "23:00"
+      },
+      {
+        "dia": 2,
+        "apertura": "16:00",
+        "cierre": "23:00"
+      },
+      {
+        "dia": 3,
+        "apertura": "16:00",
+        "cierre": "23:00"
+      },
+      {
+        "dia": 4,
+        "apertura": "16:00",
+        "cierre": "23:00"
+      },
+      {
+        "dia": 5,
+        "apertura": "16:00",
+        "cierre": "23:00"
+      },
+      {
+        "dia": 6,
+        "apertura": "16:00",
+        "cierre": "00:00"
+      }
+    ]
+  },
+  {
+    "id": "97",
+    "nombre": "Jhon Brasa",
+    "imagen": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQ_z9Jdo6IWkz-FUgaOkrWqFQ68ruqbun3FFkv4yKc6VsVYAe8z3G8bo6u2&s=10",
+    "portada": "https://img.magnific.com/psd-premium/plantilla-portada-facebook-restaurante-comida_106176-755.jpg?semt=ais_hybrid&w=740&q=80",
+    "categoria": "polleria",
+    "categorias": [
+      "polleria"
+    ],
+    "rating": 3.8,
+    "opiniones": 268,
+    "tiempoEstimado": "30-40 min",
+    "distancia": "",
+    "envioGratis": false,
+    "costoEnvio": 3,
+    "lat": -12.038969587540404,
+    "lng": -76.96703641969751,
+    "direccion": "Av. Los Chancas 366, Santa Anita 15009",
+    "descripcion": "Pollos a la brasa, acompañamientos y opciones para compartir.",
+    "horario": [
+      {
+        "dia": 0,
+        "apertura": "16:00",
+        "cierre": "01:00"
+      },
+      {
+        "dia": 1,
+        "apertura": "16:00",
+        "cierre": "00:00"
+      },
+      {
+        "dia": 2,
+        "apertura": "16:00",
+        "cierre": "00:00"
+      },
+      {
+        "dia": 3,
+        "apertura": "16:00",
+        "cierre": "00:00"
+      },
+      {
+        "dia": 4,
+        "apertura": "16:00",
+        "cierre": "00:00"
+      },
+      {
+        "dia": 5,
+        "apertura": "16:00",
+        "cierre": "00:00"
+      },
+      {
+        "dia": 6,
+        "apertura": "16:00",
+        "cierre": "01:00"
+      }
+    ]
+  }
 ]

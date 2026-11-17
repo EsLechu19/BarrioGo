@@ -4,9 +4,8 @@ import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { RootStackParamList } from './RootStackParamList';
 import { TabParamList } from './TabParamList';
 
-// Props de una pantalla que vive en un Tab pero también puede navegar al
-// stack raíz (Detalle, Carrito, etc.). Reemplaza el CompositeScreenProps
-// repetido en cada pantalla de los tabs.
+// Props de una pantalla Tab que también navega al stack raíz
+// (Detalle, Carrito…). Evita repetir CompositeScreenProps en cada pantalla.
 export type TabScreenProps<T extends keyof TabParamList> = CompositeScreenProps<
   BottomTabScreenProps<TabParamList, T>,
   NativeStackScreenProps<RootStackParamList>

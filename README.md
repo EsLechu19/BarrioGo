@@ -17,6 +17,10 @@ BarrioGo cumple los objetivos principales de APF2:
 - Persistencia local con AsyncStorage.
 - Ordenamiento de negocios por cercanía usando GPS, con fallback seguro.
 - Interfaz consistente con componentes reutilizables y diseño responsive.
+- Carta diaria para restaurantes (catálogo demo: La olla del sur, #16): el
+  cliente ve solo la carta de hoy en secciones Entradas → Menú → Extras y
+  arma el menú del día (1 entrada + 1 comida a precio configurable del
+  negocio, extras aparte); el dueño programa qué días sale cada plato.
 
 ## Propuesta de valor
 
@@ -106,7 +110,7 @@ comprobar que la rama no contiene archivos sensibles:
 
 ```powershell
 git status --short
-git ls-files .env service-account.json
+git ls-files .env firebase-sdk.json
 ```
 
 Los dos últimos archivos deben estar ignorados y no deben aparecer como
@@ -117,12 +121,17 @@ archivos versionados.
 1. Crear proyecto, habilitar Auth Email/Password y Firestore (producción).
 2. Registrar app web `</>` y copiar `.env.example` a `.env` con los valores.
 3. Pegar `firestore.rules` en Firestore → Reglas → Publicar.
-4. Descargar `service-account.json` (Cuentas de servicio) a la raíz
+4. Descargar `firebase-sdk.json` (Cuentas de servicio) a la raíz
    (está en `.gitignore`, nunca se sube) y correr el seed:
 
 ```powershell
 npm run seed   # 15 negocios + 48 productos
 ```
+
+5. Para builds de Android con notificaciones: descargar `google-services.json`
+   (Configuración del proyecto → tus apps de Android) a la raíz. También está
+   en `.gitignore` (son credenciales), así que hay que compartirlo con el
+   equipo por fuera del repo: sin ese archivo el build de Android falla.
 
 ## Estado del proyecto y alcance de la presentación
 
@@ -133,11 +142,24 @@ npm run seed   # 15 negocios + 48 productos
 - **APF3** (rama `feature/apf3-firebase-base`) — F1 Auth real con roles ✔,
   F2 Firestore + seed (15 negocios, 48 productos) ✔, F3 pedidos con
   tracking en tiempo real ✔, F4 panel negocio (estados + alta de menú) ✔,
-  F5 notificaciones locales ✔ (activas en dev build/APK; en Expo Go son
-  no-op desde SDK 53).
+  F5 notificaciones locales ✔ (cliente y negocio: aviso al confirmar el
+  pedido, aviso al negocio de pedido nuevo y de cancelación, historial con
+  contador de no leídas en la campana, y tocar la notificación abre el
+  pedido). En Expo Go funcionan con el canal y el sonido por defecto; el
+  canal `barriogo-pedidos-v2`, el sonido `xd.wav` y el ícono propio solo
+  existen en dev build o APK (son ajustes de build del plugin).
 - **F6** (misma rama) — cada cuenta registra su propio negocio ✔ (S1), edita
   su local ✔ (S2), icono + portada por Cloudinary Free ✔ (S3, verificado en
   físico), reglas solo-dueño ✔ (S4, campo `duenioId` sin eñe).
+- **Pulido de revisión** — rating unificado desde opiniones reales (5–10 por
+  negocio, el mismo número en Inicio, Detalle y filtros), Ganancias calculado
+  con los pedidos entregados de la semana en curso, horario y abrir/cerrar
+  persistidos en Firestore, sección Repartidores funcional (alta, estado y
+  baja en la colección `repartidores`), pausar/eliminar platos reales
+  (`disponible: false` oculta el plato del catálogo del cliente; eliminar hace
+  `deleteDoc` con confirmación), login sin botones sociales muertos,
+  Configuración solo con Modo oscuro y Notificaciones, y pestaña Información
+  sin el placeholder de mapa (queda dirección y coordenadas).
 
 APF3 y F6 son avances posteriores y no reemplazan los criterios funcionales
 de APF2. Para esta presentación se debe priorizar el guion APF2 anterior.
@@ -147,7 +169,7 @@ de APF2. Para esta presentación se debe priorizar el guion APF2 anterior.
 - Ramas `feature/nombre`; nada directo a `master` sin revisión.
 - Commits en español, estilo convencional (`feat`, `fix`, `docs`, `chore`).
 - `npx tsc --noEmit` sin errores antes de cada commit.
-- `.env` y `service-account.json` jamás se suben al repo.
+- `.env` y `firebase-sdk.json` jamás se suben al repo.
 
 ## Equipo
 

@@ -1,7 +1,9 @@
-import { useMemo } from 'react';
+import { memo, useMemo } from 'react';
 import { StyleSheet, Image, Text, TouchableOpacity, View } from 'react-native'
 import { Negocio } from "../types/Negocio";
 import { Ionicons } from "@expo/vector-icons";
+import { estaAbierto, proximaAperturaTexto, textoEnvio } from '../utils/negocios';
+import { useEstadoNegocios } from '../context/EstadoNegociosContext';
 import { useColors } from '../context/ThemeContext';
 import type { Colors } from '../styles/colors';
 
@@ -12,7 +14,10 @@ type Props = {
     onPress?: () => void;
 }
 
-export function RestaurantCard({ negocio, esFavorito, onToggleFavorito, onPress }: Props) {
+// memo: las listas (Home/Restaurantes/Favoritos) re-renderizan por cambios de
+// filtros o GPS; la card solo debe repintarse si cambia su negocio o su
+// estado de favorito.
+function RestaurantCardBase({ negocio, esFavorito, onToggleFavorito, onPress }: Props) {
     const colors = useColors();
     const styles = useMemo(() => makeStyles(colors), [colors]);
     // uri vacía ('') rompe <Image>: solo se renderiza con URL real.
@@ -20,6 +25,11 @@ export function RestaurantCard({ negocio, esFavorito, onToggleFavorito, onPress 
         negocio.imagen?.trim() ? negocio.imagen
         : negocio.portada?.trim() ? negocio.portada
         : null;
+    // Estado efectivo (override de la sesión + horario + override backend).
+    const { conOverride } = useEstadoNegocios();
+    const negocioVista: Negocio = conOverride(negocio);
+    const abierto: boolean = estaAbierto(negocioVista);
+    const proximaApertura: string | null = abierto ? null : proximaAperturaTexto(negocioVista);
     return (
         // contenedor de la card
         <View style={styles.card}>
@@ -46,6 +56,27 @@ export function RestaurantCard({ negocio, esFavorito, onToggleFavorito, onPress 
                     <View style={styles.titleRow}>
                         <Text style={styles.restaurantName}>{negocio.nombre}</Text>
                     </View>
+                    {/* Badge estado: Abierto / Cerrado · Abre HH:mm */}
+                    <View style={styles.estadoRow}>
+                        <View
+                            style={[
+                                styles.estadoDot,
+                                { backgroundColor: abierto ? colors.success : colors.textMuted },
+                            ]}
+                        />
+                        <Text
+                            style={[
+                                styles.estadoText,
+                                { color: abierto ? colors.success : colors.textMuted },
+                            ]}
+                        >
+                            {abierto
+                                ? 'Abierto'
+                                : proximaApertura
+                                    ? `Cerrado · ${proximaApertura}`
+                                    : 'Cerrado'}
+                        </Text>
+                    </View>
                     {/* Fila 2: rating */}
                     <View style={styles.ratingRow}>
                         <Ionicons name='star-outline' size={20} color={colors.rating} />
@@ -57,12 +88,12 @@ export function RestaurantCard({ negocio, esFavorito, onToggleFavorito, onPress 
                         <Text style={styles.metaText}>{negocio.tiempoEstimado}</Text>
                         <Text style={styles.metaText}>•</Text>
                         <Text style={styles.metaText}>{negocio.distancia}</Text>
-                        <Text style={styles.metaText}>•</Text>
-                        {negocio.envioGratis?(
-                            <Text style={styles.freeShipping}>Envío gratis</Text>
-                        ):(
-                            <Text style={styles.freeShipping}>{negocio.envioMinimo}</Text>
-                        )}
+                        {textoEnvio(negocioVista) ? (
+                            <>
+                                <Text style={styles.metaText}>•</Text>
+                                <Text style={styles.freeShipping}>{textoEnvio(negocioVista)}</Text>
+                            </>
+                        ) : null}
                     </View>
                 </View>
             </TouchableOpacity>
@@ -84,6 +115,8 @@ export function RestaurantCard({ negocio, esFavorito, onToggleFavorito, onPress 
     );
 }
 
+export const RestaurantCard = memo(RestaurantCardBase);
+
 function makeStyles(c: Colors) {
     return StyleSheet.create({
         // Card
@@ -101,6 +134,10 @@ function makeStyles(c: Colors) {
         // Fila 1: nombre
         titleRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
         restaurantName: { fontSize: 16, fontWeight: 'bold', color: c.textPrimary },
+        // Badge estado (Abierto / Cerrado)
+        estadoRow: { flexDirection: 'row', alignItems: 'center', gap: 5 },
+        estadoDot: { width: 7, height: 7, borderRadius: 4 },
+        estadoText: { fontSize: 12, fontWeight: '700' },
         // Fila 2: rating
         ratingRow: { flexDirection: 'row', alignItems: 'center', gap: 4 },
         rating: { fontSize: 14, fontWeight: '600', color: c.textPrimary },

@@ -1,10 +1,32 @@
 {
   "expo": {
+    "plugins": [
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "BarrioGo accede a tus fotos para la imagen de tu negocio, tus platos y tu perfil.",
+          "cameraPermission": "BarrioGo usa la cámara para tomar fotos de tu negocio, tus platos y tu perfil.",
+          "microphonePermission": false
+        }
+      ],
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/img/noti-silueta.png",
+          "color": "#F97316",
+          "defaultChannel": "barriogo-pedidos-v2",
+          "sounds": [
+            "./assets/sounds/xd.wav"
+          ]
+        }
+      ],
+      "@maplibre/maplibre-react-native"
+    ],
     "name": "BarrioGo",
     "slug": "BarrioGo",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/icon.png",
+    "icon": "./assets/img/icon1.png",
     "userInterfaceStyle": "light",
     "ios": {
       "supportsTablet": true,
@@ -13,16 +35,21 @@
       }
     },
     "android": {
+      "googleServicesFile": "./google-services.json",
       "adaptiveIcon": {
-        "backgroundColor": "#E6F4FE",
-        "foregroundImage": "./assets/android-icon-foreground.png",
-        "backgroundImage": "./assets/android-icon-background.png",
-        "monochromeImage": "./assets/android-icon-monochrome.png"
+        "backgroundColor": "#F97316",
+        "foregroundImage": "./assets/img/icon1.png"
       },
-      "predictiveBackGestureEnabled": false
+      "predictiveBackGestureEnabled": false,
+      "package": "com.jotah26.BarrioGo"
     },
     "web": {
       "favicon": "./assets/favicon.png"
+    },
+    "extra": {
+      "eas": {
+        "projectId": "661bd518-440d-48f6-9cc8-5369821620b6"
+      }
     }
   }
 }

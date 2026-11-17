@@ -15,14 +15,20 @@ import { RestaurantCard } from '../components/RestaurantCard';
 import { EmptyState } from '../components/EmptyState';
 import { useColors } from '../context/ThemeContext';
 import type { Colors } from '../styles/colors';
+import { UserCoords, formatDistancia, getUserCoords, haversineKm } from '../services/location';
+import { estaAbierto } from '../utils/negocios';
+import { LIST_PERF } from '../utils/listPerf';
+import { useEstadoNegocios } from '../context/EstadoNegociosContext';
 
 type Props = TabScreenProps<'FavoritosTab'>;
 
 export default function FavoritosScreen({ navigation }: Props) {
   const insets = useSafeAreaInsets();
   const { ids, toggle, esFavorito } = useFavorites();
+  const { conOverride } = useEstadoNegocios();
   const [negocios, setNegocios] = useState<Negocio[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
+  const [userLoc, setUserLoc] = useState<UserCoords | null>(null);
   const colors = useColors();
   const styles = useMemo(() => makeStyles(colors), [colors]);
 
@@ -30,9 +36,27 @@ export default function FavoritosScreen({ navigation }: Props) {
     getNegocios()
       .then(setNegocios)
       .finally(() => setLoading(false));
+    getUserCoords().then(setUserLoc);
   }, []);
 
-  const favoritos = negocios.filter((n) => ids.includes(n.id));
+  const favoritos: Negocio[] = useMemo(() => {
+    const base: Negocio[] = negocios.filter((n) => ids.includes(n.id)).map(conOverride);
+    // Sin GPS: orden del API. Con GPS: distancia real + orden por cercanía.
+    let conDistancia: Negocio[] = base;
+    if (userLoc) {
+      conDistancia = base
+        .map((n) => {
+          const km = haversineKm(userLoc, { latitude: n.lat, longitude: n.lng });
+          return { negocio: { ...n, distancia: formatDistancia(km) }, km };
+        })
+        .sort((a, b) => a.km - b.km)
+        .map((r) => r.negocio);
+    }
+    // Abiertos primero (los cerrados quedan al final, visibles con su badge).
+    const abiertos: Negocio[] = conDistancia.filter((n) => estaAbierto(n));
+    const cerrados: Negocio[] = conDistancia.filter((n) => !estaAbierto(n));
+    return [...abiertos, ...cerrados];
+  }, [negocios, ids, userLoc, conOverride]);
 
   if (loading) {
     // Area loading
@@ -64,6 +88,7 @@ export default function FavoritosScreen({ navigation }: Props) {
         <FlatList
           data={favoritos}
           keyExtractor={(item) => item.id}
+          {...LIST_PERF}
           contentContainerStyle={styles.list}
           ItemSeparatorComponent={() => <View style={styles.separator} />}
           renderItem={({ item }) => (

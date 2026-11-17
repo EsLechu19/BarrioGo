@@ -1,6 +1,5 @@
-// Repartidor del negocio (SOLO DISEÑO por ahora).
-// TODO(back): colección `repartidores` en Firestore + invitación por código,
-// y reemplazar REPARTIDORES_MOCK en NegocioScreen.
+// Repartidor del negocio: colección `repartidores` (gestión en el panel).
+// TODO(back): asignar a un pedido + invitación por código.
 export type EstadoRepartidor = 'en_ruta' | 'disponible' | 'descanso';
 
 export interface Repartidor {

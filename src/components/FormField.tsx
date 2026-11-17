@@ -79,7 +79,7 @@ function makeStyles(c: Colors) {
         // Input + error juntos (gap corto entre uno y otro)
         fieldGroup: { width: '100%', gap: 6 },
         inputContainer: { width: '100%', position: 'relative', justifyContent: 'center' },
-        input: { width: '100%', height: 48, paddingHorizontal: 16, borderWidth: 1, borderColor: c.border, borderRadius: 12, backgroundColor: c.surface, fontSize: 16 },
+        input: { width: '100%', height: 48, paddingHorizontal: 16, borderWidth: 1, borderColor: c.border, borderRadius: 12, backgroundColor: c.surface, color: c.textPrimary, fontSize: 16 },
         inputWithIcon: { paddingRight: 48 },
         eyeButton: { position: 'absolute', right: 14, height: 48, justifyContent: 'center', alignItems: 'center' },
     });

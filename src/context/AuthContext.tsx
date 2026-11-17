@@ -1,15 +1,31 @@
-import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
+
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+} from 'react';
 import type { ReactNode } from 'react';
+
 import {
   User,
   createUserWithEmailAndPassword,
   onAuthStateChanged,
+  sendPasswordResetEmail,
   signInWithEmailAndPassword,
   signOut,
   updateProfile,
 } from 'firebase/auth';
+
 import { doc, getDoc, setDoc } from 'firebase/firestore';
-import { firebaseReady, getFirebaseAuth, getFirestoreDb } from '../services/firebase';
+
+import {
+  firebaseReady,
+  getFirebaseAuth,
+  getFirestoreDb,
+} from '../services/firebase';
 
 export type Rol = 'cliente' | 'negocio';
 
@@ -18,9 +34,14 @@ interface AuthContextValue {
   rol: Rol | null;
   loading: boolean;
   login: (email: string, password: string) => Promise<void>;
-  register: (nombre: string, email: string, password: string) => Promise<void>;
+  register: (
+    nombre: string,
+    email: string,
+    password: string
+  ) => Promise<void>;
   logout: () => Promise<void>;
   refreshRol: () => Promise<void>;
+  recuperarContrasena: (email: string) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null);
@@ -33,129 +54,307 @@ export function authErrorEs(code: string): string {
   switch (code) {
     case 'auth/invalid-email':
       return 'Ese correo no tiene un formato válido.';
+
     case 'auth/user-not-found':
     case 'auth/wrong-password':
     case 'auth/invalid-credential':
       return 'Correo o contraseña incorrectos.';
+
     case 'auth/email-already-in-use':
       return 'Ese correo ya tiene cuenta. Iniciá sesión.';
+
     case 'auth/weak-password':
       return 'La contraseña debe tener al menos 6 caracteres.';
+
     case 'auth/network-request-failed':
       return 'Sin conexión. Revisá tu internet e intentá de nuevo.';
+
     case 'auth/too-many-requests':
       return 'Muchos intentos. Esperá unos minutos.';
+
     default:
       return 'No pudimos completar la operación. Intentá de nuevo.';
   }
 }
 
-export function AuthProvider({ children }: { children: ReactNode }) {
+export function AuthProvider({
+  children,
+}: {
+  children: ReactNode;
+}) {
   const [user, setUser] = useState<User | null>(null);
   const [rol, setRol] = useState<Rol | null>(null);
+
+  // Esperar la recuperación de sesión y rol.
   const [loading, setLoading] = useState<boolean>(true);
-  // updateProfile muta el User en el lugar y React no lo detecta: este sello
-  // fuerza el re-render para que perfil y Home refresquen el nombre al toque.
+
   const [, setSelloAuth] = useState<number>(0);
 
-  // Si Auth no tiene displayName pero Firestore sí tiene el nombre del
-  // dueño de la cuenta, lo copia a Auth una vez. Arregla cuentas viejas
-  // (se veían como la parte del correo antes de la @).
-  const completarDisplayName = useCallback(async (u: User): Promise<void> => {
-    try {
-      if (u.displayName?.trim()) return;
-      const snap = await getDoc(doc(getFirestoreDb(), 'users', u.uid));
-      const nombre: unknown = snap.data()?.nombre;
-      if (typeof nombre === 'string' && nombre.trim()) {
-        await updateProfile(u, { displayName: nombre.trim() });
-        setSelloAuth((s) => s + 1);
+  const completarDisplayName = useCallback(
+    async (u: User): Promise<void> => {
+      try {
+        if (u.displayName?.trim()) return;
+
+        const snap = await getDoc(
+          doc(getFirestoreDb(), 'users', u.uid)
+        );
+
+        const nombre: unknown = snap.data()?.nombre;
+
+        if (
+          typeof nombre === 'string' &&
+          nombre.trim()
+        ) {
+          await updateProfile(u, {
+            displayName: nombre.trim(),
+          });
+
+          setSelloAuth(s => s + 1);
+        }
+      } catch (error) {
+        console.warn(
+          '[AUTH] No se pudo completar el nombre:',
+          error
+        );
       }
-    } catch {
-      // Silencioso: se vuelve a intentar en el próximo inicio de sesión.
-    }
-  }, []);
+    },
+    []
+  );
 
-  const cargarRol = useCallback(async (uid: string): Promise<void> => {
-    try {
-      const snap = await getDoc(doc(getFirestoreDb(), 'users', uid));
-      const r: unknown = snap.data()?.rol;
-      setRol(isRol(r) ? r : 'cliente');
-    } catch {
-      setRol('cliente');
-    }
-  }, []);
+  // Consultar el rol real desde Firestore.
+  const cargarRol = useCallback(
+    async (uid: string): Promise<void> => {
+      try {
+        const snap = await getDoc(
+          doc(getFirestoreDb(), 'users', uid)
+        );
 
-  useEffect(() => {
-    if (!firebaseReady) {
-      setLoading(false);
-      return;
-    }
-    const auth = getFirebaseAuth();
-    const unsub = onAuthStateChanged(auth, async (u) => {
-      setUser(u);
-      if (u) {
-        await completarDisplayName(u);
-        await cargarRol(u.uid);
-      } else {
+        if (!snap.exists()) {
+          console.warn(
+            '[AUTH] Documento no encontrado:',
+            uid
+          );
+          setRol(null);
+          return;
+        }
+
+        const data = snap.data();
+        const rolFirestore: unknown = data.rol;
+
+        console.log(
+          '[AUTH] Rol recibido:',
+          rolFirestore
+        );
+
+        console.log(
+          '[AUTH] Negocio ID:',
+          data.negocioId
+        );
+
+        if (typeof rolFirestore === 'string') {
+          const rolNormalizado =
+            rolFirestore.trim().toLowerCase();
+
+          if (isRol(rolNormalizado)) {
+            setRol(rolNormalizado);
+            return;
+          }
+        }
+
+        console.warn(
+          '[AUTH] Rol inválido:',
+          rolFirestore
+        );
+
+        setRol(null);
+      } catch (error) {
+        console.error(
+          '[AUTH] Error recuperando rol:',
+          error
+        );
+
+        // No convertir errores de Firebase en rol cliente.
         setRol(null);
       }
-      setLoading(false);
-    });
-    return unsub;
-  }, [cargarRol, completarDisplayName]);
+    },
+    []
+  );
 
-  // Relee el rol sin pedir re-login (ej. tras registrar el negocio propio,
-  // para que el tab Negocio aparezca al instante).
-  const refreshRol = useCallback(async (): Promise<void> => {
-    try {
-      if (!firebaseReady) return;
-      const u = getFirebaseAuth().currentUser;
-      if (u) await cargarRol(u.uid);
-    } catch {
-      // Silencioso: el rol se re-lee en el próximo cambio de sesión.
+  useEffect(() => {
+    let activo = true;
+    let version = 0;
+
+    if (!firebaseReady) {
+      console.error(
+        '[AUTH] Firebase no está configurado'
+      );
+      return;
     }
-  }, [cargarRol]);
 
-  const login = async (email: string, password: string): Promise<void> => {
+    const auth = getFirebaseAuth();
+
+    const unsub = onAuthStateChanged(auth, u => {
+      const actual = ++version;
+
+      setLoading(true);
+      setUser(u);
+      setRol(null);
+
+      if (!u) {
+        setLoading(false);
+        return;
+      }
+
+      // Primero recuperar rol, después nombre.
+      void (async () => {
+        try {
+          const snap = await getDoc(
+            doc(getFirestoreDb(), 'users', u.uid)
+          );
+
+          if (!activo || actual !== version) return;
+
+          if (snap.exists()) {
+            const r: unknown = snap.data().rol;
+
+            if (typeof r === 'string') {
+              const normalizado = r.trim().toLowerCase();
+
+              setRol(
+                isRol(normalizado) ? normalizado : null
+              );
+            } else {
+              setRol(null);
+            }
+          } else {
+            setRol(null);
+          }
+        } catch (error) {
+          console.error(
+            '[AUTH] Error inicializando rol:',
+            error
+          );
+
+          if (activo && actual === version) {
+            setRol(null);
+          }
+        } finally {
+          if (activo && actual === version) {
+            setLoading(false);
+          }
+        }
+
+        if (activo && actual === version) {
+          void completarDisplayName(u);
+        }
+      })();
+    });
+
+    return () => {
+      activo = false;
+      version++;
+      unsub();
+    };
+  }, [completarDisplayName]);
+
+  // Actualizar rol sin cerrar sesión.
+  const refreshRol = useCallback(
+    async (): Promise<void> => {
+      if (!firebaseReady) return;
+
+      const u = getFirebaseAuth().currentUser;
+
+      if (u) {
+        await cargarRol(u.uid);
+      }
+    },
+    [cargarRol]
+  );
+
+  const login = async (
+    email: string,
+    password: string
+  ): Promise<void> => {
     await signInWithEmailAndPassword(
       getFirebaseAuth(),
       email.trim(),
-      password,
+      password
     );
-    // El listener onAuthStateChanged actualiza user/rol solo.
   };
 
-  const register = async (nombre: string, email: string, password: string): Promise<void> => {
+  const register = async (
+    nombre: string,
+    email: string,
+    password: string
+  ): Promise<void> => {
     const cred = await createUserWithEmailAndPassword(
       getFirebaseAuth(),
       email.trim(),
-      password,
+      password
     );
-    await setDoc(doc(getFirestoreDb(), 'users', cred.user.uid), {
-      nombre: nombre.trim(),
-      email: email.trim(),
-      rol: 'cliente',
-      createdAt: new Date().toISOString(),
+
+    await setDoc(
+      doc(getFirestoreDb(), 'users', cred.user.uid),
+      {
+        nombre: nombre.trim(),
+        email: email.trim(),
+        rol: 'cliente',
+        createdAt: new Date().toISOString(),
+      }
+    );
+
+    await updateProfile(cred.user, {
+      displayName: nombre.trim(),
     });
-    // El nombre del dueño de la cuenta, tal cual lo escribió al registrarse.
-    await updateProfile(cred.user, { displayName: nombre.trim() });
-    setSelloAuth((s) => s + 1);
+
+    setSelloAuth(s => s + 1);
+
+    await refreshRol();
   };
 
   const logout = async (): Promise<void> => {
     await signOut(getFirebaseAuth());
   };
 
-  const value = useMemo(
-    () => ({ user, rol, loading, login, register, logout, refreshRol }),
-    [user, rol, loading, login, register, logout, refreshRol],
+  const recuperarContrasena = useCallback(
+    async (email: string): Promise<void> => {
+      await sendPasswordResetEmail(
+        getFirebaseAuth(),
+        email.trim()
+      );
+    },
+    []
   );
 
-  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+  const value = useMemo(
+    () => ({
+      user,
+      rol,
+      loading,
+      login,
+      register,
+      logout,
+      refreshRol,
+      recuperarContrasena,
+    }),
+    [user, rol, loading, refreshRol]
+  );
+
+  return (
+    <AuthContext.Provider value={value}>
+      {children}
+    </AuthContext.Provider>
+  );
 }
 
 export function useAuth(): AuthContextValue {
   const ctx = useContext(AuthContext);
-  if (!ctx) throw new Error('useAuth debe usarse dentro de AuthProvider');
+
+  if (!ctx) {
+    throw new Error(
+      'useAuth debe usarse dentro de AuthProvider'
+    );
+  }
+
   return ctx;
 }

@@ -1,6 +1,5 @@
-// Opinión de un cliente sobre un negocio (SOLO DISEÑO por ahora).
-// TODO(back): crear colección `opiniones` en Firestore + `crearOpinion` y
-// `escucharOpiniones` en src/services/api.ts, y reemplazar OPINIONES_MOCK.
+// Opinión de un cliente. La lista de la app = Firestore + sesión + ejemplos
+// (opinionesDemo). El rating se calcula SIEMPRE de esa lista combinada.
 export type Estrellas = 1 | 2 | 3 | 4 | 5;
 
 export interface Opinion {

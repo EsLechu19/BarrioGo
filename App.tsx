@@ -9,9 +9,18 @@ import { AppNavigator } from './src/navigation/AppNavigator';
 import { AuthNavigator } from './src/navigation/AuthNavigator';
 import { CartProvider } from './src/context/CartContext';
 import { FavoritesProvider } from './src/context/FavoritesContext';
+import { EstadoNegociosProvider } from './src/context/EstadoNegociosContext';
+import { OpinionesProvider } from './src/context/OpinionesContext';
 import { AuthProvider, useAuth } from './src/context/AuthContext';
 import { ThemeProvider, useTheme } from './src/context/ThemeContext';
 import { CustomerNotificationBridge } from './src/components/CustomerNotificationBridge';
+import { BusinessNotificationBridge } from './src/components/BusinessNotificationBridge';
+import {
+  NotificationTapHandler,
+  navigationRef,
+} from './src/components/NotificationTapHandler';
+import { registrarPushToken } from './src/services/pushNotifications';
+import { useEffect } from 'react';
 
 function Root() {
   const { user, loading } = useAuth();
@@ -42,13 +51,15 @@ function Root() {
   const barStyle = isDark ? 'light-content' : 'dark-content';
 
   return (
-    <NavigationContainer theme={tema}>
+    <NavigationContainer theme={tema} ref={navigationRef}>
       <StatusBar
         barStyle={isDark ? 'light-content' : 'dark-content'}
         backgroundColor={colors.background}
         translucent={false}
       />
       <CustomerNotificationBridge />
+      <BusinessNotificationBridge />
+      <NotificationTapHandler />
       {user ? <AppNavigator /> : <AuthNavigator />}
     </NavigationContainer>
   );
@@ -61,7 +72,12 @@ export default function App() {
         <AuthProvider>
           <CartProvider>
             <FavoritesProvider>
-              <Root />
+              <OpinionesProvider>
+                <EstadoNegociosProvider>
+                  <RegistrarPush/>
+                  <Root />
+                </EstadoNegociosProvider>
+              </OpinionesProvider>
             </FavoritesProvider>
           </CartProvider>
         </AuthProvider>
@@ -69,6 +85,36 @@ export default function App() {
     </SafeAreaProvider>
   );
 }
+
+
+function RegistrarPush() {
+  const { user, loading } = useAuth();
+
+  useEffect(() => {
+    if (loading || !user) return;
+
+    let cancelado = false;
+
+    const registrar = async () => {
+      try {
+        await registrarPushToken(user.uid);
+      } catch (error) {
+        if (!cancelado) {
+          console.error('Error registrando notificaciones:', error);
+        }
+      }
+    };
+
+    void registrar();
+
+    return () => {
+      cancelado = true;
+    };
+  }, [user?.uid, loading]);
+
+  return null;
+}
+
 
 const styles = StyleSheet.create({
   center: { flex: 1, justifyContent: 'center', alignItems: 'center' },

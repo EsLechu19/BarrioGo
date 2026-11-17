@@ -5,9 +5,8 @@ import { Ionicons } from '@expo/vector-icons';
 import { useColors } from '../context/ThemeContext';
 import type { Colors } from '../styles/colors';
 
-// Card única del panel negocio (modelo Locales): mismos valores de tamaño en
-// todas las filas de todas las secciones (Pedidos, Mi menú, Repartidores,
-// Locales). Thumb 56 + título + subtítulo + badge + fila inferior opcional.
+// Card única del panel: mismos tamaños en todas las secciones (Pedidos,
+// Mi menú, Repartidores, Locales). Thumb 56 + título + subtítulo + badge.
 export type IconoCard =
   | 'storefront-outline'
   | 'fast-food-outline'

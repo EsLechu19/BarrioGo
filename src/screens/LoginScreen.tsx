@@ -1,7 +1,6 @@
-import { StyleSheet, Text, View, Image, TouchableOpacity, KeyboardAvoidingView, Platform, ScrollView } from 'react-native'
+import { Alert, StyleSheet, Text, View, Image, TouchableOpacity, KeyboardAvoidingView, Platform, ScrollView } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useMemo, useState } from 'react'
-import { Ionicons } from '@expo/vector-icons';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { AuthStackParamList } from '../navigation/AuthStackParamList';
 import { FormField } from '../components/FormField';
@@ -14,11 +13,12 @@ type Props = NativeStackScreenProps<AuthStackParamList, 'Login'>
 
 export default function LoginScreen ({ navigation }: Props){
     const insets = useSafeAreaInsets();
-    const { login } = useAuth();
+    const { login, recuperarContrasena } = useAuth();
     const [email,setEmail] = useState('');
     const [password,setPassword] = useState('');
     const [error,setError] = useState<{email?: string; password?: string; auth?: string}>({});
     const [submitting, setSubmitting] = useState<boolean>(false);
+    const [sendingReset, setSendingReset] = useState<boolean>(false);
     const colors = useColors();
     const styles = useMemo(() => makeStyles(colors), [colors]);
     const isValidEmail = (value: string): boolean => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value.trim());
@@ -42,22 +42,31 @@ export default function LoginScreen ({ navigation }: Props){
         }
     }
 
-    const handleForgotPassword = () => {
-        console.log('Olvidó contraseña');
-        // Aquí navegarías a la pantalla de recuperar contraseña
+    const handleForgotPassword = async () => {
+        const newError: { email?: string } = {};
+        if(!email.trim()) newError.email = 'El correo es necesario';
+        else if(!isValidEmail(email)) newError.email = 'Ingresa un correo válido';
+        setError(newError);
+        if(Object.keys(newError).length > 0) return;
+        setSendingReset(true);
+        try {
+            await recuperarContrasena(email);
+            setError({});
+            Alert.alert(
+                'Correo enviado',
+                'Si el correo existe, recibirás un enlace para crear una contraseña nueva.',
+            );
+        } catch (e: unknown) {
+            const code = e instanceof Object && 'code' in e ? String((e as { code: unknown }).code) : '';
+            setError({ auth: authErrorEs(code) });
+        } finally {
+            setSendingReset(false);
+        }
     };
 
     const handleRegister = () => {
         console.log('Ir a registro');
         navigation.navigate('Register');
-    };
-
-    const handleFacebookLogin = () => {
-        console.log('Login con Facebook');
-    };
-
-    const handleGoogleLogin = () => {
-        console.log('Login con Google');
     };
 
     return(
@@ -103,8 +112,14 @@ export default function LoginScreen ({ navigation }: Props){
                                 error={error.password}
                                 secureTextEntry
                             />
-                            <TouchableOpacity style={styles.forgotWrapper} onPress={handleForgotPassword}>
-                                <Text style={styles.forgotText}>¿Olvidaste tu contraseña?</Text>
+                            <TouchableOpacity
+                                style={styles.forgotWrapper}
+                                onPress={handleForgotPassword}
+                                disabled={sendingReset}
+                            >
+                                <Text style={styles.forgotText}>
+                                    {sendingReset ? 'Enviando enlace...' : '¿Olvidaste tu contraseña?'}
+                                </Text>
                             </TouchableOpacity>
                         </View>
                     </View>
@@ -119,25 +134,6 @@ export default function LoginScreen ({ navigation }: Props){
                                 <Text style={styles.registerLink}>Registrate</Text>
                             </TouchableOpacity>
                         </View>
-                    </View>
-
-                    {/* Area de separador "O continúa con" */}
-                    <View style={styles.dividerRow}>
-                        <View style={styles.dividerLine}/>
-                        <Text style={styles.dividerText}>O continúa con</Text>
-                        <View style={styles.dividerLine}/>
-                    </View>
-
-                    {/* Area de botones de login social (Facebook / Google) */}
-                    <View style={styles.socialRow}>
-                        <TouchableOpacity style={styles.socialButton} onPress={handleGoogleLogin}>
-                            <Ionicons name='logo-google' size={20} color={colors.google}/>
-                            <Text style={styles.socialText}>Google</Text>
-                        </TouchableOpacity>
-                        <TouchableOpacity style={styles.socialButton} onPress={handleFacebookLogin}>
-                            <Ionicons name='logo-facebook' size={20} color={colors.facebook}/>
-                            <Text style={styles.socialText}>Facebook</Text>
-                        </TouchableOpacity>
                     </View>
                 </View>
             </ScrollView>
@@ -174,15 +170,5 @@ function makeStyles(c: Colors) {
         registerRow: { flexDirection: 'row', justifyContent: 'center', alignItems: 'center' },
         registerText: { height: 17, fontSize: 14, color: c.textMuted },
         registerLink: { height: 17, color: c.primary, fontSize: 14, fontWeight: '600' },
-
-        // Area de separador "O continúa con"
-        dividerRow: { flexDirection: 'row', width: '100%', alignItems: 'center', gap: 12 },
-        dividerLine: { flex: 1, height: 1, backgroundColor: c.border },
-        dividerText: { color: c.textPlaceholder, fontSize: 13, fontWeight: '600' },
-
-        // Area de botones de login social (Facebook / Google)
-        socialRow: { flexDirection: 'row', width: '100%', gap: 12 },
-        socialButton: { flex: 1, flexDirection: 'row', height: 48, justifyContent: 'center', alignItems: 'center', gap: 8, borderWidth: 1, borderColor: c.border, borderRadius: 12 ,backgroundColor: c.surface },
-        socialText: { color: c.textSecondary, fontSize: 14, fontWeight: '600' }
     })
 }

@@ -26,7 +26,7 @@ const ETIQUETA_ESTRELLAS: Record<number, string> = {
   5: '¡Excelente!',
 };
 
-// Pestaña Opiniones: resumen de rating, lista de opiniones y formulario visual.
+// Pestaña Opiniones: rating, lista y formulario de publicación.
 type Props = {
   opiniones: Opinion[];
   promedio: number;
@@ -54,7 +54,7 @@ export function ReviewsTab({
   const styles = useMemo(() => makeStyles(colors), [colors]);
   return (
     <ScrollView contentContainerStyle={styles.tabContent}>
-      {/* Resumen rating (promedio local del mock) */}
+      {/* Resumen rating (mismo cálculo que muestran las cards) */}
       <View style={styles.reviewSummary}>
         <Text style={styles.ratingBig}>
           {opiniones.length > 0 ? `⭐ ${promedio.toFixed(1)}` : '⭐ —'}
@@ -99,7 +99,7 @@ export function ReviewsTab({
           <OpinionCard key={opinion.id} opinion={opinion} />
         ))
       )}
-      {/* Formulario visual (solo diseño, no persiste) */}
+      {/* Formulario: publica la opinión en la sesión (OpinionesContext) */}
       <View style={styles.formCard}>
         <Text style={styles.formTitle}>Dejá tu opinión</Text>
         <View style={styles.starsBox}>

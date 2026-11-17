@@ -1,7 +1,6 @@
 rules_version = '2';
-// Pegar en consola Firebase → Firestore → Reglas → Publicar.
-// Catálogo público; escritura solo del dueño (duenioId). S4.
-// Los 15 del seed no tienen dueño: nadie los edita desde la app.
+// Pegar en consola Firebase → Reglas → Publicar. Catálogo público;
+// escritura solo del dueño. Los 15 del seed no tienen dueño.
 service cloud.firestore {
   match /databases/{database}/documents {
 
@@ -38,15 +37,31 @@ service cloud.firestore {
           && request.resource.data.negocioId is string
           && get(/databases/$(database)/documents/negocios/$(request.resource.data.negocioId)).data.duenioId == request.auth.uid;
       }
-      // Generic profile writes cannot change role or negocioId. The only
-      // exception is linking a business created by this same authenticated uid.
+      // Dirección de trabajo: el dueño solo actualiza esa clave de su cuenta.
+      function esUbicacionTrabajoPropia() {
+        return request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+            'ubicacionTrabajo'
+          ])
+          && request.resource.data.ubicacionTrabajo is map
+          && request.resource.data.ubicacionTrabajo.direccion is string
+          && request.resource.data.ubicacionTrabajo.lat is number
+          && request.resource.data.ubicacionTrabajo.lng is number
+          && resource.data.rol == 'negocio'
+          && resource.data.negocioId is string
+          && get(/databases/$(database)/documents/negocios/$(resource.data.negocioId)).data.duenioId == request.auth.uid;
+      }
+      // La plantilla no puede cambiar rol ni negocioId; la excepción es
+      // vincular un negocio creado por esta misma cuenta.
+      // expoPushTokens = tokens de Expo Push. El nombre debe coincidir con
+      // el que escribe la app (src/services/pushNotifications.ts).
       allow update: if request.auth != null
         && request.auth.uid == uid
         && (
           request.resource.data.diff(resource.data).affectedKeys().hasOnly([
-            'nombre', 'email', 'telefono', 'preferencias'
+            'nombre', 'email', 'telefono', 'preferencias', 'expoPushTokens'
           ])
           || esVinculacionNegocio()
+          || esUbicacionTrabajoPropia()
         );
     }
     match /pedidos/{id} {
@@ -82,7 +97,9 @@ service cloud.firestore {
       // Crear: solo tus propios pedidos (anti-suplantación).
       allow create: if request.auth != null
         && request.resource.data.usuarioId == request.auth.uid
-        && request.resource.data.estado == 'pendiente';
+        && request.resource.data.estado == 'pendiente'
+        && (!('pedidoGeneralId' in request.resource.data)
+          || request.resource.data.pedidoGeneralId is string);
       // Leer: el cliente ve los suyos, el dueño los de su negocio.
       allow read: if request.auth != null && (
         resource.data.usuarioId == request.auth.uid
@@ -103,7 +120,76 @@ service cloud.firestore {
         && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
           'estado', 'canceladoPor', 'canceladoFecha'
         ]);
+      // Fase 3: el cliente dueño actualiza únicamente el estado del pago
+      // simulado (pendiente/pagado/fallido). No toca estado ni cancelación.
+      allow update: if request.auth != null
+        && resource.data.usuarioId == request.auth.uid
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+          'estadoPago'
+        ])
+        && request.resource.data.estadoPago in ['pendiente', 'pagado', 'fallido'];
       allow delete: if false;
+    }
+
+    // Pedido general multinegocio: solo lo crea y lee su dueño; inmutable
+    // después (los estados viven en los subpedidos de `pedidos`).
+    match /pedidosGenerales/{id} {
+      allow read: if request.auth != null
+        && resource.data.usuarioId == request.auth.uid;
+      allow create: if request.auth != null
+        && request.resource.data.usuarioId == request.auth.uid
+        && request.resource.data.total is number
+        && request.resource.data.total > 0
+        && request.resource.data.subpedidoIds is list
+        && request.resource.data.fecha is string;
+      allow update, delete: if false;
+    }
+
+    // Fase 5: repartidores del negocio (sección Repartidores del panel).
+    // Solo el dueño los crea/modifica/borra; el cliente no usa esta colección.
+    match /repartidores/{id} {
+      // El listener consulta con where('negocioId', '==', ...): Firestore
+      // puede probar esa restricción de igualdad → solo el dueño lo lee.
+      allow read: if esDuenoNegocio(resource.data.negocioId);
+
+      allow create: if esDuenoNegocio(request.resource.data.negocioId)
+        && request.resource.data.nombre is string
+        && request.resource.data.nombre.size() >= 3
+        && request.resource.data.estado in ['disponible', 'en_ruta', 'descanso']
+        && request.resource.data.entregasHoy is number
+        && request.resource.data.entregasHoy >= 0
+        && ('telefono' in request.resource.data
+            ? request.resource.data.telefono is string : true);
+
+      // La app solo cambia `estado`; se habilita también `entregasHoy` para
+      // no tener que volver a tocar reglas si se empieza a contar entregas.
+      allow update: if esDuenoNegocio(resource.data.negocioId)
+        && request.resource.data.negocioId == resource.data.negocioId
+        && request.resource.data.diff(resource.data).affectedKeys()
+            .hasOnly(['estado', 'entregasHoy'])
+        && request.resource.data.estado in ['disponible', 'en_ruta', 'descanso'];
+
+      allow delete: if esDuenoNegocio(resource.data.negocioId);
+    }
+
+    // Reseñas: cada quien crea la suya, no se editan ni borran. Lectura
+    // pública porque el rating se ve en Inicio sin sesión.
+    match /opiniones/{id} {
+      allow read: if true;
+      allow create: if request.auth != null
+        && request.resource.data.usuarioId == request.auth.uid
+        && request.resource.data.negocioId is string
+        && request.resource.data.negocioId.size() > 0
+        && request.resource.data.nombre is string
+        && request.resource.data.nombre.size() > 0
+        && request.resource.data.estrellas is number
+        && request.resource.data.estrellas >= 1
+        && request.resource.data.estrellas <= 5
+        && request.resource.data.texto is string
+        && request.resource.data.texto.size() > 0
+        && request.resource.data.texto.size() <= 280
+        && request.resource.data.fecha is string;
+      allow update, delete: if false;
     }
   }
 }

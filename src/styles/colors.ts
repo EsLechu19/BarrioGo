@@ -39,9 +39,8 @@ export const lightColors: Colors = {
   successSoft: '#ECFDF5',
 };
 
-// Oscuro: fondo slate-900, superficies slate-800, textos claros. El primario
-// naranja y el verde éxito se mantienen (leen bien sobre fondo oscuro); el
-// error se aclara para que también contraste.
+// Oscuro: fondo slate-900 y superficies slate-800. Naranja y verde se
+// mantienen; el error se aclara para contraste.
 export const darkColors: Colors = {
   primary: '#f97316',
   background: '#0F172A',

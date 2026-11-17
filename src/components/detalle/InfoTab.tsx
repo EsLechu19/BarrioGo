@@ -2,10 +2,13 @@ import { useMemo } from 'react';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Negocio } from '../../types/Negocio';
+import { textoEnvio } from '../../utils/negocios';
 import { useColors } from '../../context/ThemeContext';
 import type { Colors } from '../../styles/colors';
+import { MapaUbicacion } from './MapaUbicacion';
 
-// Pestaña Información: descripción, ubicación (placeholder de mapa) y entrega.
+// Pestaña Información: descripción, ubicación (con mapa estático de OSM) y
+// entrega.
 type Props = {
   negocio: Negocio;
 };
@@ -27,7 +30,7 @@ export function InfoTab({ negocio }: Props) {
           <Text style={styles.infoDesc}>{negocio.descripcion}</Text>
         </View>
       ) : null}
-      {/* Card ubicacion + mapa (placeholder) */}
+      {/* Card ubicacion */}
       <View style={styles.infoCard}>
         <View style={styles.infoHeader}>
           <View style={styles.infoIcon}>
@@ -35,16 +38,12 @@ export function InfoTab({ negocio }: Props) {
           </View>
           <Text style={styles.infoTitle}>Ubicación</Text>
         </View>
-        {/* Placeholder cuadrado: aquí va el mapa (react-native-maps, Fase 3) */}
-        <View style={styles.mapPlaceholder}>
-          <Ionicons name="map-outline" size={32} color={colors.textPlaceholder} />
-          <Text style={styles.mapPlaceholderText}>Aquí va el mapa</Text>
-          <Text style={styles.infoSub}>
-            {Number.isFinite(negocio.lat) && Number.isFinite(negocio.lng)
-              ? `${negocio.lat.toFixed(4)}, ${negocio.lng.toFixed(4)}`
-              : 'Sin coordenadas'}
-          </Text>
-        </View>
+        <MapaUbicacion
+          key={`${negocio.lat}-${negocio.lng}`}
+          lat={negocio.lat}
+          lng={negocio.lng}
+          nombre={negocio.nombre}
+        />
         {/* Detalle direccion */}
         <View style={styles.infoRowLine}>
           <Ionicons name="home-outline" size={16} color={colors.textMuted} />
@@ -52,6 +51,15 @@ export function InfoTab({ negocio }: Props) {
             {negocio.direccion?.trim() ? negocio.direccion : 'Dirección por confirmar'}
           </Text>
         </View>
+        {/* Coordenadas reales del negocio */}
+        {Number.isFinite(negocio.lat) && Number.isFinite(negocio.lng) ? (
+          <View style={styles.infoRowLine}>
+            <Ionicons name="map-outline" size={16} color={colors.textMuted} />
+            <Text style={styles.meta}>
+              {negocio.lat.toFixed(4)}, {negocio.lng.toFixed(4)}
+            </Text>
+          </View>
+        ) : null}
         <View style={styles.infoRowLine}>
           <Ionicons name="navigate-outline" size={16} color={colors.textMuted} />
           <Text style={styles.meta}>{negocio.distancia} de ti</Text>
@@ -72,11 +80,7 @@ export function InfoTab({ negocio }: Props) {
         <View style={styles.infoRowLine}>
           <Ionicons name="cube-outline" size={16} color={colors.textMuted} />
           <Text style={styles.meta}>
-            {negocio.envioGratis
-              ? 'Envío gratis'
-              : negocio.envioMinimo?.trim()
-                ? negocio.envioMinimo
-                : 'Costo de envío por confirmar'}
+            {textoEnvio(negocio) ?? 'Costo de envío por confirmar'}
           </Text>
         </View>
       </View>
@@ -106,20 +110,7 @@ function makeStyles(c: Colors) {
     },
     infoTitle: { color: c.textPrimary, fontSize: 15, fontWeight: '800' },
     infoDesc: { color: c.textSecondary, fontSize: 14, lineHeight: 20 },
-    infoSub: { color: c.textMuted, fontSize: 12.5 },
     infoRowLine: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-    mapPlaceholder: {
-      height: 160,
-      borderRadius: 12,
-      justifyContent: 'center',
-      alignItems: 'center',
-      gap: 6,
-      backgroundColor: c.background,
-      borderWidth: 1,
-      borderStyle: 'dashed',
-      borderColor: c.border,
-    },
-    mapPlaceholderText: { color: c.textMuted, fontSize: 14, fontWeight: '700' },
     meta: { color: c.textMuted, fontSize: 13 },
   });
 }

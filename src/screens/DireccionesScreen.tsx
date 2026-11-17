@@ -14,12 +14,14 @@ import { RootStackParamList } from '../navigation/RootStackParamList';
 import { ScreenHeader } from '../components/ScreenHeader';
 import { SelectableCard } from '../components/SelectableCard';
 import { FormField } from '../components/FormField';
+import { EmptyState } from '../components/EmptyState';
 import { useColors } from '../context/ThemeContext';
 import { useAuth } from '../context/AuthContext';
 import { storage } from '../services/storage';
 import { confirm } from '../utils/confirm';
 import {
   aDireccionPedido,
+  cargarDireccionCheckout,
   cargarDirecciones,
   direccionSeleccionadaId,
 } from '../utils/direcciones';
@@ -33,6 +35,7 @@ export default function DireccionesScreen({ navigation }: Props) {
   const [direcciones, setDirecciones] = useState<DireccionUsuario[]>([]);
   const [seleccionada, setSeleccionada] = useState<string>('');
   const [modalVisible, setModalVisible] = useState<boolean>(false);
+  const [editandoId, setEditandoId] = useState<string | null>(null);
   const [alias, setAlias] = useState<string>('');
   const [detalle, setDetalle] = useState<string>('');
   const [aliasError, setAliasError] = useState<string | undefined>(undefined);
@@ -47,7 +50,7 @@ export default function DireccionesScreen({ navigation }: Props) {
     let activa = true;
     void Promise.all([
       cargarDirecciones(usuarioId),
-      storage.loadCheckoutAddress(usuarioId),
+      cargarDireccionCheckout(usuarioId),
     ]).then(([lista, direccion]) => {
       if (!activa) return;
       setDirecciones(lista);
@@ -79,11 +82,44 @@ export default function DireccionesScreen({ navigation }: Props) {
     setDetalle('');
     setAliasError(undefined);
     setDetalleError(undefined);
+    setEditandoId(null);
+    setModalVisible(true);
+  };
+
+  const abrirEdicion = (d: DireccionUsuario): void => {
+    setAlias(d.alias);
+    setDetalle(d.detalle);
+    setAliasError(undefined);
+    setDetalleError(undefined);
+    setEditandoId(d.id);
     setModalVisible(true);
   };
 
   const cerrarModal = (): void => {
     setModalVisible(false);
+    setEditandoId(null);
+  };
+
+  const eliminarDireccion = async (d: DireccionUsuario): Promise<void> => {
+    const acepta: boolean = await confirm({
+      title: '¿Eliminar dirección?',
+      message: `Se eliminará "${d.alias}" (${d.detalle}).`,
+      confirmText: 'Eliminar',
+      destructive: true,
+    });
+    if (!acepta || !user) return;
+    const restantes: DireccionUsuario[] = direcciones.filter((x) => x.id !== d.id);
+    // Si se borró la principal, la primera restante queda como principal.
+    const conPrincipal: DireccionUsuario[] =
+      d.esPrincipal && restantes.length > 0
+        ? restantes.map((x, i) => ({ ...x, esPrincipal: i === 0 }))
+        : restantes;
+    setDirecciones(conPrincipal);
+    await storage.saveAddresses(user.uid, conPrincipal);
+    if (seleccionada === d.id) {
+      setSeleccionada('');
+      await storage.clearCheckoutAddress(user.uid);
+    }
   };
 
   const guardarDireccion = (): void => {
@@ -103,25 +139,41 @@ export default function DireccionesScreen({ navigation }: Props) {
     setDetalleError(errorDetalle);
     if (errorAlias || errorDetalle) return;
     const nuevaId: string = `d${Date.now()}`;
-    const lista: DireccionUsuario[] = [
-      ...direcciones,
-      {
-        id: nuevaId,
-        alias: aliasLimpio,
-        detalle: detalleLimpio,
-        esPrincipal: direcciones.length === 0,
-      },
-    ];
+    let lista: DireccionUsuario[];
+    if (editandoId !== null) {
+      lista = direcciones.map((d) =>
+        d.id === editandoId
+          ? { ...d, alias: aliasLimpio, detalle: detalleLimpio }
+          : d,
+      );
+    } else {
+      lista = [
+        ...direcciones,
+        {
+          id: nuevaId,
+          alias: aliasLimpio,
+          detalle: detalleLimpio,
+          esPrincipal: direcciones.length === 0,
+        },
+      ];
+    }
     setDirecciones(lista);
-    setSeleccionada(nuevaId);
     if (user) {
       void storage.saveAddresses(user.uid, lista);
-      void storage.saveCheckoutAddress(user.uid, {
-        alias: aliasLimpio,
-        detalle: detalleLimpio,
-      });
+      // Dirección nueva → queda activa. Al editar solo se cambia el checkout
+      // si era la que estaba activa (no se roba otra selección).
+      const esNueva: boolean = editandoId === null;
+      const estabaActiva: boolean = !esNueva && seleccionada === editandoId;
+      if (esNueva || estabaActiva) {
+        setSeleccionada(editandoId ?? nuevaId);
+        void storage.saveCheckoutAddress(user.uid, {
+          alias: aliasLimpio,
+          detalle: detalleLimpio,
+        });
+      }
     }
     setModalVisible(false);
+    setEditandoId(null);
   };
 
   return (
@@ -147,6 +199,15 @@ export default function DireccionesScreen({ navigation }: Props) {
           }
         />
 
+        {direcciones.length === 0 ? (
+          <EmptyState
+            icono="location-outline"
+            titulo="Todavía no tenés direcciones"
+            subtitulo="Agregá una con el botón Añadir para poder recibir pedidos."
+            style={styles.emptyState}
+          />
+        ) : null}
+
         {direcciones.map((d) => {
           const activa: boolean = seleccionada === d.id;
           return (
@@ -168,6 +229,28 @@ export default function DireccionesScreen({ navigation }: Props) {
               <Text style={styles.detalle} numberOfLines={2}>
                 {d.detalle}
               </Text>
+              <View style={styles.accionesRow}>
+                <TouchableOpacity
+                  style={styles.accionBtn}
+                  onPress={() => abrirEdicion(d)}
+                  accessibilityRole="button"
+                  accessibilityLabel={`Editar dirección ${d.alias}`}
+                >
+                  <Ionicons name="create-outline" size={16} color={colors.primary} />
+                  <Text style={styles.accionBtnText}>Editar</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={styles.accionBtn}
+                  onPress={() => void eliminarDireccion(d)}
+                  accessibilityRole="button"
+                  accessibilityLabel={`Eliminar dirección ${d.alias}`}
+                >
+                  <Ionicons name="trash-outline" size={16} color={colors.error} />
+                  <Text style={[styles.accionBtnText, { color: colors.error }]}>
+                    Eliminar
+                  </Text>
+                </TouchableOpacity>
+              </View>
             </SelectableCard>
           );
         })}
@@ -181,7 +264,9 @@ export default function DireccionesScreen({ navigation }: Props) {
       >
         <View style={styles.modalOverlay}>
           <View style={styles.modalCard}>
-            <Text style={styles.modalTitle}>Nueva dirección</Text>
+            <Text style={styles.modalTitle}>
+              {editandoId !== null ? 'Editar dirección' : 'Nueva dirección'}
+            </Text>
             <FormField
               label="Alias"
               value={alias}
@@ -247,6 +332,25 @@ function makeStyles(c: Colors) {
     },
     principalText: { color: c.primary, fontSize: 11, fontWeight: '800' },
     detalle: { color: c.textMuted, fontSize: 13 },
+    accionesRow: {
+      flexDirection: 'row',
+      gap: 14,
+      marginTop: 6,
+      paddingTop: 8,
+      borderTopWidth: 1,
+      borderTopColor: c.border,
+    },
+    accionBtn: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 4,
+      paddingVertical: 4,
+      paddingHorizontal: 8,
+      borderRadius: 8,
+      backgroundColor: c.background,
+    },
+    accionBtnText: { color: c.primary, fontSize: 12, fontWeight: '700' },
+    emptyState: { paddingVertical: 24, paddingHorizontal: 8 },
 
     modalOverlay: {
       flex: 1,

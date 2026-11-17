@@ -36,6 +36,12 @@ yarn-error.*
 
 # firebase service account (seed local, nunca se sube)
 service-account*.json
+firebase-adminsdk.json
+firebase-sdk.json
+
+# cuentas de prueba locales (nunca se sube)
+cuentas-prueba.json
+usuarios-prueba.txt
 
 # typescript
 *.tsbuildinfo

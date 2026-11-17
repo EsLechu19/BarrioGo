@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "121075850033",
+    "project_id": "barrio-test-413eb",
+    "storage_bucket": "barrio-test-413eb.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:121075850033:android:0313eb37c8bcc3bb2d6e10",
+        "android_client_info": {
+          "package_name": "com.jotah26.BarrioGo"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCXHFFMqr56S9E8lCIhLxaWLWKk48shR0U"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

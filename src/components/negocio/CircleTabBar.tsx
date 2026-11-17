@@ -5,18 +5,21 @@ import { useColors } from '../../context/ThemeContext';
 import type { Colors } from '../../styles/colors';
 
 // Menú de secciones del panel: botones circulares del mismo tamaño, con badge
-// de conteo para las secciones que lo necesitan.
-export type Seccion = 'pedidos' | 'menu' | 'ganancias' | 'repartidores' | 'locales';
+// de conteo para las secciones que lo necesitan. "Carta del día" solo se
+// muestra en restaurantes (carta diaria).
+export type Seccion = 'pedidos' | 'menu' | 'carta' | 'ganancias' | 'repartidores' | 'locales';
 
 type IconoSeccion =
   | 'receipt-outline'
   | 'fast-food-outline'
+  | 'calendar-outline'
   | 'cash-outline'
   | 'bicycle-outline'
   | 'storefront-outline';
 
 export const SECCIONES: { id: Seccion; titulo: string; icono: IconoSeccion }[] = [
   { id: 'menu', titulo: 'Mi menú', icono: 'fast-food-outline' },
+  { id: 'carta', titulo: 'Carta del día', icono: 'calendar-outline' },
   { id: 'pedidos', titulo: 'Pedidos', icono: 'receipt-outline' },
   { id: 'ganancias', titulo: 'Ganancias', icono: 'cash-outline' },
   { id: 'repartidores', titulo: 'Repartidores', icono: 'bicycle-outline' },
@@ -25,6 +28,7 @@ export const SECCIONES: { id: Seccion; titulo: string; icono: IconoSeccion }[] =
 
 type Props = {
   seccion: Seccion;
+  esRestaurante: boolean;
   conteoPedidos: number;
   conteoMenu: number;
   onSeleccionar: (seccion: Seccion) => void;
@@ -32,12 +36,16 @@ type Props = {
 
 export function CircleTabBar({
   seccion,
+  esRestaurante,
   conteoPedidos,
   conteoMenu,
   onSeleccionar,
 }: Props) {
   const colors = useColors();
   const styles = useMemo(() => makeStyles(colors), [colors]);
+  const visibles = esRestaurante
+    ? SECCIONES
+    : SECCIONES.filter((s) => s.id !== 'carta');
   return (
     <ScrollView
       horizontal
@@ -45,7 +53,7 @@ export function CircleTabBar({
       style={styles.circleScroll}
       contentContainerStyle={styles.circleRow}
     >
-      {SECCIONES.map((s) => {
+      {visibles.map((s) => {
         const activa: boolean = seccion === s.id;
         const conteo: number | null =
           s.id === 'pedidos'

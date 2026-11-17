@@ -12,48 +12,64 @@ import {
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
-import { Negocio } from '../types/Negocio';
+import { CategoriaNegocio, Negocio } from '../types/Negocio';
 import { RestaurantCard } from '../components/RestaurantCard';
 import { ScreenHeader } from '../components/ScreenHeader';
 import { LoadingState, ErrorState } from '../components/StateView';
 import { EmptyState } from '../components/EmptyState';
 import { getNegocios } from '../services/api';
+import { estaAbierto } from '../utils/negocios';
+import { LIST_PERF } from '../utils/listPerf';
 import { UserCoords, formatDistancia, getUserCoords, haversineKm } from '../services/location';
 import { useFavorites } from '../context/FavoritesContext';
+import { useEstadoNegocios } from '../context/EstadoNegociosContext';
+import { useOpiniones } from '../context/OpinionesContext';
+import { resumenOpiniones } from '../utils/opinionesDemo';
 import { RootStackParamList } from '../navigation/RootStackParamList';
 import { useColors } from '../context/ThemeContext';
 import type { Colors } from '../styles/colors';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Restaurants'>;
 
-const FILTROS: string[] = ['Todos', 'Envío gratis', 'Top 4.5+', 'Pollerías', 'Chifas'];
-const FILTROS_CATEGORIA: string[] = ['Pollerías', 'Chifas'];
+const FILTROS: string[] = [
+  'Todos', 'Solo abiertos', 'Envío gratis', 'Top 4.5+',
+  'Pollerías', 'Chifas', 'Comida criolla', 'Broaster', 'Anticuchos',
+  'Cevicherías', 'Caldos', 'Pizza', 'Pastelería', 'Sanguchería', 'Juguería',
+  'Cafetería',
+];
+// Chips de categoría → campos `categorias[]` (o `categoria`) real del negocio (Fase 1).
+const FILTROS_CATEGORIA: { chip: string; categoria: CategoriaNegocio }[] = [
+  { chip: 'Pollerías', categoria: 'polleria' },
+  { chip: 'Chifas', categoria: 'chifa' },
+  { chip: 'Comida criolla', categoria: 'comida_criolla' },
+  { chip: 'Broaster', categoria: 'broaster' },
+  { chip: 'Anticuchos', categoria: 'anticuchos' },
+  { chip: 'Cevicherías', categoria: 'cevicheria' },
+  { chip: 'Caldos', categoria: 'caldos' },
+  { chip: 'Pizza', categoria: 'pizza' },
+  { chip: 'Pastelería', categoria: 'pasteleria' },
+  { chip: 'Sanguchería', categoria: 'sangucheria' },
+  { chip: 'Juguería', categoria: 'jugueria' },
+  { chip: 'Cafetería', categoria: 'cafeteria' },
+];
 
-function esPolleria(n: Negocio): boolean {
-  const nombre: string = n.nombre.toLowerCase();
-  return (
-    nombre.includes('poll') || nombre.includes('brasa') || nombre.includes('broaster') || nombre.includes('corral')
-  );
+// Categorías efectivas del negocio: `categorias[]` si tiene elementos,
+// si no la `categoria` única vieja (datos pre-migración siguen sirviendo).
+function categoriasDe(n: Negocio): CategoriaNegocio[] {
+  if (n.categorias && n.categorias.length > 0) return n.categorias;
+  return n.categoria ? [n.categoria] : [];
 }
 
-function esChifa(n: Negocio): boolean {
-  const nombre: string = n.nombre.toLowerCase();
-  return (
-    nombre.includes('chifa') ||
-    nombre.includes('drag') ||
-    nombre.includes('mandar') ||
-    nombre.includes('chung')
-  );
-}
-
-// Filtros múltiples: atributos (envío, top) se exigen todos (AND);
-// categorías (Pollerías/Chifas) pasan si coincide alguna (OR).
-function pasaFiltros(n: Negocio, activos: string[]): boolean {
+// Filtros: atributos (envío, top) se exigen todos; categorías, basta con una
+// (usa `categorias[]` sin adivinar por nombre). `rating` viene del resumen.
+function pasaFiltros(n: Negocio, activos: string[], rating: number): boolean {
+  if (activos.includes('Solo abiertos') && !estaAbierto(n)) return false;
   if (activos.includes('Envío gratis') && !n.envioGratis) return false;
-  if (activos.includes('Top 4.5+') && n.rating < 4.5) return false;
-  const categorias: string[] = activos.filter((f) => FILTROS_CATEGORIA.includes(f));
+  if (activos.includes('Top 4.5+') && rating < 4.5) return false;
+  const categorias = FILTROS_CATEGORIA.filter((f) => activos.includes(f.chip));
   if (categorias.length === 0) return true;
-  return categorias.some((c) => (c === 'Pollerías' ? esPolleria(n) : esChifa(n)));
+  const delNegocio: CategoriaNegocio[] = categoriasDe(n);
+  return categorias.some((f) => delNegocio.includes(f.categoria));
 }
 
 export default function RestaurantsScreen({ navigation }: Props) {
@@ -66,6 +82,8 @@ export default function RestaurantsScreen({ navigation }: Props) {
   const [filtrosActivos, setFiltrosActivos] = useState<string[]>([]);
   const [userLoc, setUserLoc] = useState<UserCoords | null>(null);
   const { toggle, esFavorito } = useFavorites();
+  const { conOverride } = useEstadoNegocios();
+  const { listaDe } = useOpiniones();
   const colors = useColors();
   const styles = useMemo(() => makeStyles(colors), [colors]);
 
@@ -102,26 +120,36 @@ export default function RestaurantsScreen({ navigation }: Props) {
     }
   }, []);
 
+  // Cargar datos al montar: 'load' es un useCallback que gestiona su propio state.
+  // Se llama directamente para evitar setState sincrónico en el effect.
   useEffect(() => {
-    load();
     getUserCoords().then(setUserLoc);
-  }, [load]);
+  }, []);
 
   const filtered: Negocio[] = useMemo(() => {
+    const conOverrides: Negocio[] = negocios.map(conOverride);
     const porTexto: Negocio[] = query.trim()
-      ? negocios.filter((n) => n.nombre.toLowerCase().includes(query.trim().toLowerCase()))
-      : negocios;
-    const porFiltro: Negocio[] = porTexto.filter((n) => pasaFiltros(n, filtrosActivos));
+      ? conOverrides.filter((n) => n.nombre.toLowerCase().includes(query.trim().toLowerCase()))
+      : conOverrides;
+    const porFiltro: Negocio[] = porTexto.filter((n) =>
+      pasaFiltros(n, filtrosActivos, resumenOpiniones(listaDe(n.id)).promedio),
+    );
     // Sin GPS: orden del API. Con GPS: distancia real + orden por cercanía.
-    if (!userLoc) return porFiltro;
-    return porFiltro
-      .map((n) => {
-        const km = haversineKm(userLoc, { latitude: n.lat, longitude: n.lng });
-        return { negocio: { ...n, distancia: formatDistancia(km) }, km };
-      })
-      .sort((a, b) => a.km - b.km)
-      .map((r) => r.negocio);
-  }, [negocios, query, filtrosActivos, userLoc]);
+    let conDistancia: Negocio[] = porFiltro;
+    if (userLoc) {
+      conDistancia = porFiltro
+        .map((n) => {
+          const km = haversineKm(userLoc, { latitude: n.lat, longitude: n.lng });
+          return { negocio: { ...n, distancia: formatDistancia(km) }, km };
+        })
+        .sort((a, b) => a.km - b.km)
+        .map((r) => r.negocio);
+    }
+    // Abiertos primero; los cerrados quedan visibles al final (no se ocultan).
+    const abiertos: Negocio[] = conDistancia.filter((n) => estaAbierto(n));
+    const cerrados: Negocio[] = conDistancia.filter((n) => !estaAbierto(n));
+    return [...abiertos, ...cerrados];
+  }, [negocios, query, filtrosActivos, userLoc, conOverride, listaDe]);
 
   if (loading && !refreshing) {
     // Area loading
@@ -197,6 +225,13 @@ export default function RestaurantsScreen({ navigation }: Props) {
               accessibilityRole="button"
               accessibilityLabel={f === 'Todos' ? 'Mostrar todos' : `Filtrar por ${f}`}
             >
+              {f === 'Solo abiertos' ? (
+                <Ionicons
+                  name="storefront-outline"
+                  size={15}
+                  color={activo ? colors.white : colors.primary}
+                />
+              ) : null}
               {f === 'Envío gratis' ? (
                 <Ionicons
                   name="bicycle-outline"
@@ -241,6 +276,7 @@ export default function RestaurantsScreen({ navigation }: Props) {
       <FlatList
         data={filtered}
         keyExtractor={(item) => item.id}
+        {...LIST_PERF}
         renderItem={({ item }) => (
           <RestaurantCard
             negocio={item}

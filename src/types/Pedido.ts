@@ -5,6 +5,10 @@ export type EstadoPedido =
   | 'entregado'
   | 'cancelado';
 
+// Estado del pago (simulado, sin dinero real):
+// pendiente = se cobra al recibir; pagado = aprobado; fallido = declinado.
+export type EstadoPago = 'pendiente' | 'pagado' | 'fallido';
+
 export interface ItemPedido {
   productoId: string;
   cantidad: number;
@@ -12,9 +16,8 @@ export interface ItemPedido {
   // Snapshot del producto y del restaurante al agregarlo. Son opcionales para
   // que los carritos/pedidos creados antes de P0 sigan siendo legibles.
   negocioId?: string;
-  // Nombre al momento de agregar. El carrito lo guarda para no depender
-  // del catálogo al mostrar (con Firestore los ids son aleatorios y el
-  // mock local no los conoce → se veían letras random).
+  // Nombre copiado al agregar, para no depender del catálogo al mostrar
+  // (con Firestore los ids son aleatorios y se veían letras random).
   nombre?: string;
   descripcion?: string;
   imagen?: string;
@@ -47,7 +50,12 @@ export interface Pedido {
   // Snapshot del nombre del cliente al momento de confirmar el pedido.
   // Los pedidos viejos no lo tienen: el negocio muestra el UID recortado.
   clienteNombre?: string;
-  // Snapshot del nombre del negocio al confirmar, para que la lista de
-  // pedidos del cliente lo muestre aunque el negocio no esté en el mock.
+  // Nombre del negocio al confirmar: se muestra en la lista de pedidos
+  // aunque el negocio no esté en el catálogo local.
   negocioNombre?: string;
+  // Resultado del pago simulado al confirmar (Fase 3). Ausente = pedido
+  // creado antes de la Fase 3: la app no muestra nada de pago.
+  estadoPago?: EstadoPago;
+  // Costo de envío cobrado (soles). Ausente = pedido sin envío cobrado.
+  envio?: number;
 }
