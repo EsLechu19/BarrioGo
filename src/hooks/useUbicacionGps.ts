@@ -1,4 +1,6 @@
 import { useState } from 'react';
+import { Alert, Linking } from 'react-native';
+import * as Location from 'expo-location';
 import { getUserCoords, UserCoords } from '../services/location';
 
 interface Opciones {
@@ -30,6 +32,17 @@ export function useUbicacionGps(opciones: Opciones): UbicacionGps {
       const coords = await getUserCoords();
       if (!coords) {
         setAviso(opciones.mensajeSinUbicacion);
+        const permiso = await Location.getForegroundPermissionsAsync();
+        if (!permiso.granted) {
+          Alert.alert(
+            'Ubicación desactivada',
+            'Activá el permiso de ubicación para usar el GPS.',
+            [
+              { text: 'Cancelar', style: 'cancel' },
+              { text: 'Abrir ajustes', onPress: () => void Linking.openSettings() },
+            ],
+          );
+        }
         return null;
       }
       setAviso(opciones.mensajeExito);
