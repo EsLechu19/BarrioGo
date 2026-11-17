@@ -20,6 +20,7 @@ import type { Colors } from '../styles/colors';
 import { ESTADO_COLORS, ESTADO_ICONS, ESTADO_LABELS, EstadoVisible } from '../utils/estadosPedido';
 import { fechaCorta } from '../utils/fechas';
 import { nombreRestaurante } from '../utils/negocios';
+import { LIST_PERF } from '../utils/listPerf';
 
 type Props = TabScreenProps<'PedidosTab'>;
 
@@ -28,19 +29,16 @@ export default function PedidosScreen({ navigation }: Props) {
   const { user } = useAuth();
   const uid: string | undefined = user?.uid;
   const [pedidos, setPedidos] = useState<Pedido[]>([]);
-  const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [cancelandoId, setCancelandoId] = useState<string | null>(null);
   const colors = useColors();
   const styles = useMemo(() => makeStyles(colors), [colors]);
 
+  const loadingInicial = !firebaseReady || !uid;
+  const [loading, setLoading] = useState(loadingInicial);
   useEffect(() => {
-    if (!firebaseReady || !uid) {
-      setLoading(false);
-      return;
-    }
-    setLoading(true);
-    setError(null);
+    if (loadingInicial) return;
+    if (!firebaseReady || !uid) return;
     const unsubscribe = escucharMisPedidos(
       uid,
       (data: Pedido[]) => {
@@ -53,7 +51,7 @@ export default function PedidosScreen({ navigation }: Props) {
       },
     );
     return unsubscribe;
-  }, [uid]);
+  }, [uid, loadingInicial]);
 
   if (!firebaseReady) {
     return (
@@ -106,6 +104,10 @@ export default function PedidosScreen({ navigation }: Props) {
     );
   }
 
+  const lista: Pedido[] = [...pedidos].sort((a, b) =>
+    a.fecha < b.fecha ? 1 : -1,
+  );
+
   return (
     <View style={[styles.container, { paddingTop: insets.top + 12 }]}>
       {/* Area titulo */}
@@ -116,27 +118,33 @@ export default function PedidosScreen({ navigation }: Props) {
       {error ? <Text style={styles.error}>{error}</Text> : null}
       {/*Area lista de pedidos*/}
       <FlatList
-        data={pedidos}
+        data={lista}
         keyExtractor={(item) => item.id}
+        {...LIST_PERF}
         contentContainerStyle={styles.list}
         ItemSeparatorComponent={() => <View style={styles.separator} />}
-        renderItem={({ item }) => {
-          const estadoVista: EstadoVisible = item.estado;
+        renderItem={({ item: pedido }) => {
+          const estadoVista: EstadoVisible = pedido.estado;
           const colorEstado: string = ESTADO_COLORS[estadoVista];
+          // Solo se puede cancelar mientras sigue pendiente.
           const puedeCancelar: boolean =
-            item.estado === 'pendiente' && cancelandoId !== item.id;
+            pedido.estado === 'pendiente' && cancelandoId !== pedido.id;
           const confirmarCancelacion = (): void => {
+            const pagoNota: string =
+              pedido.estadoPago === 'pagado'
+                ? ' El pago fue simulado: no hay dinero real que reembolsar.'
+                : '';
             Alert.alert(
               'Cancelar pedido',
-              '¿Seguro que querés cancelar este pedido? Esta acción no se puede deshacer.',
+              `¿Seguro que querés cancelar este pedido? Esta acción no se puede deshacer.${pagoNota}`,
               [
                 { text: 'Seguir con el pedido', style: 'cancel' },
                 {
                   text: 'Sí, cancelar',
                   style: 'destructive',
                   onPress: () => {
-                    setCancelandoId(item.id);
-                    void cancelarPedido(item.id, uid ?? '')
+                    setCancelandoId(pedido.id);
+                    cancelarPedido(pedido.id, uid ?? '')
                       .catch((e: unknown) => {
                         Alert.alert(
                           'No se pudo cancelar',
@@ -149,15 +157,17 @@ export default function PedidosScreen({ navigation }: Props) {
               ],
             );
           };
+          const titulo: string =
+            pedido.negocioNombre?.trim() || nombreRestaurante(pedido.negocioId);
           return (
             // Card pedido (tocable -> detalle)
             <TouchableOpacity
               style={styles.card}
-              onPress={() => navigation.navigate('PedidoDetalle', { pedidoId: item.id })}
+              onPress={() =>
+                navigation.navigate('PedidoDetalle', { pedidoId: pedido.id })
+              }
               accessibilityRole="button"
-              accessibilityLabel={`Ver detalle del pedido de ${
-                item.negocioNombre?.trim() || nombreRestaurante(item.negocioId)
-              }`}
+              accessibilityLabel={`Ver detalle del pedido de ${titulo}`}
             >
               {/* Icono estado */}
               <View style={[styles.estadoIcon, { backgroundColor: `${colorEstado}1A` }]}>
@@ -170,15 +180,16 @@ export default function PedidosScreen({ navigation }: Props) {
               {/* Informacion */}
               <View style={styles.cardInfo}>
                 <Text style={styles.negocio} numberOfLines={1}>
-                  {item.negocioNombre?.trim() || nombreRestaurante(item.negocioId)}
+                  {titulo}
                 </Text>
                 <View style={styles.metaRow}>
                   <Ionicons name="calendar-outline" size={13} color={colors.textMuted} />
-                  <Text style={styles.meta}>{fechaCorta(item.fecha)}</Text>
+                  <Text style={styles.meta}>{fechaCorta(pedido.fecha)}</Text>
                   <Text style={styles.metaDot}>•</Text>
                   <Ionicons name="fast-food-outline" size={13} color={colors.textMuted} />
                   <Text style={styles.meta}>
-                    {item.items.length} {item.items.length === 1 ? 'producto' : 'productos'}
+                    {pedido.items.length}{' '}
+                    {pedido.items.length === 1 ? 'producto' : 'productos'}
                   </Text>
                 </View>
                 <View style={styles.bottomRow}>
@@ -198,7 +209,7 @@ export default function PedidosScreen({ navigation }: Props) {
                       </TouchableOpacity>
                     ) : null}
                   </View>
-                  <Text style={styles.total}>S/{item.total.toFixed(2)}</Text>
+                  <Text style={styles.total}>S/{pedido.total.toFixed(2)}</Text>
                 </View>
               </View>
             </TouchableOpacity>

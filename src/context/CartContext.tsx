@@ -10,8 +10,6 @@ interface CartContextValue {
   count: number;
   total: number;
   add: (producto: Producto, cantidad?: number) => boolean;
-  replaceWith: (producto: Producto, cantidad?: number) => void;
-  hasDifferentRestaurant: (producto: Producto) => boolean;
   remove: (productoId: string) => void;
   setCantidad: (productoId: string, cantidad: number) => void;
   clear: () => void;
@@ -27,9 +25,8 @@ export function CartProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     storage.loadCart().then((saved) => {
       if (saved) {
-        // Migra lo que se pueda de carritos APF2. Los productos creados en
-        // Firestore no están en el mock y quedan legibles, pero sin negocioId
-        // no se permite confirmar hasta volver a agregarlos desde su menú.
+        // Migra carritos viejos (APF2): lo de Firestore queda sin negocioId
+        // y no se puede confirmar hasta agregarlo de nuevo desde su menú.
         const migrados: ItemPedido[] = saved.map((item) => {
           if (item.negocioId) return item;
           const producto = productosMock.find((p) => p.id === item.productoId);
@@ -56,16 +53,9 @@ export function CartProvider({ children }: { children: ReactNode }) {
     if (hydrated) storage.saveCart(items);
   }, [items, hydrated]);
 
-  const hasDifferentRestaurant = useCallback(
-    (producto: Producto): boolean =>
-      items.some(
-        (item) => item.negocioId !== undefined && item.negocioId !== producto.negocioId,
-      ),
-    [items],
-  );
-
+  // Carrito multinegocio (Fase 2): acepta productos de varios negocios;
+  // al confirmar, se crea un pedido por cada negocio.
   const add = useCallback((producto: Producto, cantidad = 1): boolean => {
-    if (hasDifferentRestaurant(producto)) return false;
     setItems((prev) => {
       const found = prev.find((i) => i.productoId === producto.id);
       if (found) {
@@ -93,22 +83,6 @@ export function CartProvider({ children }: { children: ReactNode }) {
       ];
     });
     return true;
-  }, [hasDifferentRestaurant]);
-
-  const replaceWith = useCallback((producto: Producto, cantidad = 1): void => {
-    setItems([
-      {
-        productoId: producto.id,
-        cantidad,
-        precioUnitario: producto.precio,
-        negocioId: producto.negocioId,
-        nombre: producto.nombre,
-        ...(producto.descripcion?.trim()
-          ? { descripcion: producto.descripcion }
-          : {}),
-        ...(producto.imagen?.trim() ? { imagen: producto.imagen } : {}),
-      },
-    ]);
   }, []);
 
   const remove = useCallback((productoId: string) => {
@@ -149,14 +123,12 @@ export function CartProvider({ children }: { children: ReactNode }) {
       count,
       total,
       add,
-      replaceWith,
-      hasDifferentRestaurant,
       remove,
       setCantidad,
       clear,
       cantidadDe,
     }),
-    [items, count, total, add, replaceWith, hasDifferentRestaurant, remove, setCantidad, clear, cantidadDe],
+    [items, count, total, add, remove, setCantidad, clear, cantidadDe],
   );
 
   return <CartContext.Provider value={value}>{children}</CartContext.Provider>;

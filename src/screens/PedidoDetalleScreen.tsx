@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import {
+  Alert,
   FlatList,
   StyleSheet,
   Text,
@@ -11,7 +12,13 @@ import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { Ionicons } from '@expo/vector-icons';
 import { RootStackParamList } from '../navigation/RootStackParamList';
 import { useAuth } from '../context/AuthContext';
-import { escucharMisPedidos, getNegocioById } from '../services/api';
+import {
+  actualizarEstadoPago,
+  cancelarPedido,
+  escucharMisPedidos,
+  getNegocioById,
+  simularPago,
+} from '../services/api';
 import { firebaseReady } from '../services/firebase';
 import { Pedido } from '../types/Pedido';
 import { Negocio } from '../types/Negocio';
@@ -22,6 +29,9 @@ import type { Colors } from '../styles/colors';
 import {
   ESTADO_COLORS,
   ESTADO_LABELS,
+  ESTADO_PAGO_COLORS,
+  ESTADO_PAGO_ICONS,
+  ESTADO_PAGO_LABELS,
   PASOS,
 } from '../utils/estadosPedido';
 import type { EstadoVisible } from '../utils/estadosPedido';
@@ -37,18 +47,19 @@ export default function PedidoDetalleScreen({ navigation, route }: Props) {
   const uid: string | undefined = user?.uid;
   const [pedido, setPedido] = useState<Pedido | null>(null);
   const [negocio, setNegocio] = useState<Negocio | null>(null);
-  const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
+  // Fase 3: reintento del pago simulado (solo visible si estadoPago === 'fallido').
+  const [reintentandoPago, setReintentandoPago] = useState<boolean>(false);
+  // Fase 4: cancelación de pedidos pendientes desde el detalle.
+  const [cancelando, setCancelando] = useState<boolean>(false);
   const colors = useColors();
   const styles = useMemo(() => makeStyles(colors), [colors]);
 
+  const loadingInicial = !firebaseReady || !uid;
+  const [loading, setLoading] = useState(loadingInicial);
   useEffect(() => {
-    if (!firebaseReady || !uid) {
-      setLoading(false);
-      return;
-    }
-    setLoading(true);
-    setError(null);
+    if (loadingInicial) return;
+    if (!firebaseReady || !uid) return;
     const unsubscribe = escucharMisPedidos(
       uid,
       (data: Pedido[]) => {
@@ -62,7 +73,7 @@ export default function PedidoDetalleScreen({ navigation, route }: Props) {
       },
     );
     return unsubscribe;
-  }, [uid, pedidoId]);
+  }, [uid, pedidoId, loadingInicial]);
 
   useEffect(() => {
     if (!pedido) return;
@@ -134,6 +145,67 @@ export default function PedidoDetalleScreen({ navigation, route }: Props) {
   const pasosTimeline: EstadoVisible[] =
     pedido.estado === 'cancelado' ? ['cancelado'] : PASOS;
   const pasoActual: number = pasosTimeline.indexOf(pedido.estado);
+
+  // Fase 3: reintenta el pago simulado sobre los pedidos fallidos dados.
+  // El reintento siempre aprueba la simulación (tarjeta declinada 1 vez).
+  const reintentarPago = async (aActualizar: Pedido[]): Promise<void> => {
+    const metodo = aActualizar.find((p) => p.metodoPago)?.metodoPago;
+    if (!metodo) {
+      Alert.alert(
+        'Sin método de pago',
+        'Este pedido no tiene un método de pago registrado.',
+      );
+      return;
+    }
+    setReintentandoPago(true);
+    try {
+      const pago = await simularPago(metodo, true);
+      if (pago.estado === 'fallido') {
+        Alert.alert('Pago no aprobado (simulación)', pago.mensaje);
+        return;
+      }
+      await actualizarEstadoPago(
+        aActualizar.map((p) => p.id),
+        pago.estado,
+      );
+    } catch (e) {
+      Alert.alert(
+        'No se pudo reintentar el pago',
+        e instanceof Error ? e.message : 'Intentá de nuevo.',
+      );
+    } finally {
+      setReintentandoPago(false);
+    }
+  };
+
+  // Fase 4: cancela solo los pedidos pendientes dados (nunca toca los ya
+  // aceptados). Misma regla del backend que la lista: pendiente → cancelado.
+  const confirmarCancelacion = (aCancelar: Pedido[]): void => {
+    if (aCancelar.length === 0 || cancelando) return;
+    const base: string =
+      '¿Seguro que querés cancelar este pedido? Esta acción no se puede deshacer.';
+    const pagoNota: string = aCancelar.some((p) => p.estadoPago === 'pagado')
+      ? ' El pago fue simulado: no hay dinero real que reembolsar.'
+      : '';
+    Alert.alert('Cancelar pedido', `${base}${pagoNota}`, [
+      { text: 'Seguir con el pedido', style: 'cancel' },
+      {
+        text: 'Sí, cancelar',
+        style: 'destructive',
+        onPress: () => {
+          setCancelando(true);
+          Promise.all(aCancelar.map((p) => cancelarPedido(p.id, uid ?? '')))
+            .catch((e: unknown) => {
+              Alert.alert(
+                'No se pudo cancelar',
+                e instanceof Error ? e.message : 'Intentá de nuevo.',
+              );
+            })
+            .finally(() => setCancelando(false));
+        },
+      },
+    ]);
+  };
 
   return (
     <View style={[styles.container, { paddingTop: insets.top + 12 }]}>
@@ -213,15 +285,65 @@ export default function PedidoDetalleScreen({ navigation, route }: Props) {
                   </Text>
                 </View>
               ) : null}
+              {pedido.estadoPago ? (
+                <View style={styles.infoRow}>
+                  <Ionicons
+                    name={ESTADO_PAGO_ICONS[pedido.estadoPago]}
+                    size={16}
+                    color={ESTADO_PAGO_COLORS[pedido.estadoPago]}
+                  />
+                  <Text style={styles.meta}>
+                    {ESTADO_PAGO_LABELS[pedido.estadoPago]}
+                  </Text>
+                </View>
+              ) : null}
             </View>
 
             <Text style={styles.sectionTitle}>Productos</Text>
           </View>
         }
         ListFooterComponent={
-          <View style={styles.totalRow}>
-            <Text style={styles.totalLabel}>Total</Text>
-            <Text style={styles.total}>S/{pedido.total.toFixed(2)}</Text>
+          <View>
+            {typeof pedido.envio === 'number' && pedido.envio > 0 ? (
+              <>
+                <View style={styles.totalRow}>
+                  <Text style={styles.totalLabel}>Subtotal</Text>
+                  <Text style={styles.subtotal}>
+                    S/{(pedido.total - pedido.envio).toFixed(2)}
+                  </Text>
+                </View>
+                <View style={styles.totalRow}>
+                  <Text style={styles.envioLabel}>Envío</Text>
+                  <Text style={styles.envioValue}>S/{pedido.envio.toFixed(2)}</Text>
+                </View>
+              </>
+            ) : null}
+            <View style={styles.totalRow}>
+              <Text style={styles.totalLabel}>Total</Text>
+              <Text style={styles.total}>S/{pedido.total.toFixed(2)}</Text>
+            </View>
+            {pedido.estadoPago === 'fallido' ? (
+              <TouchableOpacity
+                style={styles.retryButton}
+                onPress={() => void reintentarPago([pedido])}
+                disabled={reintentandoPago}
+              >
+                <Text style={styles.primaryText}>
+                  {reintentandoPago ? 'Procesando pago...' : 'Reintentar pago'}
+                </Text>
+              </TouchableOpacity>
+            ) : null}
+            {pedido.estado === 'pendiente' ? (
+              <TouchableOpacity
+                style={[styles.dangerButton, cancelando && styles.dangerButtonDisabled]}
+                onPress={() => confirmarCancelacion([pedido])}
+                disabled={cancelando}
+              >
+                <Text style={styles.dangerText}>
+                  {cancelando ? 'Cancelando...' : 'Cancelar pedido'}
+                </Text>
+              </TouchableOpacity>
+            ) : null}
           </View>
         }
         renderItem={({ item }) => (
@@ -309,6 +431,8 @@ function makeStyles(c: Colors) {
     cardInfo: { flex: 1, gap: 2 },
     dish: { color: c.textPrimary, fontSize: 15, fontWeight: '700' },
     subtotal: { color: c.textPrimary, fontSize: 14, fontWeight: '800' },
+    envioValue: { color: c.success, fontSize: 14, fontWeight: '800' },
+    envioLabel: { color: c.success, fontSize: 14, fontWeight: '600' },
 
     totalRow: {
       flexDirection: 'row',
@@ -331,5 +455,31 @@ function makeStyles(c: Colors) {
       backgroundColor: c.primary,
     },
     primaryText: { color: c.white, fontSize: 14, fontWeight: '700' },
+
+    // Fase 3: reintento del pago simulado (visible solo si el pago falló).
+    retryButton: {
+      width: '100%',
+      marginTop: 8,
+      paddingVertical: 12,
+      borderRadius: 12,
+      alignItems: 'center',
+      justifyContent: 'center',
+      backgroundColor: c.primary,
+    },
+
+    // Fase 4: cancelar pedido(s) pendiente(s) desde el detalle.
+    dangerButton: {
+      width: '100%',
+      marginTop: 8,
+      paddingVertical: 12,
+      borderRadius: 12,
+      alignItems: 'center',
+      justifyContent: 'center',
+      borderWidth: 1.5,
+      borderColor: c.error,
+      backgroundColor: c.surface,
+    },
+    dangerButtonDisabled: { opacity: 0.6 },
+    dangerText: { color: c.error, fontSize: 14, fontWeight: '800' },
   });
 }

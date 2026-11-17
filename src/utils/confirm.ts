@@ -1,7 +1,6 @@
 import { Alert } from 'react-native';
 
-// Diálogo de confirmación reutilizable (solo app nativa). Devuelve true
-// si el usuario acepta, false si cancela o descarta el diálogo. Uso:
+// Diálogo de confirmación. true si acepta, false si cancela. Uso:
 //   const ok: boolean = await confirm({ title: 'Vaciar carrito', message: '...' });
 //   if (ok) clear();
 export interface ConfirmOptions {
