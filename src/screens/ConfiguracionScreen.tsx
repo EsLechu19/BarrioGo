@@ -19,6 +19,7 @@ import {
   getPreferenciasUsuario,
 } from '../services/api';
 import { asegurarPermisoNotificaciones } from '../services/notificaciones';
+import { registrarPushToken } from '../services/pushNotifications';
 import type { PreferenciasUsuario } from '../types/Usuario';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Configuracion'>;
@@ -107,44 +108,31 @@ export default function ConfiguracionScreen({ navigation }: Props) {
   const { user } = useAuth();
   const styles = useMemo(() => makeStyles(colors), [colors]);
   const [notifs, setNotifs] = useState<boolean>(true);
-  const [ubicacion, setUbicacion] = useState<boolean>(true);
-  const [ofertas, setOfertas] = useState<boolean>(false);
 
   useEffect(() => {
     if (!user) return;
     void getPreferenciasUsuario(user.uid).then((prefs) => {
       setNotifs(prefs.notificaciones);
-      setUbicacion(prefs.ubicacion);
-      setOfertas(prefs.ofertas);
     });
   }, [user]);
 
   const guardarPreferencias = (next: PreferenciasUsuario): void => {
     setNotifs(next.notificaciones);
-    setUbicacion(next.ubicacion);
-    setOfertas(next.ofertas);
     if (user) void actualizarPreferenciasUsuario(user.uid, next).catch(() => {});
   };
 
   const cambiarNotificaciones = (valor: boolean): void => {
-    guardarPreferencias({ notificaciones: valor, ubicacion, ofertas });
-    if (valor) void asegurarPermisoNotificaciones();
-  };
-
-  const cambiarUbicacion = (valor: boolean): void => {
-    guardarPreferencias({ notificaciones: notifs, ubicacion: valor, ofertas });
-  };
-
-  const cambiarOfertas = (valor: boolean): void => {
-    guardarPreferencias({ notificaciones: notifs, ubicacion, ofertas: valor });
+    guardarPreferencias({ notificaciones: valor });
+    if (valor && user) {
+      void (async () => {
+        const autorizado = await asegurarPermisoNotificaciones();
+        if (autorizado) await registrarPushToken(user.uid);
+      })();
+    }
   };
 
   const interruptores: {
-    icono:
-      | 'moon-outline'
-      | 'notifications-outline'
-      | 'location-outline'
-      | 'pricetag-outline';
+    icono: 'moon-outline' | 'notifications-outline';
     titulo: string;
     subtitulo: string;
     valor: boolean;
@@ -163,20 +151,6 @@ export default function ConfiguracionScreen({ navigation }: Props) {
       subtitulo: 'Confirmado, en camino y entregado',
       valor: notifs,
       onCambiar: cambiarNotificaciones,
-    },
-    {
-      icono: 'location-outline',
-      titulo: 'Ubicación',
-      subtitulo: 'Ordenar negocios por cercanía',
-      valor: ubicacion,
-      onCambiar: cambiarUbicacion,
-    },
-    {
-      icono: 'pricetag-outline',
-      titulo: 'Ofertas y novedades',
-      subtitulo: 'Promos de tus locales favoritos',
-      valor: ofertas,
-      onCambiar: cambiarOfertas,
     },
   ];
 

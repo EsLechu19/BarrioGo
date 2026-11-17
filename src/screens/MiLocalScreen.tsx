@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState, useRef } from 'react';
 import {
   ActivityIndicator,
   Image,
@@ -15,14 +15,18 @@ import { doc, getDoc } from 'firebase/firestore';
 import { useAuth } from '../context/AuthContext';
 import { firebaseReady, getFirestoreDb } from '../services/firebase';
 import { actualizarNegocio } from '../services/api';
+import { CategoriaNegocio, HorarioDia } from '../types/Negocio';
+import { esCategoriaNegocio } from '../utils/cartaDiaria';
 import { useNegocioId } from '../hooks/useNegocioId';
 import { useUbicacionGps } from '../hooks/useUbicacionGps';
 import { useFotoNegocio } from '../hooks/useFotoNegocio';
 import { ScreenHeader } from '../components/ScreenHeader';
 import { FormField } from '../components/FormField';
+import { SelectorCategoria } from '../components/SelectorCategoria';
 import { PrimaryButton } from '../components/PrimaryButton';
 import { UbicacionInput } from '../components/UbicacionInput';
 import { LoadingState } from '../components/StateView';
+import { HorarioEditor } from '../components/negocio/HorarioEditor';
 import { RootStackParamList } from '../navigation/RootStackParamList';
 import { useColors } from '../context/ThemeContext';
 import type { Colors } from '../styles/colors';
@@ -51,10 +55,16 @@ export default function MiLocalScreen({ navigation }: Props) {
   const [negocioError, setNegocioError] = useState<string | null>(null);
 
   const [nombre, setNombre] = useState<string>('');
+  const [categoria, setCategoria] = useState<CategoriaNegocio | null>(null);
   const [descripcion, setDescripcion] = useState<string>('');
   const [direccion, setDireccion] = useState<string>('');
   const [tiempoEstimado, setTiempoEstimado] = useState<string>('');
   const [envioGratis, setEnvioGratis] = useState<boolean>(false);
+  const [costoEnvioTxt, setCostoEnvioTxt] = useState<string>('');
+  // Carta diaria (solo si el negocio es restaurante): precio del menú del
+  // día (entrada+comida) y de cada extra.
+  const [precioMenuTxt, setPrecioMenuTxt] = useState<string>('');
+  const [precioExtraTxt, setPrecioExtraTxt] = useState<string>('');
   const [latTxt, setLatTxt] = useState<string>('');
   const [lngTxt, setLngTxt] = useState<string>('');
 
@@ -79,6 +89,10 @@ export default function MiLocalScreen({ navigation }: Props) {
   // S3 Fotos: icono (cuadrado) + portada (16:9) con subida a Cloudinary.
   const [iconoUrl, setIconoUrl] = useState<string>('');
   const [portadaUrl, setPortadaUrl] = useState<string>('');
+  // Horario del negocio para precargar el editor; `horarioEditado` guarda los
+  // cambios (undefined = no se tocó: no se envía y sigue el de servidor).
+  const [horarioInicial, setHorarioInicial] = useState<HorarioDia[] | undefined>(undefined);
+  const [horarioEditado, setHorarioEditado] = useState<HorarioDia[] | undefined>(undefined);
   const {
     subiendo,
     error: fotoError,
@@ -92,53 +106,82 @@ export default function MiLocalScreen({ navigation }: Props) {
     },
   });
 
+  // El estado 'cargandoNegocio' ya inicia en 'true' (línea 54) y el effect
+  // que antes lo seteaba nuevamente ya no es necesario; el loading se gestiona
+  // a través del flujo normal del formulario.
+const activoRef = useRef(true);
   useEffect(() => {
-    if (leyendoVinculo) return;
-    if (!negocioId) {
-      setCargandoNegocio(false);
-      return;
-    }
-    let activo = true;
-    setCargandoNegocio(true);
-    setNegocioError(null);
-    (async () => {
+    const loadBusiness = async () => {
       try {
+        if (!negocioId) return;
         const negocioSnap = await getDoc(
           doc(getFirestoreDb(), 'negocios', negocioId),
         );
         if (!negocioSnap.exists()) {
-          if (activo) setNegocioError('El negocio no existe.');
+          if (activoRef.current) setNegocioError('El negocio no existe.');
           return;
         }
         const negocio: unknown = negocioSnap.data();
         if (typeof negocio === 'object' && negocio !== null) {
           const n = negocio as {
             nombre?: unknown;
+            categoria?: unknown;
+            categorias?: unknown;
             descripcion?: unknown;
             direccion?: unknown;
             tiempoEstimado?: unknown;
             envioGratis?: unknown;
+            costoEnvio?: unknown;
+            precioMenuDia?: unknown;
+            precioExtra?: unknown;
             lat?: unknown;
             lng?: unknown;
             imagen?: unknown;
             portada?: unknown;
+            horario?: unknown;
           };
           if (typeof n.nombre === 'string') setNombre(n.nombre);
+          if (esCategoriaNegocio(n.categoria)) setCategoria(n.categoria);
+          else if (
+            Array.isArray(n.categorias) &&
+            n.categorias.length > 0 &&
+            esCategoriaNegocio(n.categorias[0])
+          ) {
+            setCategoria(n.categorias[0]);
+          }
           if (typeof n.descripcion === 'string') setDescripcion(n.descripcion);
           if (typeof n.direccion === 'string') setDireccion(n.direccion);
           if (typeof n.tiempoEstimado === 'string')
             setTiempoEstimado(n.tiempoEstimado);
           if (typeof n.envioGratis === 'boolean')
             setEnvioGratis(n.envioGratis);
+          if (typeof n.costoEnvio === 'number' && n.costoEnvio > 0)
+            setCostoEnvioTxt(String(n.costoEnvio));
+          if (typeof n.precioMenuDia === 'number' && n.precioMenuDia > 0)
+            setPrecioMenuTxt(String(n.precioMenuDia));
+          if (typeof n.precioExtra === 'number' && n.precioExtra > 0)
+            setPrecioExtraTxt(String(n.precioExtra));
           if (typeof n.lat === 'number' && Number.isFinite(n.lat))
             setLatTxt(String(n.lat));
           if (typeof n.lng === 'number' && Number.isFinite(n.lng))
             setLngTxt(String(n.lng));
           if (typeof n.imagen === 'string') setIconoUrl(n.imagen);
           if (typeof n.portada === 'string') setPortadaUrl(n.portada);
+          // Chequeo de forma del horario (no confiar ciegamente en Firestore).
+          if (Array.isArray(n.horario)) {
+            const valido: boolean = n.horario.every(
+              (f) =>
+                typeof f === 'object' &&
+                f !== null &&
+                typeof (f as HorarioDia).dia === 'number' &&
+                typeof (f as HorarioDia).apertura === 'string' &&
+                typeof (f as HorarioDia).cierre === 'string',
+            );
+            if (valido) setHorarioInicial(n.horario as HorarioDia[]);
+          }
         }
       } catch (e) {
-        if (activo) {
+        if (activoRef.current) {
           setNegocioError(
             e instanceof Error
               ? `No se pudo leer tu negocio: ${e.message}`
@@ -146,16 +189,19 @@ export default function MiLocalScreen({ navigation }: Props) {
           );
         }
       } finally {
-        if (activo) setCargandoNegocio(false);
+        if (activoRef.current) setCargandoNegocio(false);
       }
-    })();
+    };
+    loadBusiness();
     return () => {
-      activo = false;
+      activoRef.current = false;
     };
   }, [negocioId, leyendoVinculo]);
 
   const cargando: boolean = leyendoVinculo || cargandoNegocio;
   const cargaError: string | null = vinculoError ?? negocioError;
+  // Restaurante (carta diaria): muestra los campos de precio de menú/extra.
+  const esRestauranteLocal: boolean = categoria === 'comida_criolla';
 
   async function usarMiUbicacion(): Promise<void> {
     const coords = await obtenerUbicacion();
@@ -183,18 +229,46 @@ export default function MiLocalScreen({ navigation }: Props) {
       setFormError('La ubicación no es válida (revisá latitud y longitud).');
       return;
     }
+    const precioMenu: number = Number(precioMenuTxt.replace(',', '.'));
+    const precioExtra: number = Number(precioExtraTxt.replace(',', '.'));
+    if (esRestauranteLocal) {
+      if (precioMenuTxt.trim() && !(precioMenu > 0)) {
+        setFormError('El precio del menú del día debe ser mayor a 0.');
+        return;
+      }
+      if (precioExtraTxt.trim() && !(precioExtra > 0)) {
+        setFormError('El precio extra debe ser mayor a 0.');
+        return;
+      }
+    }
+    const costoEnvio: number = Number(costoEnvioTxt.replace(',', '.'));
+    if (!envioGratis && costoEnvioTxt.trim() && !(costoEnvio > 0)) {
+      setFormError('El costo de envío debe ser mayor a 0 (o dejalo vacío).');
+      return;
+    }
     setGuardando(true);
     try {
       await actualizarNegocio({
         negocioId,
         usuarioId: uid,
         nombre: nombreValido,
+        ...(categoria ? { categoria } : {}),
         descripcion: descripcion.trim(),
         direccion: direccion.trim(),
         tiempoEstimado: tiempoEstimado.trim(),
         envioGratis,
+        // Envío gratis => sin costo (0). Si no, el valor del campo (0 si vacío).
+        costoEnvio: !envioGratis && costoEnvioTxt.trim() ? costoEnvio : 0,
+        ...(esRestauranteLocal && precioMenuTxt.trim()
+          ? { precioMenuDia: precioMenu }
+          : {}),
+        ...(esRestauranteLocal && precioExtraTxt.trim()
+          ? { precioExtra }
+          : {}),
         lat: latTxt.trim() ? lat : undefined,
         lng: lngTxt.trim() ? lng : undefined,
+        // Solo si el dueño tocó el editor; array vacío = sin horario.
+        horario: horarioEditado,
       });
       setFormOk('Cambios guardados.');
     } catch (e) {
@@ -271,6 +345,29 @@ export default function MiLocalScreen({ navigation }: Props) {
         value={nombre}
         onChangeText={setNombre}
       />
+      <SelectorCategoria
+        label="Categoría"
+        valor={categoria}
+        onChange={setCategoria}
+      />
+      {esRestauranteLocal ? (
+        <>
+          <FormField
+            label="Precio del menú del día (S/)"
+            placeholder="Ej. 10"
+            keyboardType="decimal-pad"
+            value={precioMenuTxt}
+            onChangeText={setPrecioMenuTxt}
+          />
+          <FormField
+            label="Precio extra (S/)"
+            placeholder="Ej. 15"
+            keyboardType="decimal-pad"
+            value={precioExtraTxt}
+            onChangeText={setPrecioExtraTxt}
+          />
+        </>
+      ) : null}
       <FormField
         placeholder="Descripción (opcional)"
         value={descripcion}
@@ -308,6 +405,16 @@ export default function MiLocalScreen({ navigation }: Props) {
           </View>
         </TouchableOpacity>
       </View>
+      {/* Costo de envío: solo cuando el envío no es gratis */}
+      {!envioGratis ? (
+        <FormField
+          label="Costo de envío (S/)"
+          placeholder="Ej. 3.50 (vacío = sin costo)"
+          value={costoEnvioTxt}
+          onChangeText={setCostoEnvioTxt}
+          keyboardType="decimal-pad"
+        />
+      ) : null}
       {/* Area ubicacion */}
       <UbicacionInput
         leyendo={leyendoGps}
@@ -386,6 +493,9 @@ export default function MiLocalScreen({ navigation }: Props) {
         <ActivityIndicator size="small" color={colors.primary} />
       ) : null}
       {fotoError ? <Text style={styles.error}>{fotoError}</Text> : null}
+      {/* Area horario (se persiste con "Guardar cambios") */}
+      <Text style={styles.sectionTitle}>Horario de atención</Text>
+      <HorarioEditor horario={horarioInicial} onChange={setHorarioEditado} />
       {/* Area guardar */}
       <View style={{ marginBottom: insets.bottom + 40 }}>
         <PrimaryButton

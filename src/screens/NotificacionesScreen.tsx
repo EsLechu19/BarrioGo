@@ -8,6 +8,7 @@ import { RootStackParamList } from '../navigation/RootStackParamList';
 import { ScreenHeader } from '../components/ScreenHeader';
 import { useAuth } from '../context/AuthContext';
 import { storage } from '../services/storage';
+import { avisarHistorialActualizado } from '../services/notificaciones';
 import type { Notificacion } from '../types/Notificacion';
 import { ESTADO_ICONS } from '../utils/estadosPedido';
 import { fechaLarga } from '../utils/fechas';
@@ -40,12 +41,24 @@ export default function NotificacionesScreen({ navigation }: Props) {
     } finally {
       setLoading(false);
     }
-  }, [user?.uid]);
+  }, [user]);
+
+  // Abrir la pantalla marca el historial como leído y actualiza la campana.
+  const marcarLeidas = useCallback(async (): Promise<void> => {
+    if (!user?.uid) return;
+    try {
+      await storage.markNotificationsAsRead(user.uid);
+      avisarHistorialActualizado(user.uid);
+    } catch {
+      // Silencioso: el historial se puede volver a marcar al siguiente foco.
+    }
+  }, [user]);
 
   useFocusEffect(
     useCallback(() => {
       void loadNotifications();
-    }, [loadNotifications]),
+      void marcarLeidas();
+    }, [loadNotifications, marcarLeidas]),
   );
 
   return (
@@ -84,6 +97,7 @@ export default function NotificacionesScreen({ navigation }: Props) {
                         size={20}
                         color={colors.primary}
                       />
+                      {!notification.leida ? <View style={styles.unreadDot} /> : null}
                     </View>
                     <View style={styles.textBlock}>
                       <Text style={styles.texto}>{notification.texto}</Text>
@@ -127,6 +141,15 @@ function makeStyles(c: Colors) {
       justifyContent: 'center',
     },
     textBlock: { flex: 1, gap: 2 },
+    unreadDot: {
+      position: 'absolute',
+      top: 2,
+      right: 2,
+      width: 10,
+      height: 10,
+      borderRadius: 5,
+      backgroundColor: c.primary,
+    },
     texto: { color: c.textPrimary, fontSize: 14, fontWeight: '600', lineHeight: 20 },
     hora: { color: c.textMuted, fontSize: 12 },
     stateBlock: { alignItems: 'center', gap: 8, paddingVertical: 20 },
