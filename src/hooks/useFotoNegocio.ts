@@ -1,6 +1,6 @@
 import { useState } from 'react';
-import * as ImagePicker from 'expo-image-picker';
 import { subirFotoNegocio, TipoFotoNegocio } from '../services/api';
+import { elegirImagen } from '../utils/imagen';
 
 interface Opciones {
   negocioId: string | null;
@@ -55,36 +55,13 @@ export function useFotoNegocio({
       // Icono cuadrado, portada 16:9 (el aspect solo aplica en Android; en
       // iOS el recorte siempre es cuadrado — docs SDK 57).
       const aspect: [number, number] = tipo === 'icono' ? [1, 1] : [16, 9];
-      if (desdeCamara) {
-        const permiso = await ImagePicker.requestCameraPermissionsAsync();
-        if (!permiso.granted) {
-          setError('Necesitamos permiso de cámara para tomar la foto.');
-          return;
-        }
-        const resultado = await ImagePicker.launchCameraAsync({
-          mediaTypes: ['images'],
-          allowsEditing: true,
-          aspect,
-          quality: 0.7,
-        });
-        if (resultado.canceled) return;
-        const asset = resultado.assets[0];
-        if (!asset) return;
-        await subirElegida(tipo, asset.uri);
+      const resultado = await elegirImagen(desdeCamara, aspect);
+      if (resultado.estado === 'error') {
+        setError(resultado.mensaje);
         return;
       }
-      // Galería: no hace falta pedir permiso antes (docs SDK 57).
-      const resultado = await ImagePicker.launchImageLibraryAsync({
-        mediaTypes: ['images'],
-        allowsEditing: true,
-        aspect,
-        quality: 0.7,
-      });
-      // El usuario canceló → no hace nada, nunca crashea.
-      if (resultado.canceled) return;
-      const asset = resultado.assets[0];
-      if (!asset) return;
-      await subirElegida(tipo, asset.uri);
+      if (resultado.estado === 'cancelado') return;
+      await subirElegida(tipo, resultado.uri);
     } catch (e) {
       setError(
         e instanceof Error

@@ -105,10 +105,9 @@ function isPerfilUsuario(value: unknown): value is PerfilUsuario {
 }
 
 function isPreferenciasUsuario(value: unknown): value is PreferenciasUsuario {
+  // Solo el campo usado por la app; los JSON viejos con campos extra pasan.
   return typeof value === 'object' && value !== null &&
-    typeof (value as PreferenciasUsuario).notificaciones === 'boolean' &&
-    typeof (value as PreferenciasUsuario).ubicacion === 'boolean' &&
-    typeof (value as PreferenciasUsuario).ofertas === 'boolean';
+    typeof (value as PreferenciasUsuario).notificaciones === 'boolean';
 }
 
 function isDireccionPedido(value: unknown): value is DireccionPedido {
@@ -251,6 +250,10 @@ export const storage = {
     usuarioId.trim() && isDireccionPedido(address)
       ? write(checkoutAddressKey(usuarioId), address)
       : Promise.resolve(),
+  clearCheckoutAddress: (usuarioId: string): Promise<void> =>
+    usuarioId.trim()
+      ? AsyncStorage.removeItem(checkoutAddressKey(usuarioId))
+      : Promise.resolve(),
   loadCheckoutPayment: (usuarioId: string): Promise<MetodoPagoPedido | null> =>
     usuarioId.trim()
       ? read(checkoutPaymentKey(usuarioId), isMetodoPagoPedido)
@@ -262,8 +265,8 @@ export const storage = {
     usuarioId.trim() && isMetodoPagoPedido(payment)
       ? write(checkoutPaymentKey(usuarioId), payment)
       : Promise.resolve(),
-  // null = nunca se guardó (la pantalla de direcciones siembra el diseño la
-  // primera vez); [] = lista guardada vacía.
+  // null = nunca se guardó; [] = lista guardada vacía. La app NO siembra
+  // direcciones de demostración: una cuenta nueva empieza vacía.
   loadAddresses: (usuarioId: string): Promise<DireccionUsuario[] | null> =>
     usuarioId.trim()
       ? read(addressesKey(usuarioId), isDireccionUsuarioArray)
@@ -294,6 +297,18 @@ export const storage = {
       if (duplicate) return false;
       await writeNotifications(usuarioId, [notification, ...existing]);
       return true;
+    });
+  },
+  // Marca todo el historial como leído. No toca los pedidos ni su estado.
+  markNotificationsAsRead: (usuarioId: string): Promise<void> => {
+    if (!usuarioId.trim()) return Promise.resolve();
+    return enqueueNotificationWrite(usuarioId, async () => {
+      const existing = await readNotifications(usuarioId);
+      if (!existing.some((item) => !item.leida)) return;
+      await writeNotifications(
+        usuarioId,
+        existing.map((item) => (item.leida ? item : { ...item, leida: true })),
+      );
     });
   },
 };
