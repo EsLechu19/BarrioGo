@@ -1,4 +1,4 @@
-import { EstadoPedido } from '../types/Pedido';
+import { EstadoPago, EstadoPedido } from '../types/Pedido';
 import { EstadoRepartidor } from '../types/Repartidor';
 
 // Estados de pedido: color, etiqueta e icono en un solo lugar.
@@ -35,6 +35,27 @@ export const ESTADO_ICONS = {
   cancelado: 'close-circle-outline',
 } satisfies Record<EstadoVisible, EstadoIcono>;
 
+// Pago simulado (Fase 3): color, etiqueta e icono en un solo lugar.
+export const ESTADO_PAGO_COLORS: Record<EstadoPago, string> = {
+  pendiente: '#F59E0B',
+  pagado: '#10B981',
+  fallido: '#EF4444',
+};
+
+export const ESTADO_PAGO_LABELS: Record<EstadoPago, string> = {
+  pendiente: 'Pago pendiente (se cobra al recibir)',
+  pagado: 'Pago aprobado (simulado)',
+  fallido: 'Pago rechazado (simulado)',
+};
+
+export type EstadoPagoIcono = 'wallet-outline' | 'checkmark-circle-outline' | 'close-circle-outline';
+
+export const ESTADO_PAGO_ICONS = {
+  pendiente: 'wallet-outline',
+  pagado: 'checkmark-circle-outline',
+  fallido: 'close-circle-outline',
+} satisfies Record<EstadoPago, EstadoPagoIcono>;
+
 // Flujo lineal del pedido: el negocio avanza al siguiente estado.
 export const SIGUIENTE_ESTADO: Record<
   Exclude<EstadoPedido, 'entregado' | 'cancelado'>,
@@ -46,14 +67,15 @@ export const SIGUIENTE_ESTADO: Record<
 };
 
 // Pasos del seguimiento (línea de progreso del detalle).
-export const PASOS: Array<Exclude<EstadoPedido, 'cancelado'>> = [
+export const PASOS: (Exclude<EstadoPedido, 'cancelado'>)[] = [
   'pendiente',
   'confirmado',
   'en_camino',
   'entregado',
 ];
 
-// Repartidores (solo diseño por ahora).
+// Estados del repartidor: paleta y etiquetas compartidas por el panel
+// Repartidores (colección `repartidores` gestionada desde el panel).
 export const ESTADO_REPARTIDOR_COLOR: Record<EstadoRepartidor, string> = {
   en_ruta: '#8B5CF6',
   disponible: '#10B981',
