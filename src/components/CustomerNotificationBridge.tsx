@@ -3,7 +3,6 @@ import { useAuth } from '../context/AuthContext';
 import { escucharMisPedidos } from '../services/api';
 import { firebaseReady } from '../services/firebase';
 import {
-  asegurarPermisoNotificaciones,
   registrarCambioEstado,
 } from '../services/notificaciones';
 import type { EstadoPedido, Pedido } from '../types/Pedido';
@@ -21,7 +20,6 @@ export function CustomerNotificationBridge(): null {
     let activo = true;
     let primeraCarga = true;
     const uid = user.uid;
-    void asegurarPermisoNotificaciones();
     const unsubscribe = escucharMisPedidos(
       uid,
       (pedidos: Pedido[]) => {
@@ -29,13 +27,22 @@ export function CustomerNotificationBridge(): null {
 
         const mapa: Record<string, EstadoPedido> = {};
         if (primeraCarga) {
+          // La primera lectura es la línea base: los pedidos que ya existían
+          // no son avisos, son el estado previo.
           primeraCarga = false;
         } else {
           for (const pedido of pedidos) {
             const estadoPrevio = estadosPrevios.current[pedido.id];
-            if (estadoPrevio !== undefined && estadoPrevio !== pedido.estado) {
+            if (estadoPrevio === undefined) {
+              // Pedido nuevo: hecho en otro dispositivo o recién creado. El
+              // historial deduplica por pedido+estado, así que no duplica el
+              // aviso que ya se mandó al confirmar el pedido.
+              void registrarCambioEstado(uid, pedido, 'nuevo').catch(() => {
+                // Fallos de historial o del SO no son fatales.
+              });
+            } else if (estadoPrevio !== pedido.estado) {
               void registrarCambioEstado(uid, pedido).catch(() => {
-                // Notification history and OS notification failures are non-fatal.
+                // Fallos de historial o del SO no son fatales.
               });
             }
           }
@@ -45,7 +52,7 @@ export function CustomerNotificationBridge(): null {
         estadosPrevios.current = mapa;
       },
       () => {
-        // This bridge is intentionally silent; visible screens handle listener errors.
+        // Silencioso: las pantallas muestran los errores del listener.
       },
     );
 
