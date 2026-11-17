@@ -1,6 +1,8 @@
 import { Ionicons } from '@expo/vector-icons';
 import {
+  AppState,
   FlatList,
+  Linking,
   RefreshControl,
   StyleSheet,
   Text,
@@ -14,11 +16,15 @@ import { Negocio } from '../types/Negocio';
 import { RestaurantCard } from '../components/RestaurantCard';
 import { LoadingState, ErrorState } from '../components/StateView';
 import { EmptyState } from '../components/EmptyState';
-import { getNegociosConOrigen } from '../services/api';
-import { UserCoords, formatDistancia, getUserCoords, haversineKm } from '../services/location';
+import { getNegociosConOrigen, getUbicacionTrabajo } from '../services/api';
+import { estaAbierto } from '../utils/negocios';
+import { LIST_PERF } from '../utils/listPerf';
+import { useEstadoNegocios } from '../context/EstadoNegociosContext';
+import { UserCoords, formatDistancia, getUserCoords, haversineKm, permisoUbicacionOtorgado } from '../services/location';
 import { useFavorites } from '../context/FavoritesContext';
 import { useAuth } from '../context/AuthContext';
 import { useCart } from '../context/CartContext';
+import { useUnreadNotifications } from '../hooks/useUnreadNotifications';
 import { TabScreenProps } from '../navigation/TabScreenProps';
 import { useColors } from '../context/ThemeContext';
 import type { Colors } from '../styles/colors';
@@ -27,6 +33,7 @@ import { UbicacionModal } from '../components/UbicacionModal';
 import { storage } from '../services/storage';
 import {
   aDireccionPedido,
+  cargarDireccionCheckout,
   cargarDirecciones,
   direccionSeleccionadaId,
 } from '../utils/direcciones';
@@ -43,9 +50,12 @@ export default function HomeScreen({ navigation }: Props) {
   const [refreshing, setRefreshing] = useState<boolean>(false);
   const [query, setQuery] = useState<string>('');
   const [userLoc, setUserLoc] = useState<UserCoords | null>(null);
+  const [sinPermisoUbicacion, setSinPermisoUbicacion] = useState<boolean>(false);
   const { toggle, esFavorito } = useFavorites();
+  const { conOverride } = useEstadoNegocios();
   const { user } = useAuth();
   const { count: cartCount } = useCart();
+  const unreadNotifications = useUnreadNotifications();
   const [direcciones, setDirecciones] = useState<DireccionUsuario[]>([]);
   const [direccionActual, setDireccionActual] = useState<DireccionUsuario | null>(null);
   const [modalUbicacion, setModalUbicacion] = useState<boolean>(false);
@@ -53,66 +63,130 @@ export default function HomeScreen({ navigation }: Props) {
   const colors = useColors();
   const styles = useMemo(() => makeStyles(colors), [colors]);
 
-  // Dirección de entrega real (AsyncStorage). autoAbrir: cuenta nueva sin
-  // dirección → se abre el modal de ubicación al entrar al inicio.
+// Modal autoabierto bandera (solo se abre una vez por sesión)
+  const modalAutoabierto = useRef<boolean>(false);
+
+// Función para refrescar ubicación (usada al volver del modal de ubicación)
   const refrescarUbicacion = useCallback(
     async (autoAbrir: boolean): Promise<void> => {
       if (!user) {
         setDireccionActual(null);
         return;
       }
-      const [lista, activa] = await Promise.all([
-        cargarDirecciones(user.uid),
-        storage.loadCheckoutAddress(user.uid),
-      ]);
+      const lista = await cargarDirecciones(user.uid);
+      const activa = await cargarDireccionCheckout(user.uid);
       setDirecciones(lista);
       const idSeleccionada = direccionSeleccionadaId(lista, activa);
       const elegida = idSeleccionada
         ? (lista.find((d) => d.id === idSeleccionada) ?? null)
         : null;
       setDireccionActual(elegida);
-      if (autoAbrir && !elegida) setModalUbicacion(true);
+      if (elegida || !autoAbrir) return;
+      if (lista.length === 0) {
+        const trabajo = await getUbicacionTrabajo(user.uid);
+        const detalle: string = trabajo?.direccion.trim() ?? '';
+        if (detalle.length >= 5) {
+          const nueva: DireccionUsuario = {
+            id: `d${Date.now()}`,
+            alias: 'Trabajo',
+            detalle,
+            esPrincipal: true,
+          };
+          setDirecciones([nueva]);
+          setDireccionActual(nueva);
+          void storage.saveAddresses(user.uid, [nueva]);
+          void storage.saveCheckoutAddress(user.uid, aDireccionPedido(nueva));
+          return;
+        }
+      }
+      setModalUbicacion(true);
     },
     [user],
   );
 
-  // Carga la dirección al entrar al inicio y al volver de Direcciones.
-  // El modal solo se autoabre una vez por sesión (cuenta nueva sin dirección);
-  // después se abre únicamente con el chevron del header.
-  const modalAutoabierto = useRef<boolean>(false);
-
-  useEffect(() => {
-    const offFoco = navigation.addListener('focus', () => {
-      void refrescarUbicacion(!modalAutoabierto.current);
-      modalAutoabierto.current = true;
-    });
-    return offFoco;
-  }, [navigation, refrescarUbicacion]);
-
-  const load = useCallback(async (isRefresh = false) => {
-    if (isRefresh) {
-      setRefreshing(true);
-    } else {
-      setLoading(true);
-    }
-    setError(null);
-    setAdvertenciaFuente(null);
+  // Cargar negocios: useCallback con dependencias vacías para evitar
+  // re-renders innecesarios. El primer setState ocurre después del fetch
+  // para no encadenar renders desde el effect.
+  const load = useCallback(async () => {
     try {
       const resultado = await getNegociosConOrigen();
-      setNegocios(resultado.negocios);
+      setError(null);
       setAdvertenciaFuente(resultado.advertencia);
+      setNegocios(resultado.negocios);
     } catch {
       setError('No se pudo cargar los restaurantes. Revisa tu conexión e intenta de nuevo.');
+      setAdvertenciaFuente(null);
     } finally {
       setLoading(false);
       setRefreshing(false);
     }
   }, []);
 
+// Cargar coordenadas de usuario al montar (crítico para GPS)
   useEffect(() => {
-    load();
-    getUserCoords().then(setUserLoc);
-  }, [load]);
+    let activo = true;
+    void (async () => {
+      const coords = await getUserCoords();
+      if (!activo) return;
+      setUserLoc(coords);
+      const otorgado = await permisoUbicacionOtorgado();
+      if (activo) setSinPermisoUbicacion(!otorgado);
+    })();
+    return () => {
+      activo = false;
+    };
+  }, []);
+
+  // Al volver de los ajustes del sistema, refresca permiso y coordenadas.
+  useEffect(() => {
+    const sub = AppState.addEventListener('change', (estado) => {
+      if (estado !== 'active') return;
+      void (async () => {
+        const otorgado = await permisoUbicacionOtorgado();
+        setSinPermisoUbicacion(!otorgado);
+        if (!otorgado) return;
+        const coords = await getUserCoords();
+        setUserLoc(coords);
+      })();
+    });
+    return () => sub.remove();
+  }, []);
+
+// Cargar negocios después de obtener la ubicación GPS
+  useEffect(() => {
+    let activo = true;
+    void (async () => {
+      try {
+        const resultado = await getNegociosConOrigen();
+        if (!activo) return;
+        setError(null);
+        setAdvertenciaFuente(resultado.advertencia);
+        setNegocios(resultado.negocios);
+      } catch {
+        if (!activo) return;
+        setError('No se pudo cargar los restaurantes. Revisa tu conexión e intenta de nuevo.');
+        setAdvertenciaFuente(null);
+      } finally {
+        if (activo) {
+          setLoading(false);
+          setRefreshing(false);
+        }
+      }
+    })();
+    return () => {
+      activo = false;
+    };
+  }, [userLoc]);
+
+  // Listener de focus solo si hay usuario (opcional, no bloquea render)
+  useEffect(() => {
+    if (!user) return;
+    const offFoco = navigation.addListener('focus', () => {
+      void refrescarUbicacion(!modalAutoabierto.current);
+      modalAutoabierto.current = true;
+    });
+    return () => offFoco?.();
+  }, [user, navigation, refrescarUbicacion, modalAutoabierto]);
 
   const handleMore = () => {
     setModalUbicacion(true);
@@ -140,19 +214,24 @@ export default function HomeScreen({ navigation }: Props) {
   };
 
   const filtered: Negocio[] = useMemo(() => {
+    const conOverrides: Negocio[] = negocios.map(conOverride);
     const base = query.trim()
-      ? negocios.filter((n) => n.nombre.toLowerCase().includes(query.trim().toLowerCase()))
-      : negocios;
-    // Sin GPS: orden del API. Con GPS: distancia real + orden por cercanía.
-    if (!userLoc) return base;
-    return base
-      .map((n) => {
-        const km = haversineKm(userLoc, { latitude: n.lat, longitude: n.lng });
-        return { negocio: { ...n, distancia: formatDistancia(km) }, km };
-      })
-      .sort((a, b) => a.km - b.km)
-      .map((r) => r.negocio);
-  }, [negocios, query, userLoc]);
+      ? conOverrides.filter((n) => n.nombre.toLowerCase().includes(query.trim().toLowerCase()))
+      : conOverrides;
+    let conDistancia: Negocio[] = base;
+    if (userLoc) {
+      conDistancia = base
+        .map((n) => {
+          const km = haversineKm(userLoc, { latitude: n.lat, longitude: n.lng });
+          return { negocio: { ...n, distancia: formatDistancia(km) }, km };
+        })
+        .sort((a, b) => a.km - b.km)
+        .map((r) => r.negocio);
+    }
+    const abiertos: Negocio[] = conDistancia.filter((n) => estaAbierto(n));
+    const cerrados: Negocio[] = conDistancia.filter((n) => !estaAbierto(n));
+    return [...abiertos, ...cerrados];
+  }, [negocios, query, userLoc, conOverride]);
 
   // Los 5 más cercanos a tu punto GPS ("Ver todos" abre la vista Restaurants).
   const visibles: Negocio[] = filtered.slice(0, 5);
@@ -176,7 +255,7 @@ export default function HomeScreen({ navigation }: Props) {
         style={[styles.container, styles.center, { paddingTop: insets.top + 12 }]}
         textoStyle={styles.statusText}
         accion={
-          <TouchableOpacity style={styles.retryButton} onPress={() => load()}>
+          <TouchableOpacity style={styles.retryButton} onPress={() => { setLoading(true); void load(); }}>
             <Text style={styles.retryText}>Reintentar</Text>
           </TouchableOpacity>
         }
@@ -194,9 +273,22 @@ export default function HomeScreen({ navigation }: Props) {
           <View style={styles.locationTextBlock}>
             <Text style={styles.locationLabel}>Direccion de entrega</Text>
             <View style={styles.locationRow}>
-              <Text style={styles.locationAddress} numberOfLines={1}>
-                {direccionActual ? direccionActual.detalle : 'Añadir ubicación'}
-              </Text>
+              {/* El texto también abre el modal de ubicación, como la flecha. */}
+              <TouchableOpacity
+                onPress={handleMore}
+                hitSlop={8}
+                accessibilityRole="button"
+                accessibilityLabel={
+                  direccionActual
+                    ? `Cambiar dirección de entrega, actual: ${direccionActual.detalle}`
+                    : 'Añadir ubicación'
+                }
+                style={styles.locationAddressTouch}
+              >
+                <Text style={styles.locationAddress} numberOfLines={1}>
+                  {direccionActual ? direccionActual.detalle : 'Añadir ubicación'}
+                </Text>
+              </TouchableOpacity>
               <TouchableOpacity
                 onPress={handleMore}
                 hitSlop={8}
@@ -219,9 +311,20 @@ export default function HomeScreen({ navigation }: Props) {
             onPress={() => navigation.navigate('Notificaciones')}
             hitSlop={8}
             accessibilityRole="button"
-            accessibilityLabel="Ver notificaciones de pedidos"
+            accessibilityLabel={
+              unreadNotifications > 0
+                ? `Ver notificaciones de pedidos, ${unreadNotifications} sin leer`
+                : 'Ver notificaciones de pedidos'
+            }
           >
             <Ionicons name="notifications-outline" size={22} color={colors.textSecondary} />
+            {unreadNotifications > 0 ? (
+              <View style={styles.cartBadge}>
+                <Text style={styles.cartBadgeText}>
+                  {unreadNotifications > 99 ? '99+' : String(unreadNotifications)}
+                </Text>
+              </View>
+            ) : null}
           </TouchableOpacity>
 
           <TouchableOpacity
@@ -245,6 +348,7 @@ export default function HomeScreen({ navigation }: Props) {
       <FlatList
         data={visibles}
         keyExtractor={(item) => item.id}
+        {...LIST_PERF}
         renderItem={({ item }) => (
           <RestaurantCard
             negocio={item}
@@ -287,11 +391,25 @@ export default function HomeScreen({ navigation }: Props) {
                 <Text style={styles.sourceWarningText}>{advertenciaFuente}</Text>
               </View>
             ) : null}
-            <Text style={styles.gpsNote}>
-              {userLoc
-                ? '📍 Ordenado por tu ubicación real'
-                : 'Sin ubicación: activá el GPS para ordenar por cercanía'}
-            </Text>
+            {userLoc ? (
+              <Text style={styles.gpsNote}>📍 Ordenado por tu ubicación real</Text>
+            ) : (
+              <View style={styles.gpsRow}>
+                <Text style={styles.gpsNote}>
+                  Sin ubicación: activá el GPS para ordenar por cercanía
+                </Text>
+                {sinPermisoUbicacion ? (
+                  <TouchableOpacity
+                    onPress={() => void Linking.openSettings()}
+                    hitSlop={8}
+                    accessibilityRole="button"
+                    accessibilityLabel="Abrir ajustes de ubicación"
+                  >
+                    <Text style={styles.gpsAction}>Abrir ajustes</Text>
+                  </TouchableOpacity>
+                ) : null}
+              </View>
+            )}
           </View>
         }
         ListEmptyComponent={
@@ -304,7 +422,7 @@ export default function HomeScreen({ navigation }: Props) {
           />
         }
         refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={() => load(true)} />
+          <RefreshControl refreshing={refreshing} onRefresh={() => { setRefreshing(true); void load(); }} />
         }
       />
 
@@ -330,13 +448,17 @@ function makeStyles(c: Colors) {
     // Area del top-bar
     topBar: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',marginBottom:10 },
     // Locacion
-    location: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-    locationTextBlock: { flexDirection: 'column' },
+    // flex/minWidth: la dirección encoge con "…" y nunca empuja los iconos.
+    location: { flexDirection: 'row', alignItems: 'center', gap: 8, flex: 1, minWidth: 0 },
+    locationTextBlock: { flexDirection: 'column', flexShrink: 1 },
     locationLabel: { color: c.textMuted, fontSize: 12 },
     locationRow: { flexDirection: 'row', alignItems: 'center', gap: 4 },
-    locationAddress: { color: c.textPrimary, fontSize: 14, fontWeight: 'bold' },
+    // maxWidth: el texto se corta antes (ej. "Av. Petit Thouars 281…"), con "…".
+    locationAddress: { color: c.textPrimary, fontSize: 14, fontWeight: 'bold', flexShrink: 1, maxWidth: 165 },
+    // Toque sobre el texto: mismo destino que la flecha.
+    locationAddressTouch: { flexShrink: 1 },
     // Notificacion + carrito
-    topActions: { flexDirection: 'row', alignItems: 'center', gap: 10 },
+    topActions: { flexDirection: 'row', alignItems: 'center', gap: 10, flexShrink: 0 },
     iconButton: {
       width: 40,
       height: 40,
@@ -378,13 +500,15 @@ function makeStyles(c: Colors) {
       borderRadius: 22,
       backgroundColor: c.surface,
     },
-    input: { flex: 1, paddingVertical: 10 },
+    input: { flex: 1, paddingVertical: 10, color: c.textPrimary },
 
     // Area seccion header
     sectionHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
     sectionTitle: { color: c.textPrimary, fontSize: 18, fontWeight: '800' },
     seeAll: { color: c.primary, fontSize: 14, fontWeight: '700' },
     gpsNote: { color: c.textMuted, fontSize: 12,paddingBottom:10 },
+    gpsRow: { flexDirection: 'row', alignItems: 'center', gap: 8, flexWrap: 'wrap' },
+    gpsAction: { color: c.primary, fontSize: 12, fontWeight: '800' },
     sourceWarning: {
       flexDirection: 'row',
       alignItems: 'center',
