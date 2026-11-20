@@ -80,37 +80,37 @@
       {
         "dia": 0,
         "apertura": "18:00",
-        "cierre": "01:00"
+        "cierre": "00:00"
       },
       {
         "dia": 1,
         "apertura": "18:00",
-        "cierre": "01:00"
+        "cierre": "00:00"
       },
       {
         "dia": 2,
         "apertura": "18:00",
-        "cierre": "01:00"
+        "cierre": "00:00"
       },
       {
         "dia": 3,
         "apertura": "18:00",
-        "cierre": "01:00"
+        "cierre": "00:00"
       },
       {
         "dia": 4,
         "apertura": "18:00",
-        "cierre": "01:00"
+        "cierre": "00:00"
       },
       {
         "dia": 5,
         "apertura": "18:00",
-        "cierre": "01:00"
+        "cierre": "00:00"
       },
       {
         "dia": 6,
         "apertura": "18:00",
-        "cierre": "01:00"
+        "cierre": "00:00"
       }
     ]
   },
@@ -1781,7 +1781,7 @@
       {
         "dia": 0,
         "apertura": "16:00",
-        "cierre": "01:00"
+        "cierre": "00:00"
       },
       {
         "dia": 1,
@@ -1811,7 +1811,7 @@
       {
         "dia": 6,
         "apertura": "16:00",
-        "cierre": "01:00"
+        "cierre": "00:00"
       }
     ]
   },
@@ -1949,37 +1949,37 @@
       {
         "dia": 0,
         "apertura": "17:00",
-        "cierre": "02:00"
+        "cierre": "00:00"
       },
       {
         "dia": 1,
         "apertura": "17:00",
-        "cierre": "01:00"
+        "cierre": "00:00"
       },
       {
         "dia": 2,
         "apertura": "17:00",
-        "cierre": "01:00"
+        "cierre": "00:00"
       },
       {
         "dia": 3,
         "apertura": "17:00",
-        "cierre": "01:00"
+        "cierre": "00:00"
       },
       {
         "dia": 4,
         "apertura": "17:00",
-        "cierre": "01:00"
+        "cierre": "00:00"
       },
       {
         "dia": 5,
         "apertura": "17:00",
-        "cierre": "01:00"
+        "cierre": "00:00"
       },
       {
         "dia": 6,
         "apertura": "17:00",
-        "cierre": "02:00"
+        "cierre": "00:00"
       }
     ]
   },
@@ -2122,7 +2122,7 @@
       {
         "dia": 0,
         "apertura": "11:00",
-        "cierre": "01:00"
+        "cierre": "00:00"
       },
       {
         "dia": 1,
@@ -2152,7 +2152,7 @@
       {
         "dia": 6,
         "apertura": "11:00",
-        "cierre": "01:00"
+        "cierre": "00:00"
       }
     ]
   },
@@ -2523,7 +2523,7 @@
       {
         "dia": 0,
         "apertura": "17:00",
-        "cierre": "01:00"
+        "cierre": "00:00"
       },
       {
         "dia": 1,
@@ -2553,7 +2553,7 @@
       {
         "dia": 6,
         "apertura": "17:00",
-        "cierre": "01:00"
+        "cierre": "00:00"
       }
     ]
   },
@@ -3042,7 +3042,7 @@
       {
         "dia": 0,
         "apertura": "16:30",
-        "cierre": "01:00"
+        "cierre": "00:00"
       },
       {
         "dia": 1,
@@ -3072,7 +3072,7 @@
       {
         "dia": 6,
         "apertura": "16:30",
-        "cierre": "01:00"
+        "cierre": "00:00"
       }
     ]
   },
@@ -3438,7 +3438,7 @@
       {
         "dia": 0,
         "apertura": "11:00",
-        "cierre": "01:00"
+        "cierre": "00:00"
       },
       {
         "dia": 1,
@@ -3468,7 +3468,7 @@
       {
         "dia": 6,
         "apertura": "11:00",
-        "cierre": "01:00"
+        "cierre": "00:00"
       }
     ]
   },
@@ -3495,7 +3495,7 @@
       {
         "dia": 0,
         "apertura": "16:00",
-        "cierre": "01:00"
+        "cierre": "00:00"
       },
       {
         "dia": 2,
@@ -3520,7 +3520,7 @@
       {
         "dia": 6,
         "apertura": "16:00",
-        "cierre": "01:00"
+        "cierre": "00:00"
       }
     ]
   },
@@ -3779,7 +3779,7 @@
       {
         "dia": 0,
         "apertura": "17:00",
-        "cierre": "01:30"
+        "cierre": "00:00"
       },
       {
         "dia": 1,
@@ -3809,7 +3809,7 @@
       {
         "dia": 6,
         "apertura": "17:00",
-        "cierre": "01:30"
+        "cierre": "00:00"
       }
     ]
   },
@@ -3836,37 +3836,37 @@
       {
         "dia": 0,
         "apertura": "17:30",
-        "cierre": "02:00"
+        "cierre": "00:00"
       },
       {
         "dia": 1,
         "apertura": "17:30",
-        "cierre": "01:00"
+        "cierre": "00:00"
       },
       {
         "dia": 2,
         "apertura": "17:30",
-        "cierre": "01:00"
+        "cierre": "00:00"
       },
       {
         "dia": 3,
         "apertura": "17:30",
-        "cierre": "01:00"
+        "cierre": "00:00"
       },
       {
         "dia": 4,
         "apertura": "17:30",
-        "cierre": "01:00"
+        "cierre": "00:00"
       },
       {
         "dia": 5,
         "apertura": "17:30",
-        "cierre": "01:00"
+        "cierre": "00:00"
       },
       {
         "dia": 6,
         "apertura": "17:30",
-        "cierre": "02:00"
+        "cierre": "00:00"
       }
     ]
   },
@@ -3947,37 +3947,37 @@
       {
         "dia": 0,
         "apertura": "17:00",
-        "cierre": "02:00"
+        "cierre": "00:00"
       },
       {
         "dia": 1,
         "apertura": "17:00",
-        "cierre": "01:00"
+        "cierre": "00:00"
       },
       {
         "dia": 2,
         "apertura": "17:00",
-        "cierre": "01:00"
+        "cierre": "00:00"
       },
       {
         "dia": 3,
         "apertura": "17:00",
-        "cierre": "01:00"
+        "cierre": "00:00"
       },
       {
         "dia": 4,
         "apertura": "17:00",
-        "cierre": "01:00"
+        "cierre": "00:00"
       },
       {
         "dia": 5,
         "apertura": "17:00",
-        "cierre": "01:00"
+        "cierre": "00:00"
       },
       {
         "dia": 6,
         "apertura": "17:00",
-        "cierre": "02:00"
+        "cierre": "00:00"
       }
     ]
   },
@@ -4573,37 +4573,37 @@
       {
         "dia": 0,
         "apertura": "18:00",
-        "cierre": "02:00"
+        "cierre": "00:00"
       },
       {
         "dia": 1,
         "apertura": "18:00",
-        "cierre": "01:00"
+        "cierre": "00:00"
       },
       {
         "dia": 2,
         "apertura": "18:00",
-        "cierre": "01:00"
+        "cierre": "00:00"
       },
       {
         "dia": 3,
         "apertura": "18:00",
-        "cierre": "01:00"
+        "cierre": "00:00"
       },
       {
         "dia": 4,
         "apertura": "18:00",
-        "cierre": "01:00"
+        "cierre": "00:00"
       },
       {
         "dia": 5,
         "apertura": "18:00",
-        "cierre": "01:00"
+        "cierre": "00:00"
       },
       {
         "dia": 6,
         "apertura": "18:00",
-        "cierre": "02:00"
+        "cierre": "00:00"
       }
     ]
   },
@@ -4687,37 +4687,37 @@
       {
         "dia": 0,
         "apertura": "18:00",
-        "cierre": "02:00"
+        "cierre": "00:00"
       },
       {
         "dia": 1,
         "apertura": "18:00",
-        "cierre": "01:00"
+        "cierre": "00:00"
       },
       {
         "dia": 2,
         "apertura": "18:00",
-        "cierre": "01:00"
+        "cierre": "00:00"
       },
       {
         "dia": 3,
         "apertura": "18:00",
-        "cierre": "01:00"
+        "cierre": "00:00"
       },
       {
         "dia": 4,
         "apertura": "18:00",
-        "cierre": "01:00"
+        "cierre": "00:00"
       },
       {
         "dia": 5,
         "apertura": "18:00",
-        "cierre": "01:00"
+        "cierre": "00:00"
       },
       {
         "dia": 6,
         "apertura": "18:00",
-        "cierre": "02:00"
+        "cierre": "00:00"
       }
     ]
   },
@@ -4744,7 +4744,7 @@
       {
         "dia": 0,
         "apertura": "17:30",
-        "cierre": "01:00"
+        "cierre": "00:00"
       },
       {
         "dia": 1,
@@ -4774,7 +4774,7 @@
       {
         "dia": 6,
         "apertura": "17:30",
-        "cierre": "01:00"
+        "cierre": "00:00"
       }
     ]
   },
@@ -4801,7 +4801,7 @@
       {
         "dia": 0,
         "apertura": "16:30",
-        "cierre": "01:00"
+        "cierre": "00:00"
       },
       {
         "dia": 1,
@@ -4831,7 +4831,7 @@
       {
         "dia": 6,
         "apertura": "16:30",
-        "cierre": "01:00"
+        "cierre": "00:00"
       }
     ]
   },
@@ -5493,7 +5493,7 @@
       {
         "dia": 0,
         "apertura": "16:00",
-        "cierre": "01:00"
+        "cierre": "00:00"
       },
       {
         "dia": 1,
@@ -5523,7 +5523,7 @@
       {
         "dia": 6,
         "apertura": "16:00",
-        "cierre": "01:00"
+        "cierre": "00:00"
       }
     ]
   }

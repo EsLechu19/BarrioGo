@@ -123,8 +123,9 @@ export default function RestaurantsScreen({ navigation }: Props) {
   // Cargar datos al montar: 'load' es un useCallback que gestiona su propio state.
   // Se llama directamente para evitar setState sincrónico en el effect.
   useEffect(() => {
-    getUserCoords().then(setUserLoc);
-  }, []);
+    void getUserCoords().then(setUserLoc);
+    setTimeout(() => { void load(); }, 0);
+  }, [load]);
 
   const filtered: Negocio[] = useMemo(() => {
     const conOverrides: Negocio[] = negocios.map(conOverride);

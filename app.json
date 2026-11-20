@@ -23,8 +23,8 @@
       "@maplibre/maplibre-react-native"
     ],
     "name": "BarrioGo",
-    "slug": "BarrioGo",
-    "version": "1.0.0",
+    "slug": "barriogov2",
+    "version": "3.2.0",
     "orientation": "portrait",
     "icon": "./assets/img/icon1.png",
     "userInterfaceStyle": "light",
@@ -48,8 +48,9 @@
     },
     "extra": {
       "eas": {
-        "projectId": "661bd518-440d-48f6-9cc8-5369821620b6"
+        "projectId": "c2d3efe3-3831-444d-a5d6-9dcb9a4580ac"
       }
-    }
+    },
+    "owner": "jotah99"
   }
 }

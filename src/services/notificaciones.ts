@@ -177,9 +177,6 @@ export async function notificarPedido(
         title: mensaje.titulo,
         body: mensaje.cuerpo,
         ...(conAssetsPropios ? { sound: NOTIFICATION_SOUND } : {}),
-        ...(conAssetsPropios && Platform.OS === 'android'
-          ? { largeIcon: require('../assets/img/noti.png') }
-          : {}),
         data: {
           pedidoId: pedido.id,
           rol,
@@ -188,15 +185,15 @@ export async function notificarPedido(
         },
       },
       trigger:
-        Platform.OS === 'android'
-          ? {
-              type: Notifications.SchedulableTriggerInputTypes.TIME_INTERVAL,
-              seconds: 1,
-              ...(conAssetsPropios
-                ? { channelId: NOTIFICATION_CHANNEL_ID }
-                : {}),
-            }
-          : null,
+    Platform.OS === 'android'
+      ? {
+          type: Notifications.SchedulableTriggerInputTypes.TIME_INTERVAL,
+          seconds: 1,
+          ...(conAssetsPropios
+            ? { channelId: NOTIFICATION_CHANNEL_ID }
+            : {}),
+        }
+      : null,
     });
   } catch (error) {
     console.warn('Error al mostrar notificación:', error);

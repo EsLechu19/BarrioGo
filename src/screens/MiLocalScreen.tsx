@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, useRef } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import {
   ActivityIndicator,
   Image,
@@ -109,8 +109,8 @@ export default function MiLocalScreen({ navigation }: Props) {
   // El estado 'cargandoNegocio' ya inicia en 'true' (línea 54) y el effect
   // que antes lo seteaba nuevamente ya no es necesario; el loading se gestiona
   // a través del flujo normal del formulario.
-const activoRef = useRef(true);
   useEffect(() => {
+    let activo = true;
     const loadBusiness = async () => {
       try {
         if (!negocioId) return;
@@ -118,7 +118,7 @@ const activoRef = useRef(true);
           doc(getFirestoreDb(), 'negocios', negocioId),
         );
         if (!negocioSnap.exists()) {
-          if (activoRef.current) setNegocioError('El negocio no existe.');
+          if (activo) setNegocioError('El negocio no existe.');
           return;
         }
         const negocio: unknown = negocioSnap.data();
@@ -181,7 +181,7 @@ const activoRef = useRef(true);
           }
         }
       } catch (e) {
-        if (activoRef.current) {
+        if (activo) {
           setNegocioError(
             e instanceof Error
               ? `No se pudo leer tu negocio: ${e.message}`
@@ -189,12 +189,12 @@ const activoRef = useRef(true);
           );
         }
       } finally {
-        if (activoRef.current) setCargandoNegocio(false);
+        if (activo) setCargandoNegocio(false);
       }
     };
     loadBusiness();
     return () => {
-      activoRef.current = false;
+      activo = false;
     };
   }, [negocioId, leyendoVinculo]);
 

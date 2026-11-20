@@ -9,7 +9,7 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { Ionicons } from '@expo/vector-icons';
@@ -22,6 +22,7 @@ import { useCart } from '../context/CartContext';
 import { useFavorites } from '../context/FavoritesContext';
 import { useEstadoNegocios } from '../context/EstadoNegociosContext';
 import { useAuth } from '../context/AuthContext';
+import { getNegocioById, getMenu } from '../services/api';
 import { ProductoCard } from '../components/detalle/ProductoCard';
 import { TabBar, Tab } from '../components/detalle/TabBar';
 import { InfoTab } from '../components/detalle/InfoTab';
@@ -53,11 +54,8 @@ type Props = NativeStackScreenProps<RootStackParamList, 'Detalle'>;
 export default function DetalleScreen({ navigation, route }: Props) {
   const { negocioId } = route.params;
   const insets = useSafeAreaInsets();
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [negocio, setNegocio] = useState<Negocio | null>(null);
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [menu, setMenu] = useState<Producto[]>([]);
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [loading, setLoading] = useState<boolean>(true);
   const [tab, setTab] = useState<Tab>('menu');
   const {
@@ -83,6 +81,50 @@ export default function DetalleScreen({ navigation, route }: Props) {
   const [comidaSel, setComidaSel] = useState<Producto | null>(null);
   const colors = useColors();
   const styles = useMemo(() => makeStyles(colors), [colors]);
+
+  // Referencia para evitar state viejo si el usuario cambia rápido de negocio.
+  const activoRef = useRef(true);
+  const cancelRef = useRef(false);
+
+  // Cargar negocio y menú usando negocioId cuándo cambia la ruta.
+  useEffect(() => {
+    cancelRef.current = false;
+    activoRef.current = true;
+
+    const cargarDatos = async (): Promise<void> => {
+      try {
+        const n = await getNegocioById(negocioId);
+        if (cancelRef.current || !activoRef.current) return;
+        if (n) {
+          setNegocio(n);
+        } else {
+          setNegocio(null);
+        }
+        // Negocio cargado: intentar cargar menú.
+        try {
+          const m = await getMenu(negocioId);
+          if (cancelRef.current || !activoRef.current) return;
+          setMenu(m);
+        } catch {
+          if (cancelRef.current || !activoRef.current) return;
+          setMenu([]);
+        } finally {
+          if (activoRef.current && !cancelRef.current) setLoading(false);
+        }
+      } catch {
+        if (cancelRef.current || !activoRef.current) return;
+        setNegocio(null);
+        setMenu([]);
+        setLoading(false);
+      }
+    };
+
+    cargarDatos();
+    return () => {
+      cancelRef.current = true;
+      activoRef.current = false;
+    };
+  }, [negocioId]);
 
   // Lista del negocio: primero las opiniones publicadas en la sesión y
   // debajo las de ejemplo (determinísticas por negocio).

@@ -50,45 +50,47 @@ function parsearHora(hora: string): number | null {
   return Number(match[1]) * 60 + Number(match[2]);
 }
 
-// minutoDelDia dentro de la franja. `cierre <= apertura` cruza medianoche.
-function dentroDeFranja(minutoDelDia: number, apertura: number, cierre: number): boolean {
-  if (apertura === cierre) return true; // 24h
-  if (apertura < cierre) return minutoDelDia >= apertura && minutoDelDia < cierre;
-  return minutoDelDia >= apertura || minutoDelDia < cierre;
-}
-
-function franjaDelDia(horario: HorarioDia[], dia: HoraLima['diaSemana']): HorarioDia | null {
-  // Puede haber varias franjas por día (ej. 11–15 y 19–23): estaAbierto()
-  // revisa todas; proximaAperturaTexto() usa la primera del día.
-  return horario.find((f) => f.dia === dia) ?? null;
-}
-
 /**
  * Estado EFECTIVO del negocio en `ahora` (por defecto, ahora mismo, hora de Lima).
- * 1. Override manual del dueño manda siempre.
- * 2. Sin horario (o todas las franjas inválidas) => abierto.
- * 3. Si no, se calcula contra la franja del día (soporta franja que cruza
- *    la medianoche, mirando también el día anterior).
+ * 1. Ignora abiertoManual completamente; el horario semanal es la única fuente.
+ * 2. Si el horario no existe o está vacío, el negocio está cerrado.
+ * 3. Si no hay entrada para el día actual en el horario, está cerrado.
+ * 4. Se usa hora de Lima; no se revisa el día anterior ni madrugadas.
+ * 5. Para horarios normales: apertura <= horaActual < cierre.
+ * 6. Si el cierre es 00:00, abierto desde apertura hasta antes de medianoche.
+ * 7. Si Apertura > Cierre y no es el caso 00:00, cerrado por seguridad.
  */
 export function estaAbierto(negocio: Negocio, ahora: Date = new Date()): boolean {
-  if (negocio.abiertoManual !== undefined) return negocio.abiertoManual;
+  // 1. Ignorar abiertoManual completamente.
+
+  // 2. Si el horario no existe o está vacío, el negocio está cerrado.
   const horario: HorarioDia[] = negocio.horario ?? [];
-  if (horario.length === 0) return true;
+  if (horario.length === 0) return false;
 
+  // 3. Obtener hora actual en Lima.
   const { minutoDelDia, diaSemana } = horaLima(ahora);
-  const ayer: HoraLima['diaSemana'] = ((diaSemana + 6) % 7) as HoraLima['diaSemana'];
 
-  const esAbierto = (franja: HorarioDia | null): boolean => {
-    if (!franja) return false;
-    const apertura = parsearHora(franja.apertura);
-    const cierre = parsearHora(franja.cierre);
-    if (apertura === null || cierre === null) return false;
-    return dentroDeFranja(minutoDelDia, apertura, cierre);
-  };
+  // 4. Buscar la franja del día actual en el horario.
+  const franja = horario.find((f) => f.dia === diaSemana);
 
-  if (esAbierto(franjaDelDia(horario, diaSemana))) return true;
-  // Franja del día anterior que cruza medianoche (ej. ayer 22:00–02:00).
-  return esAbierto(franjaDelDia(horario, ayer));
+  // 6. Si no hay entrada para el día actual, está cerrado.
+  if (!franja) return false;
+
+  // 7. Parsear apertura y cierre a minutos.
+  const apertura = parsearHora(franja.apertura);
+  const cierre = parsearHora(franja.cierre);
+
+  // Si horas inválidas → cerrado.
+  if (apertura === null || cierre === null) return false;
+
+  // 8. Si el cierre es 00:00, considerar abierto desde apertura hasta antes de medianoche.
+  if (cierre === 0) return minutoDelDia >= apertura;
+
+  // 9. Si apertura > cierre y no es el caso 00:00, cerrar por seguridad.
+  if (apertura > cierre) return false;
+
+  // 10. Horario normal: apertura <= horaActual < cierre.
+  return minutoDelDia >= apertura && minutoDelDia < cierre;
 }
 
 /**

@@ -86,7 +86,7 @@ export function AuthProvider({
   const [rol, setRol] = useState<Rol | null>(null);
 
   // Esperar la recuperación de sesión y rol.
-  const [loading, setLoading] = useState<boolean>(true);
+  const [loading, setLoading] = useState<boolean>(firebaseReady);
 
   const [, setSelloAuth] = useState<number>(0);
 
