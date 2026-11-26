@@ -143,6 +143,7 @@ async function enviarNotificacion(usuarioId, mensaje, pedidoId) {
     data: {
       tipo: 'pedido',
       pedidoId,
+      origen: 'remota',
     },
   }));
 

@@ -1,8 +1,11 @@
 import { initializeApp, getApps, FirebaseApp } from 'firebase/app';
-import { getAuth, initializeAuth, Auth } from 'firebase/auth';
-// Existe solo en tipos RN: el @ts-expect-error de abajo es por esto.
-// @ts-expect-error - símbolo RN ausente en los .d.ts web, presente en runtime
-import { getReactNativePersistence } from 'firebase/auth';
+import {
+  getAuth,
+  initializeAuth,
+  type Auth,
+  // @ts-expect-error - símbolo RN ausente en los .d.ts web, presente en runtime
+  getReactNativePersistence,
+} from 'firebase/auth';
 import {
   getFirestore,
   Firestore,

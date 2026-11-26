@@ -3,7 +3,7 @@ import { Platform } from 'react-native';
 import Constants from 'expo-constants';
 import * as Notifications from 'expo-notifications';
 
-import { doc, setDoc, arrayUnion } from 'firebase/firestore';
+import { arrayRemove, arrayUnion, doc, setDoc, updateDoc } from 'firebase/firestore';
 
 import { getFirebaseAuth, getFirestoreDb } from './firebase';
 import { asegurarPermisoNotificaciones } from './notificaciones';
@@ -102,5 +102,32 @@ export async function registrarPushToken(usuarioId: string): Promise<void> {
     await guardarExpoPushToken(usuarioId, token);
   } catch (error) {
     console.warn('No se pudo registrar el push token:', error);
+  }
+}
+
+// Quita del usuario saliente únicamente el token de este dispositivo.
+// Un fallo no debe impedir que la sesión pueda cerrarse.
+export async function desvincularPushToken(usuarioId: string): Promise<void> {
+  if (!usuarioId.trim()) return;
+
+  try {
+    const usuarioActual = getFirebaseAuth().currentUser;
+
+    if (!usuarioActual || usuarioActual.uid !== usuarioId) {
+      console.warn('No se pudo desvincular el push token: UID no válido.');
+      return;
+    }
+
+    const token = await obtenerExpoPushToken(false);
+
+    if (!token) return;
+
+    await updateDoc(doc(getFirestoreDb(), 'users', usuarioId), {
+      expoPushTokens: arrayRemove(token),
+    });
+
+    console.log('Expo Push Token desvinculado al cerrar sesión.');
+  } catch (error) {
+    console.warn('No se pudo desvincular el push token:', error);
   }
 }

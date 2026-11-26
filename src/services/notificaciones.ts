@@ -28,12 +28,19 @@ const enExpoGo = () => isRunningInExpoGo();
 if (Platform.OS !== 'web') {
   try {
     Notifications.setNotificationHandler({
-      handleNotification: async () => ({
-        shouldShowBanner: true,
-        shouldShowList: true,
-        shouldPlaySound: true,
-        shouldSetBadge: false,
-      }),
+      handleNotification: async (notification) => {
+        // Mientras la app está abierta, los bridges ya generan el aviso local
+        // correspondiente. El push remoto se conserva para segundo plano.
+        const esPushRemoto =
+          notification.request.content.data?.origen === 'remota';
+
+        return {
+          shouldShowBanner: !esPushRemoto,
+          shouldShowList: !esPushRemoto,
+          shouldPlaySound: !esPushRemoto,
+          shouldSetBadge: false,
+        };
+      },
     });
   } catch (error) {
     console.warn('No se pudo configurar el handler de notificaciones:', error);
@@ -182,6 +189,7 @@ export async function notificarPedido(
           rol,
           evento,
           tipo: 'pedido',
+          origen: 'local',
         },
       },
       trigger:

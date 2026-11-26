@@ -1,4 +1,5 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { Alert } from 'react-native';
 import {
   DireccionPedido,
   ItemPedido,
@@ -133,6 +134,9 @@ function isMetodoPagoPedido(value: unknown): value is MetodoPagoPedido {
 }
 
 function isDireccionUsuario(value: unknown): value is DireccionUsuario {
+  const lat = (value as Partial<DireccionUsuario>)?.lat;
+  const lng = (value as Partial<DireccionUsuario>)?.lng;
+  const tieneCoordenadas = lat !== undefined || lng !== undefined;
   return (
     typeof value === 'object' &&
     value !== null &&
@@ -142,7 +146,16 @@ function isDireccionUsuario(value: unknown): value is DireccionUsuario {
     (value as DireccionUsuario).alias.trim().length > 0 &&
     typeof (value as DireccionUsuario).detalle === 'string' &&
     (value as DireccionUsuario).detalle.trim().length > 0 &&
-    typeof (value as DireccionUsuario).esPrincipal === 'boolean'
+    typeof (value as DireccionUsuario).esPrincipal === 'boolean' &&
+    (!tieneCoordenadas ||
+      (typeof lat === 'number' &&
+        Number.isFinite(lat) &&
+        lat >= -90 &&
+        lat <= 90 &&
+        typeof lng === 'number' &&
+        Number.isFinite(lng) &&
+        lng >= -180 &&
+        lng <= 180))
   );
 }
 
@@ -151,6 +164,19 @@ function isDireccionUsuarioArray(value: unknown): value is DireccionUsuario[] {
 }
 
 const notificationWrites = new Map<string, Promise<void>>();
+let avisoPersistenciaMostrado = false;
+
+function avisarFalloPersistencia(key: string): void {
+  console.warn('No se pudo persistir', key);
+
+  if (avisoPersistenciaMostrado) return;
+
+  avisoPersistenciaMostrado = true;
+  Alert.alert(
+    'No se pudieron guardar tus cambios',
+    'Revisa el espacio disponible en el dispositivo e inténtalo nuevamente.',
+  );
+}
 
 async function readNotifications(usuarioId: string): Promise<Notificacion[]> {
   const raw = await AsyncStorage.getItem(notificationsKey(usuarioId));
@@ -170,7 +196,13 @@ async function writeNotifications(
   usuarioId: string,
   notifications: Notificacion[],
 ): Promise<void> {
-  await AsyncStorage.setItem(notificationsKey(usuarioId), JSON.stringify(notifications));
+  const key = notificationsKey(usuarioId);
+
+  try {
+    await AsyncStorage.setItem(key, JSON.stringify(notifications));
+  } catch {
+    avisarFalloPersistencia(key);
+  }
 }
 
 function enqueueNotificationWrite<T>(
@@ -202,7 +234,15 @@ async function write(key: string, value: unknown): Promise<void> {
     await AsyncStorage.setItem(key, JSON.stringify(value));
   } catch {
     // Disco lleno o storage no disponible: la app sigue en memoria.
-    console.log('No se pudo persistir', key);
+    avisarFalloPersistencia(key);
+  }
+}
+
+async function remove(key: string): Promise<void> {
+  try {
+    await AsyncStorage.removeItem(key);
+  } catch {
+    avisarFalloPersistencia(key);
   }
 }
 
@@ -213,7 +253,7 @@ export const storage = {
   saveFavorites: (ids: string[]) => write(KEYS.favorites, ids),
   loadSession: () => read(KEYS.session, isSession),
   saveSession: (s: Session) => write(KEYS.session, s),
-  clearSession: () => AsyncStorage.removeItem(KEYS.session),
+  clearSession: () => remove(KEYS.session),
   // Tema: se guarda como 'dark' | 'light'; al leer se valida el valor.
   loadTheme: async (): Promise<'dark' | 'light' | null> => {
     try {
@@ -252,7 +292,7 @@ export const storage = {
       : Promise.resolve(),
   clearCheckoutAddress: (usuarioId: string): Promise<void> =>
     usuarioId.trim()
-      ? AsyncStorage.removeItem(checkoutAddressKey(usuarioId))
+      ? remove(checkoutAddressKey(usuarioId))
       : Promise.resolve(),
   loadCheckoutPayment: (usuarioId: string): Promise<MetodoPagoPedido | null> =>
     usuarioId.trim()

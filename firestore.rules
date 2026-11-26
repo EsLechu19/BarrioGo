@@ -65,19 +65,88 @@ service cloud.firestore {
         );
     }
     match /pedidos/{id} {
+      function tieneCamposPedidoPermitidos() {
+        return request.resource.data.keys().hasAll([
+            'usuarioId', 'negocioId', 'items', 'total', 'estado', 'fecha'
+          ])
+          && request.resource.data.keys().hasOnly([
+            'usuarioId', 'negocioId', 'items', 'total', 'estado', 'fecha',
+            'direccion', 'metodoPago', 'clienteNombre', 'negocioNombre',
+            'estadoPago', 'envio', 'pedidoGeneralId'
+          ]);
+      }
+
+      function esDireccionPedidoValida(direccion) {
+        return direccion is map
+          && direccion.alias is string
+          && direccion.alias.size() > 0
+          && direccion.detalle is string
+          && direccion.detalle.size() > 0;
+      }
+
+      function esMetodoPagoValido(metodoPago) {
+        return metodoPago is map
+          && metodoPago.tipo is string
+          && metodoPago.tipo.size() > 0
+          && metodoPago.nombre is string
+          && metodoPago.nombre.size() > 0;
+      }
+
+      function esPedidoNuevoValido() {
+        return request.auth != null
+          && tieneCamposPedidoPermitidos()
+          && request.resource.data.usuarioId == request.auth.uid
+          && request.resource.data.negocioId is string
+          && request.resource.data.negocioId.size() > 0
+          && exists(/databases/$(database)/documents/negocios/$(request.resource.data.negocioId))
+          && request.resource.data.items is list
+          && request.resource.data.items.size() > 0
+          && request.resource.data.total is number
+          && request.resource.data.total > 0
+          && request.resource.data.estado == 'pendiente'
+          && request.resource.data.fecha is string
+          && request.resource.data.fecha.size() > 0
+          && (!('direccion' in request.resource.data)
+            || esDireccionPedidoValida(request.resource.data.direccion))
+          && (!('metodoPago' in request.resource.data)
+            || esMetodoPagoValido(request.resource.data.metodoPago))
+          && (!('clienteNombre' in request.resource.data)
+            || (request.resource.data.clienteNombre is string
+              && request.resource.data.clienteNombre.size() > 0))
+          && (!('negocioNombre' in request.resource.data)
+            || (request.resource.data.negocioNombre is string
+              && request.resource.data.negocioNombre.size() > 0))
+          && (!('envio' in request.resource.data)
+            || (request.resource.data.envio is number
+              && request.resource.data.envio >= 0))
+          && (!('pedidoGeneralId' in request.resource.data)
+            || request.resource.data.pedidoGeneralId is string)
+          // estadoPago continúa simulado hasta integrar una pasarela: no
+          // representa un cobro real ni sustituye la autorización del backend.
+          && (!('estadoPago' in request.resource.data)
+            || request.resource.data.estadoPago in ['pendiente', 'pagado', 'fallido'])
+          // Mercado Pago state is server-owned: clients may only create a
+          // sandbox order as pending, never pre-mark it paid or failed.
+          && (!(('metodoPago' in request.resource.data)
+              && request.resource.data.metodoPago.tipo == 'mercadopago_sandbox')
+            || request.resource.data.estadoPago == 'pendiente');
+      }
+
       function esTransicionValida() {
-        return (resource.data.estado == 'pendiente'
+        return !('pagoActivoId' in resource.data)
+          && ((resource.data.estado == 'pendiente'
             && request.resource.data.estado == 'confirmado')
           || (resource.data.estado == 'confirmado'
             && request.resource.data.estado == 'en_camino')
           || (resource.data.estado == 'en_camino'
-            && request.resource.data.estado == 'entregado');
+            && request.resource.data.estado == 'entregado'));
       }
 
       function esCancelacionPropia() {
         return request.auth != null
           && resource.data.usuarioId == request.auth.uid
           && resource.data.estado == 'pendiente'
+          && !('pagoActivoId' in resource.data)
           && request.resource.data.estado == 'cancelado'
           && request.resource.data.usuarioId == resource.data.usuarioId
           && request.resource.data.canceladoPor == request.auth.uid
@@ -87,6 +156,7 @@ service cloud.firestore {
       function esRechazoNegocio() {
         return esDuenoNegocio(resource.data.negocioId)
           && resource.data.estado == 'pendiente'
+          && !('pagoActivoId' in resource.data)
           && request.resource.data.estado == 'cancelado'
           && request.resource.data.usuarioId == resource.data.usuarioId
           && request.resource.data.negocioId == resource.data.negocioId
@@ -94,12 +164,10 @@ service cloud.firestore {
           && request.resource.data.canceladoFecha is string;
       }
 
-      // Crear: solo tus propios pedidos (anti-suplantación).
-      allow create: if request.auth != null
-        && request.resource.data.usuarioId == request.auth.uid
-        && request.resource.data.estado == 'pendiente'
-        && (!('pedidoGeneralId' in request.resource.data)
-          || request.resource.data.pedidoGeneralId is string);
+      // Crear: identidad, forma, negocio existente e importes básicos.
+      // Rules no puede iterar cada item contra el catálogo para recalcular el
+      // total; esa garantía completa requiere backend/pasarela.
+      allow create: if esPedidoNuevoValido();
       // Leer: el cliente ve los suyos, el dueño los de su negocio.
       allow read: if request.auth != null && (
         resource.data.usuarioId == request.auth.uid
@@ -124,11 +192,21 @@ service cloud.firestore {
       // simulado (pendiente/pagado/fallido). No toca estado ni cancelación.
       allow update: if request.auth != null
         && resource.data.usuarioId == request.auth.uid
+        && (!('metodoPago' in resource.data)
+          || resource.data.metodoPago.tipo != 'mercadopago_sandbox')
         && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
           'estadoPago'
         ])
         && request.resource.data.estadoPago in ['pendiente', 'pagado', 'fallido'];
       allow delete: if false;
+    }
+
+    // Aggregate Mercado Pago payment records are created and updated only by
+    // the trusted backend (Firebase Admin bypasses client security rules).
+    match /pagos/{id} {
+      allow read: if request.auth != null
+        && resource.data.usuarioId == request.auth.uid;
+      allow create, update, delete: if false;
     }
 
     // Pedido general multinegocio: solo lo crea y lee su dueño; inmutable
