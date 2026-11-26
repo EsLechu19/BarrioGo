@@ -8,17 +8,19 @@ import { PrimaryButton } from '../components/PrimaryButton';
 import { authErrorEs, useAuth } from '../context/AuthContext';
 import { useColors } from '../context/ThemeContext';
 import type { Colors } from '../styles/colors';
+import { FontAwesome } from '@expo/vector-icons';
 
 type Props = NativeStackScreenProps<AuthStackParamList, 'Login'>
 
 export default function LoginScreen ({ navigation }: Props){
     const insets = useSafeAreaInsets();
-    const { login, recuperarContrasena } = useAuth();
+    const { login, loginConGoogle, recuperarContrasena } = useAuth();
     const [email,setEmail] = useState('');
     const [password,setPassword] = useState('');
     const [error,setError] = useState<{email?: string; password?: string; auth?: string}>({});
     const [submitting, setSubmitting] = useState<boolean>(false);
     const [sendingReset, setSendingReset] = useState<boolean>(false);
+    const [googleSubmitting, setGoogleSubmitting] = useState<boolean>(false);
     const colors = useColors();
     const styles = useMemo(() => makeStyles(colors), [colors]);
     const isValidEmail = (value: string): boolean => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value.trim());
@@ -62,6 +64,24 @@ export default function LoginScreen ({ navigation }: Props){
         } finally {
             setSendingReset(false);
         }
+    };
+
+    const handleGoogleLogin = async (): Promise<void> => {
+        setError({});
+        setGoogleSubmitting(true);
+        try {
+            await loginConGoogle();
+        } catch (e: unknown) {
+            const code = e instanceof Object && 'code' in e ? String((e as { code: unknown }).code) : '';
+            const message = e instanceof Error ? e.message : '';
+            setError({ auth: code ? authErrorEs(code) : message || 'No se pudo iniciar sesión con Google.' });
+        } finally {
+            setGoogleSubmitting(false);
+        }
+    };
+
+    const handleAppleLogin = (): void => {
+        Alert.alert('Próximamente', 'El inicio de sesión con Apple estará disponible próximamente.');
     };
 
     const handleRegister = () => {
@@ -128,6 +148,32 @@ export default function LoginScreen ({ navigation }: Props){
                     <View style={styles.actionArea}>
                         {error.auth && <Text style={styles.authError}>{error.auth}</Text>}
                         <PrimaryButton title={submitting ? 'Ingresando...' : 'Ingresar'} onPress={handleLogin} />
+                        <View style={styles.dividerRow}>
+                            <View style={styles.divider} />
+                            <Text style={styles.dividerText}>O continúa con</Text>
+                            <View style={styles.divider} />
+                        </View>
+                        <View style={styles.socialRow}>
+                            <TouchableOpacity
+                                style={styles.socialButton}
+                                onPress={() => void handleGoogleLogin()}
+                                disabled={googleSubmitting}
+                                accessibilityRole="button"
+                                accessibilityLabel="Continuar con Google"
+                            >
+                                <FontAwesome name="google" size={18} color={colors.google} />
+                                <Text style={styles.socialText}>{googleSubmitting ? 'Abriendo...' : 'Google'}</Text>
+                            </TouchableOpacity>
+                            <TouchableOpacity
+                                style={styles.socialButton}
+                                onPress={handleAppleLogin}
+                                accessibilityRole="button"
+                                accessibilityLabel="Continuar con Apple próximamente"
+                            >
+                                <FontAwesome name="apple" size={20} color={colors.textPrimary} />
+                                <Text style={styles.socialText}>Apple</Text>
+                            </TouchableOpacity>
+                        </View>
                         <View style={styles.registerRow}>
                             <Text style={styles.registerText}>¿No tienes cuenta? </Text>
                             <TouchableOpacity onPress={handleRegister}>
@@ -167,6 +213,12 @@ function makeStyles(c: Colors) {
         // minHeight (no height): con el error de autentificación el contenido crece sin solaparse.
         actionArea: { width: '100%', minHeight: 89, paddingTop: 8, gap: 16 },
         authError: { color: c.google, fontSize: 14, fontWeight: '600', textAlign: 'center' },
+        dividerRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+        divider: { flex: 1, height: 1, backgroundColor: c.border },
+        dividerText: { color: c.textMuted, fontSize: 12, fontWeight: '600' },
+        socialRow: { flexDirection: 'row', gap: 12 },
+        socialButton: { flex: 1, minHeight: 48, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, borderWidth: 1, borderColor: c.border, borderRadius: 10, backgroundColor: c.surface },
+        socialText: { color: c.textPrimary, fontSize: 14, fontWeight: '700' },
         registerRow: { flexDirection: 'row', justifyContent: 'center', alignItems: 'center' },
         registerText: { height: 17, fontSize: 14, color: c.textMuted },
         registerLink: { height: 17, color: c.primary, fontSize: 14, fontWeight: '600' },

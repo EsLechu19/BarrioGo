@@ -8,6 +8,7 @@ import { PrimaryButton } from '../components/PrimaryButton';
 import { authErrorEs, useAuth } from '../context/AuthContext';
 import { useColors } from '../context/ThemeContext';
 import type { Colors } from '../styles/colors';
+import { PASSWORD_POLICY_HINT, validarContrasenaSegura } from '../utils/password';
 
 type Props = NativeStackScreenProps<AuthStackParamList, 'Register'>
 
@@ -30,7 +31,7 @@ export default function RegisterScreen({ navigation }: Props) {
         if (!email.trim()) newError.email = 'El correo es necesario';
         else if (!isValidEmail(email)) newError.email = 'Ingresa un correo válido';
         if (!password) newError.password = 'La contraseña es necesaria';
-        else if (password.length < 6) newError.password = 'Mínimo 6 caracteres';
+        else newError.password = validarContrasenaSegura(password);
         if (!confirmPassword) newError.confirmPassword = 'Repite tu contraseña';
         else if (confirmPassword !== password) newError.confirmPassword = 'No coincide con la contraseña';
         setError(newError);
@@ -91,7 +92,7 @@ export default function RegisterScreen({ navigation }: Props) {
                             label="Contraseña"
                             value={password}
                             onChangeText={setPassword}
-                            placeholder="Minimo 6 caracteres"
+                            placeholder={PASSWORD_POLICY_HINT}
                             error={error.password}
                             autoCapitalize="none"
                             keyboardType="default"

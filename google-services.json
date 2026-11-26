@@ -7,12 +7,25 @@
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:121075850033:android:0313eb37c8bcc3bb2d6e10",
+        "mobilesdk_app_id": "1:121075850033:android:8d123127ab6a145d2d6e10",
         "android_client_info": {
           "package_name": "com.jotah26.BarrioGo"
         }
       },
-      "oauth_client": [],
+      "oauth_client": [
+        {
+          "client_id": "121075850033-ke3p03rpcoipfvvbodlgi8p2ck127a5f.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.jotah26.BarrioGo",
+            "certificate_hash": "508ab6845c85b4e4b61541a7ed205098f0cb1b2e"
+          }
+        },
+        {
+          "client_id": "121075850033-mt1gguh883cg26a7du0jbofcta8b9r4v.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
       "api_key": [
         {
           "current_key": "AIzaSyCXHFFMqr56S9E8lCIhLxaWLWKk48shR0U"
@@ -20,7 +33,12 @@
       ],
       "services": {
         "appinvite_service": {
-          "other_platform_oauth_client": []
+          "other_platform_oauth_client": [
+            {
+              "client_id": "121075850033-mt1gguh883cg26a7du0jbofcta8b9r4v.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
         }
       }
     }

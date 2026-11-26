@@ -23,6 +23,7 @@ import { useFotoUsuario } from '../hooks/useFotoUsuario';
 import { useColors } from '../context/ThemeContext';
 import type { Colors } from '../styles/colors';
 import { inicialDe, nombreVisible } from '../utils/usuario';
+import { PASSWORD_POLICY_HINT, validarContrasenaSegura } from '../utils/password';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'MisDatos'>;
 
@@ -86,8 +87,9 @@ export default function MisDatosScreen({ navigation }: Props) {
     }
     let errorPass: string | undefined;
     if (nuevaPass || confirmarPass) {
-      if (nuevaPass.length < 6) {
-        errorPass = 'La contraseña debe tener al menos 6 caracteres.';
+      const errorPolitica = validarContrasenaSegura(nuevaPass);
+      if (errorPolitica) {
+        errorPass = errorPolitica;
       } else if (nuevaPass !== confirmarPass) {
         errorPass = 'Las contraseñas no coinciden.';
       }
@@ -216,7 +218,7 @@ export default function MisDatosScreen({ navigation }: Props) {
             label="Nueva contraseña"
             value={nuevaPass}
             onChangeText={setNuevaPass}
-            placeholder="Mínimo 6 caracteres"
+            placeholder={PASSWORD_POLICY_HINT}
             secureTextEntry
             error={passError}
           />

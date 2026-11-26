@@ -26,6 +26,12 @@ import {
   getFirebaseAuth,
   getFirestoreDb,
 } from '../services/firebase';
+import { desvincularPushToken } from '../services/pushNotifications';
+import { PASSWORD_POLICY_HINT } from '../utils/password';
+import {
+  cerrarSesionGoogle,
+  iniciarSesionConGoogle,
+} from '../services/googleAuth';
 
 export type Rol = 'cliente' | 'negocio';
 
@@ -34,6 +40,7 @@ interface AuthContextValue {
   rol: Rol | null;
   loading: boolean;
   login: (email: string, password: string) => Promise<void>;
+  loginConGoogle: () => Promise<boolean>;
   register: (
     nombre: string,
     email: string,
@@ -64,7 +71,8 @@ export function authErrorEs(code: string): string {
       return 'Ese correo ya tiene cuenta. Iniciá sesión.';
 
     case 'auth/weak-password':
-      return 'La contraseña debe tener al menos 6 caracteres.';
+    case 'auth/password-does-not-meet-requirements':
+      return PASSWORD_POLICY_HINT;
 
     case 'auth/network-request-failed':
       return 'Sin conexión. Revisá tu internet e intentá de nuevo.';
@@ -271,50 +279,96 @@ export function AuthProvider({
     [cargarRol]
   );
 
-  const login = async (
-    email: string,
-    password: string
-  ): Promise<void> => {
-    await signInWithEmailAndPassword(
-      getFirebaseAuth(),
-      email.trim(),
-      password
-    );
-  };
+  const login = useCallback(
+    async (email: string, password: string): Promise<void> => {
+      await signInWithEmailAndPassword(
+        getFirebaseAuth(),
+        email.trim(),
+        password
+      );
+    },
+    []
+  );
 
-  const register = async (
-    nombre: string,
-    email: string,
-    password: string
-  ): Promise<void> => {
-    const cred = await createUserWithEmailAndPassword(
-      getFirebaseAuth(),
-      email.trim(),
-      password
-    );
+  const loginConGoogle = useCallback(async (): Promise<boolean> => {
+    const credencial = await iniciarSesionConGoogle();
 
-    await setDoc(
-      doc(getFirestoreDb(), 'users', cred.user.uid),
-      {
-        nombre: nombre.trim(),
-        email: email.trim(),
+    if (!credencial) return false;
+
+    const usuarioGoogle = credencial.user;
+    const referenciaPerfil = doc(
+      getFirestoreDb(),
+      'users',
+      usuarioGoogle.uid
+    );
+    const perfilExistente = await getDoc(referenciaPerfil);
+
+    if (!perfilExistente.exists()) {
+      await setDoc(referenciaPerfil, {
+        nombre: usuarioGoogle.displayName?.trim() || 'Usuario',
+        email: usuarioGoogle.email?.trim() || '',
         rol: 'cliente',
         createdAt: new Date().toISOString(),
-      }
-    );
-
-    await updateProfile(cred.user, {
-      displayName: nombre.trim(),
-    });
-
-    setSelloAuth(s => s + 1);
+      });
+    }
 
     await refreshRol();
-  };
+    return true;
+  }, [refreshRol]);
 
-  const logout = async (): Promise<void> => {
-    await signOut(getFirebaseAuth());
-  };
+  const register = useCallback(
+    async (
+      nombre: string,
+      email: string,
+      password: string
+    ): Promise<void> => {
+      const cred = await createUserWithEmailAndPassword(
+        getFirebaseAuth(),
+        email.trim(),
+        password
+      );
+
+      await setDoc(
+        doc(getFirestoreDb(), 'users', cred.user.uid),
+        {
+          nombre: nombre.trim(),
+          email: email.trim(),
+          rol: 'cliente',
+          createdAt: new Date().toISOString(),
+        }
+      );
+
+      await updateProfile(cred.user, {
+        displayName: nombre.trim(),
+      });
+
+      setSelloAuth(s => s + 1);
+
+      await refreshRol();
+    },
+    [refreshRol]
+  );
+
+  const logout = useCallback(async (): Promise<void> => {
+    const auth = getFirebaseAuth();
+    const usuarioActual = auth.currentUser;
+    const uid = usuarioActual?.uid;
+    const ingresoConGoogle = usuarioActual?.providerData.some(
+      proveedor => proveedor.providerId === 'google.com'
+    );
+
+    try {
+      if (uid) {
+        await desvincularPushToken(uid);
+      }
+
+      if (ingresoConGoogle) {
+        await cerrarSesionGoogle();
+      }
+    } finally {
+      await signOut(auth);
+    }
+  }, []);
 
   const recuperarContrasena = useCallback(
     async (email: string): Promise<void> => {
@@ -332,12 +386,23 @@ export function AuthProvider({
       rol,
       loading,
       login,
+      loginConGoogle,
       register,
       logout,
       refreshRol,
       recuperarContrasena,
     }),
-    [user, rol, loading, refreshRol]
+    [
+      user,
+      rol,
+      loading,
+      login,
+      loginConGoogle,
+      register,
+      logout,
+      refreshRol,
+      recuperarContrasena,
+    ]
   );
 
   return (
