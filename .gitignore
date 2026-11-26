@@ -49,3 +49,5 @@ usuarios-prueba.txt
 # generated native folders
 /ios
 /android
+# Backend environment
+backend/.env

@@ -28,6 +28,8 @@ export interface ItemPedido {
 export interface DireccionPedido {
   alias: string;
   detalle: string;
+  lat?: number;
+  lng?: number;
 }
 
 export interface MetodoPagoPedido {

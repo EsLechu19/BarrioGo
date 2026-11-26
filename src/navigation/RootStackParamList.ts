@@ -15,6 +15,7 @@ export type RootStackParamList = {
   MisDatos: undefined;
   Direcciones: undefined;
   MetodosPago: undefined;
+  PagoMercadoPago: { paymentId: string };
   Ayuda: undefined;
   Configuracion: undefined;
 };

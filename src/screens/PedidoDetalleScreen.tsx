@@ -37,6 +37,7 @@ import {
 import type { EstadoVisible } from '../utils/estadosPedido';
 import { fechaLarga } from '../utils/fechas';
 import { nombreRestaurante } from '../utils/negocios';
+import { consultarPagoPedidoMercadoPago } from '../services/mercadoPago';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'PedidoDetalle'>;
 
@@ -172,6 +173,32 @@ export default function PedidoDetalleScreen({ navigation, route }: Props) {
       Alert.alert(
         'No se pudo reintentar el pago',
         e instanceof Error ? e.message : 'Intentá de nuevo.',
+      );
+    } finally {
+      setReintentandoPago(false);
+    }
+  };
+
+  const reanudarPagoMercadoPago = async (): Promise<void> => {
+    if (
+      pedido.metodoPago?.tipo !== 'mercadopago_sandbox' ||
+      pedido.estado !== 'pendiente' ||
+      pedido.estadoPago !== 'pendiente' ||
+      reintentandoPago
+    ) {
+      return;
+    }
+    setReintentandoPago(true);
+    try {
+      const payment = await consultarPagoPedidoMercadoPago(pedido.id);
+      if (payment.status !== 'pending' || !payment.checkoutUrl) {
+        throw new Error('No hay un checkout pendiente para reabrir. Consulta el estado antes de volver a intentarlo.');
+      }
+      navigation.navigate('PagoMercadoPago', { paymentId: payment.paymentId });
+    } catch (e) {
+      Alert.alert(
+        'No se pudo retomar el pago',
+        e instanceof Error ? e.message : 'Consulta el estado del pago antes de volver a intentarlo.',
       );
     } finally {
       setReintentandoPago(false);
@@ -322,7 +349,7 @@ export default function PedidoDetalleScreen({ navigation, route }: Props) {
               <Text style={styles.totalLabel}>Total</Text>
               <Text style={styles.total}>S/{pedido.total.toFixed(2)}</Text>
             </View>
-            {pedido.estadoPago === 'fallido' ? (
+            {pedido.estadoPago === 'fallido' && pedido.metodoPago?.tipo !== 'mercadopago_sandbox' ? (
               <TouchableOpacity
                 style={styles.retryButton}
                 onPress={() => void reintentarPago([pedido])}
@@ -330,6 +357,19 @@ export default function PedidoDetalleScreen({ navigation, route }: Props) {
               >
                 <Text style={styles.primaryText}>
                   {reintentandoPago ? 'Procesando pago...' : 'Reintentar pago'}
+                </Text>
+              </TouchableOpacity>
+            ) : null}
+            {pedido.estado === 'pendiente' &&
+            pedido.estadoPago === 'pendiente' &&
+            pedido.metodoPago?.tipo === 'mercadopago_sandbox' ? (
+              <TouchableOpacity
+                style={styles.retryButton}
+                onPress={() => void reanudarPagoMercadoPago()}
+                disabled={reintentandoPago}
+              >
+                <Text style={styles.primaryText}>
+                  {reintentandoPago ? 'Abriendo pago...' : 'Retomar pago en Mercado Pago'}
                 </Text>
               </TouchableOpacity>
             ) : null}

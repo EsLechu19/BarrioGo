@@ -32,6 +32,7 @@ const METODOS_MOCK: MetodoMock[] = [
   { id: 'm1', nombre: 'Efectivo', detalle: 'Pago al recibir', icono: 'cash-outline' },
   { id: 'm2', nombre: 'Yape', detalle: '999 888 777', icono: 'phone-portrait-outline' },
   { id: 'm3', nombre: 'Visa •• 4321', detalle: 'Vence 08/28', icono: 'card-outline' },
+  { id: 'mercadopago_sandbox', nombre: 'Mercado Pago (prueba)', detalle: 'Checkout Pro · entorno de prueba', icono: 'card-outline' },
 ];
 
 export default function MetodosPagoScreen({ navigation }: Props) {

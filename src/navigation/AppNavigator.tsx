@@ -11,6 +11,7 @@ import MiLocalScreen from '../screens/MiLocalScreen';
 import MisDatosScreen from '../screens/MisDatosScreen';
 import DireccionesScreen from '../screens/DireccionesScreen';
 import MetodosPagoScreen from '../screens/MetodosPagoScreen';
+import PagoMercadoPagoScreen from '../screens/PagoMercadoPagoScreen';
 import AyudaScreen from '../screens/AyudaScreen';
 import ConfiguracionScreen from '../screens/ConfiguracionScreen';
 
@@ -30,6 +31,7 @@ export function AppNavigator() {
       <Stack.Screen name="MisDatos" component={MisDatosScreen} />
       <Stack.Screen name="Direcciones" component={DireccionesScreen} />
       <Stack.Screen name="MetodosPago" component={MetodosPagoScreen} />
+      <Stack.Screen name="PagoMercadoPago" component={PagoMercadoPagoScreen} />
       <Stack.Screen name="Ayuda" component={AyudaScreen} />
       <Stack.Screen name="Configuracion" component={ConfiguracionScreen} />
     </Stack.Navigator>

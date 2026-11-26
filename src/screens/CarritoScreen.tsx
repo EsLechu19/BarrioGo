@@ -18,12 +18,21 @@ import { LIST_PERF } from '../utils/listPerf';
 import { storage } from '../services/storage';
 import { registrarCambioEstado } from '../services/notificaciones';
 import { registrarPushToken } from '../services/pushNotifications';
-import { cargarDireccionCheckout } from '../utils/direcciones';
+import {
+  aDireccionPedido,
+  cargarDireccionCheckout,
+  cargarDirecciones,
+  direccionSeleccionadaId,
+} from '../utils/direcciones';
 import { confirm } from '../utils/confirm';
 import { ScreenHeader } from '../components/ScreenHeader';
 import { CantidadStepper } from '../components/CantidadStepper';
 import { useColors } from '../context/ThemeContext';
 import type { Colors } from '../styles/colors';
+import type { DireccionUsuario } from '../types/Direccion';
+import { UbicacionModal } from '../components/UbicacionModal';
+import * as WebBrowser from 'expo-web-browser';
+import { crearPagoMercadoPago } from '../services/mercadoPago';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Carrito'>;
 
@@ -34,6 +43,9 @@ export default function CarritoScreen({ navigation }: Props) {
   const { conOverride } = useEstadoNegocios();
   const [enviando, setEnviando] = useState<boolean>(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const [direcciones, setDirecciones] = useState<DireccionUsuario[]>([]);
+  const [direccionActual, setDireccionActual] = useState<DireccionUsuario | null>(null);
+  const [modalDirecciones, setModalDirecciones] = useState<boolean>(false);
   const colors = useColors();
   const styles = useMemo(() => makeStyles(colors), [colors]);
 
@@ -74,6 +86,45 @@ export default function CarritoScreen({ navigation }: Props) {
       offFoco();
     };
   }, [navigation, items, clear]);
+
+  useEffect(() => {
+    const usuarioId = user?.uid;
+    if (!usuarioId) return;
+    let activo = true;
+    const recargarDireccion = async (): Promise<void> => {
+      const [lista, activa] = await Promise.all([
+        cargarDirecciones(usuarioId),
+        cargarDireccionCheckout(usuarioId),
+      ]);
+      if (!activo) return;
+      setDirecciones(lista);
+      const id = direccionSeleccionadaId(lista, activa);
+      setDireccionActual(id ? (lista.find((d) => d.id === id) ?? null) : null);
+    };
+    const offFoco = navigation.addListener('focus', () => void recargarDireccion());
+    void recargarDireccion();
+    return () => {
+      activo = false;
+      offFoco();
+    };
+  }, [navigation, user?.uid]);
+
+  const elegirDireccionRapida = (direccion: DireccionUsuario): void => {
+    setDireccionActual(direccion);
+    setModalDirecciones(false);
+    if (user) void storage.saveCheckoutAddress(user.uid, aDireccionPedido(direccion));
+  };
+
+  const guardarDireccionNueva = (nueva: DireccionUsuario): void => {
+    const lista = [...direcciones, nueva];
+    setDirecciones(lista);
+    setDireccionActual(nueva);
+    setModalDirecciones(false);
+    if (user) {
+      void storage.saveAddresses(user.uid, lista);
+      void storage.saveCheckoutAddress(user.uid, aDireccionPedido(nueva));
+    }
+  };
 
   const detallado = useMemo(
     () => items,
@@ -190,10 +241,14 @@ export default function CarritoScreen({ navigation }: Props) {
         (total + Object.values(envios).reduce((a, c) => a + c, 0)) * 100,
       ) / 100;
     setEnviando(true);
+    let pedidosMPGuardados: boolean = false;
     try {
-      // Fase 3: pago simulado (sin dinero real) ANTES de crear el pedido.
-      // Si la simulación lanza error (método inválido), no se crea nada.
-      const pago = await simularPago(metodoPago, false);
+      const esMercadoPagoSandbox: boolean = metodoPago.tipo === 'mercadopago_sandbox';
+      // Keep the established simulations unchanged. Mercado Pago remains
+      // pending until the backend verifies an official provider notification.
+      const pago = esMercadoPagoSandbox
+        ? { estado: 'pendiente' as const, mensaje: 'El pago de prueba sigue pendiente.' }
+        : await simularPago(metodoPago, false);
       const pedidosCreados = await crearPedidos({
         usuarioId,
         items,
@@ -205,6 +260,22 @@ export default function CarritoScreen({ navigation }: Props) {
         nombresNegocio,
         estadoPago: pago.estado,
       });
+      pedidosMPGuardados = esMercadoPagoSandbox;
+      let paymentId: string | null = null;
+      if (esMercadoPagoSandbox) {
+        const payment = await crearPagoMercadoPago(pedidosCreados.map((pedido) => pedido.id));
+        if (!payment.checkoutUrl) throw new Error('Mercado Pago no devolvió la dirección de checkout.');
+        paymentId = payment.paymentId;
+        try {
+          await WebBrowser.openAuthSessionAsync(
+            payment.checkoutUrl,
+            `barriogo://checkout-return?paymentId=${encodeURIComponent(payment.paymentId)}`,
+          );
+        } catch {
+          // The provider order remains pending; closing or failing to open the
+          // browser must never be interpreted as a failed payment.
+        }
+      }
       // Registra el token una sola vez, justo cuando el usuario acepta el
       // permiso que se pide en el primer pedido.
       let tokenSolicitado = false;
@@ -227,6 +298,10 @@ export default function CarritoScreen({ navigation }: Props) {
         });
       }
       clear();
+      if (paymentId) {
+        navigation.navigate('PagoMercadoPago', { paymentId });
+        return;
+      }
       if (pago.estado === 'fallido') {
         Alert.alert(
           'Pago no aprobado (simulación)',
@@ -235,6 +310,15 @@ export default function CarritoScreen({ navigation }: Props) {
       }
       navigation.navigate('Tabs', { screen: 'PedidosTab' });
     } catch (e) {
+      if (pedidosMPGuardados) {
+        clear();
+        navigation.navigate('Tabs', { screen: 'PedidosTab' });
+        Alert.alert(
+          'Pedido guardado',
+          'No se pudo iniciar el checkout. Tus pedidos siguen pendientes y el pago no fue confirmado; revisa su estado antes de volver a intentarlo.',
+        );
+        return;
+      }
       setErrorMsg(
         e instanceof Error
           ? e.message
@@ -377,6 +461,29 @@ export default function CarritoScreen({ navigation }: Props) {
       />
       {/* Area total: productos + envío (si algún negocio lo cobra). */}
       <View style={styles.footer}>
+        <View style={styles.addressCard}>
+          <View style={styles.addressInfo}>
+            <Ionicons name="location-outline" size={20} color={colors.primary} />
+            <View style={styles.addressTextBlock}>
+              <Text style={styles.addressLabel}>Entregar en</Text>
+              <Text style={styles.addressTitle} numberOfLines={1}>
+                {direccionActual?.alias ?? 'Seleccioná una dirección'}
+              </Text>
+              {direccionActual ? (
+                <Text style={styles.addressDetail} numberOfLines={1}>
+                  {direccionActual.detalle}
+                </Text>
+              ) : null}
+            </View>
+          </View>
+          <TouchableOpacity
+            onPress={() => setModalDirecciones(true)}
+            accessibilityRole="button"
+            accessibilityLabel="Cambiar dirección de entrega"
+          >
+            <Text style={styles.changeAddress}>Cambiar</Text>
+          </TouchableOpacity>
+        </View>
         {/* Subtotal + envío (solo si hay costo de envío) */}
         {envioTotal > 0 ? (
           <>
@@ -406,6 +513,14 @@ export default function CarritoScreen({ navigation }: Props) {
           </Text>
         </TouchableOpacity>
       </View>
+      <UbicacionModal
+        visible={modalDirecciones}
+        direcciones={direcciones}
+        seleccionadaId={direccionActual?.id ?? null}
+        onCerrar={() => setModalDirecciones(false)}
+        onElegir={elegirDireccionRapida}
+        onGuardar={guardarDireccionNueva}
+      />
     </View>
   );
 }
@@ -488,6 +603,13 @@ function makeStyles(c: Colors) {
 
     // Area total
     footer: { gap: 10, paddingTop: 8 },
+    addressCard: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 10, padding: 12, borderRadius: 14, borderWidth: 1, borderColor: c.border, backgroundColor: c.surface },
+    addressInfo: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: 8, minWidth: 0 },
+    addressTextBlock: { flex: 1, gap: 1, minWidth: 0 },
+    addressLabel: { color: c.textMuted, fontSize: 12 },
+    addressTitle: { color: c.textPrimary, fontSize: 14, fontWeight: '800' },
+    addressDetail: { color: c.textMuted, fontSize: 12 },
+    changeAddress: { color: c.primary, fontSize: 13, fontWeight: '800' },
     // Fila total
     totalRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
     totalLabel: { fontSize: 15, fontWeight: '600', color: c.textSecondary },

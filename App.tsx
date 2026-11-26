@@ -50,8 +50,13 @@ function Root() {
 
   const barStyle = isDark ? 'light-content' : 'dark-content';
 
+  const linking = {
+    prefixes: ['barriogo://'],
+    config: { screens: { PagoMercadoPago: 'checkout-return' } },
+  };
+
   return (
-    <NavigationContainer theme={tema} ref={navigationRef}>
+    <NavigationContainer theme={tema} ref={navigationRef} linking={linking}>
       <StatusBar
         barStyle={isDark ? 'light-content' : 'dark-content'}
         backgroundColor={colors.background}
