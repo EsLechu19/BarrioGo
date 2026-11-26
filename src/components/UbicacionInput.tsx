@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { StyleSheet, Text, TouchableOpacity } from 'react-native';
 import { useColors } from '../context/ThemeContext';
 import type { Colors } from '../styles/colors';
 
@@ -9,20 +9,16 @@ type Props = {
   leyendo: boolean;
   aviso: string | null;
   onUsar: () => void;
-  lat: string;
-  lng: string;
-  onLatChange: (valor: string) => void;
-  onLngChange: (valor: string) => void;
+  onElegirMapa: () => void;
+  tieneUbicacion: boolean;
 };
 
 export function UbicacionInput({
   leyendo,
   aviso,
   onUsar,
-  lat,
-  lng,
-  onLatChange,
-  onLngChange,
+  onElegirMapa,
+  tieneUbicacion,
 }: Props) {
   const colors = useColors();
   const styles = useMemo(() => makeStyles(colors), [colors]);
@@ -38,22 +34,12 @@ export function UbicacionInput({
         </Text>
       </TouchableOpacity>
       {aviso ? <Text style={styles.subtitle}>{aviso}</Text> : null}
-      <View style={styles.coordsRow}>
-        <TextInput
-          style={[styles.input, styles.coordInput]}
-          placeholder="Latitud"
-          value={lat}
-          onChangeText={onLatChange}
-          keyboardType="decimal-pad"
-        />
-        <TextInput
-          style={[styles.input, styles.coordInput]}
-          placeholder="Longitud"
-          value={lng}
-          onChangeText={onLngChange}
-          keyboardType="decimal-pad"
-        />
-      </View>
+      <TouchableOpacity style={styles.mapButton} onPress={onElegirMapa}>
+        <Text style={styles.mapText}>Elegir ubicación en mapa</Text>
+      </TouchableOpacity>
+      <Text style={styles.status}>
+        {tieneUbicacion ? 'Ubicación seleccionada.' : 'Elegí tu ubicación con GPS o en el mapa.'}
+      </Text>
     </>
   );
 }
@@ -71,17 +57,8 @@ function makeStyles(c: Colors) {
     gpsText: { color: c.primary, fontSize: 15, fontWeight: '700' },
     disabled: { opacity: 0.6 },
     subtitle: { color: c.textMuted, fontSize: 14, textAlign: 'center' },
-    coordsRow: { flexDirection: 'row', gap: 8 },
-    coordInput: { flex: 1 },
-    input: {
-      borderWidth: 1,
-      borderColor: c.border,
-      borderRadius: 12,
-      paddingHorizontal: 12,
-      paddingVertical: 10,
-      fontSize: 15,
-      color: c.textPrimary,
-      backgroundColor: c.surface,
-    },
+    mapButton: { paddingVertical: 12, borderRadius: 14, alignItems: 'center', backgroundColor: c.primarySoft },
+    mapText: { color: c.primary, fontSize: 15, fontWeight: '800' },
+    status: { color: c.textMuted, fontSize: 13, textAlign: 'center' },
   });
 }

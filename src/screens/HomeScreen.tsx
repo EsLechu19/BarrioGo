@@ -1,8 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
 import {
-  AppState,
   FlatList,
-  Linking,
   RefreshControl,
   StyleSheet,
   Text,
@@ -19,17 +17,18 @@ import { EmptyState } from '../components/EmptyState';
 import { getNegociosConOrigen, getUbicacionTrabajo } from '../services/api';
 import { estaAbierto } from '../utils/negocios';
 import { LIST_PERF } from '../utils/listPerf';
-import { useEstadoNegocios } from '../context/EstadoNegociosContext';
-import { UserCoords, formatDistancia, getUserCoords, haversineKm, permisoUbicacionOtorgado } from '../services/location';
+import { useUbicacion } from '../hooks/useUbicacion';
 import { useFavorites } from '../context/FavoritesContext';
 import { useAuth } from '../context/AuthContext';
 import { useCart } from '../context/CartContext';
 import { useUnreadNotifications } from '../hooks/useUnreadNotifications';
+import { useEstadoNegocios } from '../context/EstadoNegociosContext';
 import { TabScreenProps } from '../navigation/TabScreenProps';
 import { useColors } from '../context/ThemeContext';
 import type { Colors } from '../styles/colors';
 import { nombreVisible } from '../utils/usuario';
 import { UbicacionModal } from '../components/UbicacionModal';
+import { haversineKm, formatDistancia } from '../services/location';
 import { storage } from '../services/storage';
 import {
   aDireccionPedido,
@@ -49,8 +48,7 @@ export default function HomeScreen({ navigation }: Props) {
   const [advertenciaFuente, setAdvertenciaFuente] = useState<string | null>(null);
   const [refreshing, setRefreshing] = useState<boolean>(false);
   const [query, setQuery] = useState<string>('');
-  const [userLoc, setUserLoc] = useState<UserCoords | null>(null);
-  const [sinPermisoUbicacion, setSinPermisoUbicacion] = useState<boolean>(false);
+  const { coordenadas, estado, reintentar, abrirAjustes } = useUbicacion();
   const { toggle, esFavorito } = useFavorites();
   const { conOverride } = useEstadoNegocios();
   const { user } = useAuth();
@@ -66,7 +64,7 @@ export default function HomeScreen({ navigation }: Props) {
 // Modal autoabierto bandera (solo se abre una vez por sesión)
   const modalAutoabierto = useRef<boolean>(false);
 
-// Función para refrescar ubicación (usada al volver del modal de ubicación)
+// Función para refrescar ubicación (usada al volver desde Ajustes)
   const refrescarUbicacion = useCallback(
     async (autoAbrir: boolean): Promise<void> => {
       if (!user) {
@@ -85,12 +83,14 @@ export default function HomeScreen({ navigation }: Props) {
       if (lista.length === 0) {
         const trabajo = await getUbicacionTrabajo(user.uid);
         const detalle: string = trabajo?.direccion.trim() ?? '';
-        if (detalle.length >= 5) {
+        if (trabajo && detalle.length >= 5) {
           const nueva: DireccionUsuario = {
             id: `d${Date.now()}`,
             alias: 'Trabajo',
             detalle,
             esPrincipal: true,
+            lat: trabajo.lat,
+            lng: trabajo.lng,
           };
           setDirecciones([nueva]);
           setDireccionActual(nueva);
@@ -122,37 +122,7 @@ export default function HomeScreen({ navigation }: Props) {
     }
   }, []);
 
-// Cargar coordenadas de usuario al montar (crítico para GPS)
-  useEffect(() => {
-    let activo = true;
-    void (async () => {
-      const coords = await getUserCoords();
-      if (!activo) return;
-      setUserLoc(coords);
-      const otorgado = await permisoUbicacionOtorgado();
-      if (activo) setSinPermisoUbicacion(!otorgado);
-    })();
-    return () => {
-      activo = false;
-    };
-  }, []);
-
-  // Al volver de los ajustes del sistema, refresca permiso y coordenadas.
-  useEffect(() => {
-    const sub = AppState.addEventListener('change', (estado) => {
-      if (estado !== 'active') return;
-      void (async () => {
-        const otorgado = await permisoUbicacionOtorgado();
-        setSinPermisoUbicacion(!otorgado);
-        if (!otorgado) return;
-        const coords = await getUserCoords();
-        setUserLoc(coords);
-      })();
-    });
-    return () => sub.remove();
-  }, []);
-
-// Cargar negocios después de obtener la ubicación GPS
+  // Cargar negocios de forma independiente de la ubicación GPS.
   useEffect(() => {
     let activo = true;
     void (async () => {
@@ -176,9 +146,9 @@ export default function HomeScreen({ navigation }: Props) {
     return () => {
       activo = false;
     };
-  }, [userLoc]);
+  }, []);
 
-  // Listener de focus solo si hay usuario (opcional, no bloquea render)
+// Listener de focus solo si hay usuario (opcional, no bloquea render)
   useEffect(() => {
     if (!user) return;
     const offFoco = navigation.addListener('focus', () => {
@@ -218,22 +188,41 @@ export default function HomeScreen({ navigation }: Props) {
     const base = query.trim()
       ? conOverrides.filter((n) => n.nombre.toLowerCase().includes(query.trim().toLowerCase()))
       : conOverrides;
-    let conDistancia: Negocio[] = base;
-    if (userLoc) {
+    let conDistancia = base.map((n) => ({ ...n, distancia: '' }));
+    if (coordenadas) {
       conDistancia = base
         .map((n) => {
-          const km = haversineKm(userLoc, { latitude: n.lat, longitude: n.lng });
+          if (
+            typeof n.lat !== 'number' ||
+            !Number.isFinite(n.lat) ||
+            n.lat < -90 ||
+            n.lat > 90 ||
+            typeof n.lng !== 'number' ||
+            !Number.isFinite(n.lng) ||
+            n.lng < -180 ||
+            n.lng > 180
+          ) {
+            return { negocio: { ...n, distancia: '' }, km: null };
+          }
+          const km = haversineKm(coordenadas, { latitude: n.lat, longitude: n.lng });
+          if (!Number.isFinite(km)) {
+            return { negocio: { ...n, distancia: '' }, km: null };
+          }
           return { negocio: { ...n, distancia: formatDistancia(km) }, km };
         })
-        .sort((a, b) => a.km - b.km)
+        .sort((a, b) => {
+          if (a.km === null) return b.km === null ? 0 : 1;
+          if (b.km === null) return -1;
+          return a.km - b.km;
+        })
         .map((r) => r.negocio);
     }
     const abiertos: Negocio[] = conDistancia.filter((n) => estaAbierto(n));
     const cerrados: Negocio[] = conDistancia.filter((n) => !estaAbierto(n));
     return [...abiertos, ...cerrados];
-  }, [negocios, query, userLoc, conOverride]);
+  }, [negocios, query, coordenadas, conOverride]);
 
-  // Los 5 más cercanos a tu punto GPS ("Ver todos" abre la vista Restaurants).
+// Los 5 más cercanos a tu punto GPS ("Ver todos" abre la vista Restaurants).
   const visibles: Negocio[] = filtered.slice(0, 5);
 
   if (loading && !refreshing) {
@@ -391,24 +380,37 @@ export default function HomeScreen({ navigation }: Props) {
                 <Text style={styles.sourceWarningText}>{advertenciaFuente}</Text>
               </View>
             ) : null}
-            {userLoc ? (
+            {coordenadas ? (
               <Text style={styles.gpsNote}>📍 Ordenado por tu ubicación real</Text>
             ) : (
-              <View style={styles.gpsRow}>
-                <Text style={styles.gpsNote}>
-                  Sin ubicación: activá el GPS para ordenar por cercanía
-                </Text>
-                {sinPermisoUbicacion ? (
+              estado === 'sin_permiso' ? (
+                <View style={styles.gpsRow}>
+                  <Text style={styles.gpsNote}>Activa tu ubicación para ver distancias reales</Text>
                   <TouchableOpacity
-                    onPress={() => void Linking.openSettings()}
+                    onPress={() => void abrirAjustes()}
                     hitSlop={8}
                     accessibilityRole="button"
                     accessibilityLabel="Abrir ajustes de ubicación"
                   >
                     <Text style={styles.gpsAction}>Abrir ajustes</Text>
                   </TouchableOpacity>
-                ) : null}
-              </View>
+                </View>
+              ) : (
+                estado === 'no_disponible' ? (
+                  <View style={styles.gpsRow}>
+                    <Text style={styles.gpsNote}>No pudimos obtener tu ubicación</Text>
+                    <TouchableOpacity
+                      onPress={() => void reintentar()}
+                      hitSlop={8}
+                      accessibilityRole="button"
+                    >
+                      <Text style={styles.gpsAction}>Reintentar</Text>
+                    </TouchableOpacity>
+                  </View>
+                ) : (
+                  estado === 'calculando' && <Text style={styles.gpsNote}>Calculando distancias reales…</Text>
+                )
+              )
             )}
           </View>
         }

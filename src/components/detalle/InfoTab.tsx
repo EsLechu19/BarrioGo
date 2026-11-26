@@ -11,9 +11,10 @@ import { MapaUbicacion } from './MapaUbicacion';
 // entrega.
 type Props = {
   negocio: Negocio;
+  distanciaReal?: string;
 };
 
-export function InfoTab({ negocio }: Props) {
+export function InfoTab({ negocio, distanciaReal }: Props) {
   const colors = useColors();
   const styles = useMemo(() => makeStyles(colors), [colors]);
   return (
@@ -51,19 +52,12 @@ export function InfoTab({ negocio }: Props) {
             {negocio.direccion?.trim() ? negocio.direccion : 'Dirección por confirmar'}
           </Text>
         </View>
-        {/* Coordenadas reales del negocio */}
-        {Number.isFinite(negocio.lat) && Number.isFinite(negocio.lng) ? (
+        {distanciaReal ? (
           <View style={styles.infoRowLine}>
-            <Ionicons name="map-outline" size={16} color={colors.textMuted} />
-            <Text style={styles.meta}>
-              {negocio.lat.toFixed(4)}, {negocio.lng.toFixed(4)}
-            </Text>
+            <Ionicons name="navigate-outline" size={16} color={colors.textMuted} />
+            <Text style={styles.meta}>{distanciaReal} de ti</Text>
           </View>
         ) : null}
-        <View style={styles.infoRowLine}>
-          <Ionicons name="navigate-outline" size={16} color={colors.textMuted} />
-          <Text style={styles.meta}>{negocio.distancia} de ti</Text>
-        </View>
       </View>
       {/* Card horario / delivery */}
       <View style={styles.infoCard}>

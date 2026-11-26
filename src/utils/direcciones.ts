@@ -69,5 +69,11 @@ export function direccionSeleccionadaId(
 
 // La dirección activa, como la espera CarritoScreen / el checkout.
 export function aDireccionPedido(direccion: DireccionUsuario): DireccionPedido {
-  return { alias: direccion.alias, detalle: direccion.detalle };
+  return {
+    alias: direccion.alias,
+    detalle: direccion.detalle,
+    ...(Number.isFinite(direccion.lat) && Number.isFinite(direccion.lng)
+      ? { lat: direccion.lat, lng: direccion.lng }
+      : {}),
+  };
 }

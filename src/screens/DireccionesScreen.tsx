@@ -27,6 +27,7 @@ import {
 } from '../utils/direcciones';
 import type { DireccionUsuario } from '../types/Direccion';
 import type { Colors } from '../styles/colors';
+import { MapaSelector, type CoordenadasMapa } from '../components/MapaSelector';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Direcciones'>;
 
@@ -40,6 +41,8 @@ export default function DireccionesScreen({ navigation }: Props) {
   const [detalle, setDetalle] = useState<string>('');
   const [aliasError, setAliasError] = useState<string | undefined>(undefined);
   const [detalleError, setDetalleError] = useState<string | undefined>(undefined);
+  const [mapaVisible, setMapaVisible] = useState<boolean>(false);
+  const [coordenadas, setCoordenadas] = useState<CoordenadasMapa | null>(null);
   const { user } = useAuth();
   const colors = useColors();
   const styles = useMemo(() => makeStyles(colors), [colors]);
@@ -83,6 +86,7 @@ export default function DireccionesScreen({ navigation }: Props) {
     setAliasError(undefined);
     setDetalleError(undefined);
     setEditandoId(null);
+    setCoordenadas(null);
     setModalVisible(true);
   };
 
@@ -92,6 +96,11 @@ export default function DireccionesScreen({ navigation }: Props) {
     setAliasError(undefined);
     setDetalleError(undefined);
     setEditandoId(d.id);
+    setCoordenadas(
+      Number.isFinite(d.lat) && Number.isFinite(d.lng)
+        ? { lat: d.lat as number, lng: d.lng as number }
+        : null,
+    );
     setModalVisible(true);
   };
 
@@ -143,7 +152,7 @@ export default function DireccionesScreen({ navigation }: Props) {
     if (editandoId !== null) {
       lista = direcciones.map((d) =>
         d.id === editandoId
-          ? { ...d, alias: aliasLimpio, detalle: detalleLimpio }
+          ? { ...d, alias: aliasLimpio, detalle: detalleLimpio, ...(coordenadas ? coordenadas : {}) }
           : d,
       );
     } else {
@@ -154,6 +163,7 @@ export default function DireccionesScreen({ navigation }: Props) {
           alias: aliasLimpio,
           detalle: detalleLimpio,
           esPrincipal: direcciones.length === 0,
+          ...(coordenadas ? coordenadas : {}),
         },
       ];
     }
@@ -166,10 +176,8 @@ export default function DireccionesScreen({ navigation }: Props) {
       const estabaActiva: boolean = !esNueva && seleccionada === editandoId;
       if (esNueva || estabaActiva) {
         setSeleccionada(editandoId ?? nuevaId);
-        void storage.saveCheckoutAddress(user.uid, {
-          alias: aliasLimpio,
-          detalle: detalleLimpio,
-        });
+        const guardada = lista.find((d) => d.id === (editandoId ?? nuevaId));
+        if (guardada) void storage.saveCheckoutAddress(user.uid, aDireccionPedido(guardada));
       }
     }
     setModalVisible(false);
@@ -257,7 +265,7 @@ export default function DireccionesScreen({ navigation }: Props) {
       </ScrollView>
 
       <Modal
-        visible={modalVisible}
+        visible={modalVisible && !mapaVisible}
         transparent
         animationType="fade"
         onRequestClose={cerrarModal}
@@ -282,6 +290,16 @@ export default function DireccionesScreen({ navigation }: Props) {
               placeholder="Ej. Av. Arequipa 2450, Lima"
               error={detalleError}
             />
+            <TouchableOpacity
+              style={styles.mapButton}
+              onPress={() => setMapaVisible(true)}
+              accessibilityRole="button"
+            >
+              <Ionicons name="map-outline" size={18} color={colors.primary} />
+              <Text style={styles.mapButtonText}>
+                {coordenadas ? 'Ubicación en mapa seleccionada' : 'Elegir en mapa'}
+              </Text>
+            </TouchableOpacity>
             <View style={styles.modalActions}>
               <TouchableOpacity
                 style={styles.cancelButton}
@@ -303,6 +321,15 @@ export default function DireccionesScreen({ navigation }: Props) {
           </View>
         </View>
       </Modal>
+      {mapaVisible ? <MapaSelector
+        visible={mapaVisible}
+        initial={coordenadas}
+        onClose={() => setMapaVisible(false)}
+        onConfirm={(nuevas) => {
+          setCoordenadas(nuevas);
+          setMapaVisible(false);
+        }}
+      /> : null}
     </View>
   );
 }
@@ -367,6 +394,8 @@ function makeStyles(c: Colors) {
       backgroundColor: c.surface,
     },
     modalTitle: { color: c.textPrimary, fontSize: 17, fontWeight: '800' },
+    mapButton: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, paddingVertical: 11, borderRadius: 12, backgroundColor: c.primarySoft },
+    mapButtonText: { color: c.primary, fontSize: 14, fontWeight: '800' },
     modalActions: { flexDirection: 'row', gap: 10 },
     cancelButton: {
       flex: 1,

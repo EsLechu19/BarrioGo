@@ -5,6 +5,7 @@ import { FormField } from './FormField';
 import { useColors } from '../context/ThemeContext';
 import type { Colors } from '../styles/colors';
 import type { DireccionUsuario } from '../types/Direccion';
+import { MapaSelector, type CoordenadasMapa } from './MapaSelector';
 
 // Modal de ubicación del Home: lista las direcciones del usuario para
 // elegirla de un toque y permite añadir una nueva sin salir del inicio.
@@ -32,12 +33,15 @@ export function UbicacionModal({
   const [detalle, setDetalle] = useState<string>('');
   const [aliasError, setAliasError] = useState<string | undefined>(undefined);
   const [detalleError, setDetalleError] = useState<string | undefined>(undefined);
+  const [mapaVisible, setMapaVisible] = useState<boolean>(false);
+  const [coordenadas, setCoordenadas] = useState<CoordenadasMapa | null>(null);
 
   const abrirForm = (): void => {
     setAlias('');
     setDetalle('');
     setAliasError(undefined);
     setDetalleError(undefined);
+    setCoordenadas(null);
     setMostrarForm(true);
   };
 
@@ -66,12 +70,14 @@ export function UbicacionModal({
       alias: aliasLimpio,
       detalle: detalleLimpio,
       esPrincipal: direcciones.length === 0,
+      ...(coordenadas ? coordenadas : {}),
     });
     setMostrarForm(false);
   };
 
   return (
-    <Modal visible={visible} transparent animationType="fade" onRequestClose={onCerrar}>
+    <>
+    <Modal visible={visible && !mapaVisible} transparent animationType="fade" onRequestClose={onCerrar}>
       <View style={styles.overlay}>
         <View style={styles.card}>
           <View style={styles.headerRow}>
@@ -139,6 +145,16 @@ export function UbicacionModal({
                 placeholder="Ej. Av. Arequipa 2450, Lima"
                 error={detalleError}
               />
+              <TouchableOpacity
+                style={styles.mapButton}
+                onPress={() => setMapaVisible(true)}
+                accessibilityRole="button"
+              >
+                <Ionicons name="map-outline" size={18} color={colors.primary} />
+                <Text style={styles.mapButtonText}>
+                  {coordenadas ? 'Ubicación en mapa seleccionada' : 'Elegir en mapa'}
+                </Text>
+              </TouchableOpacity>
               <View style={styles.formActions}>
                 <TouchableOpacity
                   style={styles.cancelButton}
@@ -172,6 +188,16 @@ export function UbicacionModal({
         </View>
       </View>
     </Modal>
+    {mapaVisible ? <MapaSelector
+      visible={mapaVisible}
+      initial={coordenadas}
+      onClose={() => setMapaVisible(false)}
+      onConfirm={(nuevas) => {
+        setCoordenadas(nuevas);
+        setMapaVisible(false);
+      }}
+    /> : null}
+    </>
   );
 }
 
@@ -213,6 +239,8 @@ function makeStyles(c: Colors) {
     itemDetalle: { color: c.textMuted, fontSize: 12 },
 
     form: { gap: 14 },
+    mapButton: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, paddingVertical: 11, borderRadius: 12, backgroundColor: c.primarySoft },
+    mapButtonText: { color: c.primary, fontSize: 14, fontWeight: '800' },
     formActions: { flexDirection: 'row', gap: 10 },
     cancelButton: {
       flex: 1,

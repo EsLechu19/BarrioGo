@@ -86,13 +86,17 @@ function RestaurantCardBase({ negocio, esFavorito, onToggleFavorito, onPress }: 
                     {/* Fila 3: tiempo / distancia / envío */}
                     <View style={styles.metaRow}>
                         <Text style={styles.metaText}>{negocio.tiempoEstimado}</Text>
-                        <Text style={styles.metaText}>•</Text>
-                        <Text style={styles.metaText}>{negocio.distancia}</Text>
+                        {negocio.distancia !== '' ? (
+                          <Text style={styles.metaText}>•</Text>
+                        ) : null}
+                        {negocio.distancia !== '' ? (
+                          <Text style={styles.metaText}>{negocio.distancia}</Text>
+                        ) : null}
                         {textoEnvio(negocioVista) ? (
-                            <>
-                                <Text style={styles.metaText}>•</Text>
-                                <Text style={styles.freeShipping}>{textoEnvio(negocioVista)}</Text>
-                            </>
+                          <>
+                            <Text style={styles.metaText}>•</Text>
+                            <Text style={styles.freeShipping}>{textoEnvio(negocioVista)}</Text>
+                          </>
                         ) : null}
                     </View>
                 </View>

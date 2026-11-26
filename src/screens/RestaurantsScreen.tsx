@@ -20,7 +20,8 @@ import { EmptyState } from '../components/EmptyState';
 import { getNegocios } from '../services/api';
 import { estaAbierto } from '../utils/negocios';
 import { LIST_PERF } from '../utils/listPerf';
-import { UserCoords, formatDistancia, getUserCoords, haversineKm } from '../services/location';
+import { useUbicacion } from '../hooks/useUbicacion';
+import { haversineKm, formatDistancia } from '../services/location';
 import { useFavorites } from '../context/FavoritesContext';
 import { useEstadoNegocios } from '../context/EstadoNegociosContext';
 import { useOpiniones } from '../context/OpinionesContext';
@@ -80,7 +81,7 @@ export default function RestaurantsScreen({ navigation }: Props) {
   const [refreshing, setRefreshing] = useState<boolean>(false);
   const [query, setQuery] = useState<string>('');
   const [filtrosActivos, setFiltrosActivos] = useState<string[]>([]);
-  const [userLoc, setUserLoc] = useState<UserCoords | null>(null);
+  const { coordenadas, estado, reintentar, abrirAjustes } = useUbicacion();
   const { toggle, esFavorito } = useFavorites();
   const { conOverride } = useEstadoNegocios();
   const { listaDe } = useOpiniones();
@@ -120,11 +121,13 @@ export default function RestaurantsScreen({ navigation }: Props) {
     }
   }, []);
 
-  // Cargar datos al montar: 'load' es un useCallback que gestiona su propio state.
-  // Se llama directamente para evitar setState sincrónico en el effect.
+  // Cargar negocios una vez al montar (sin depender de userLoc/coordenadas).
   useEffect(() => {
-    void getUserCoords().then(setUserLoc);
-    setTimeout(() => { void load(); }, 0);
+    const timeoutId = setTimeout(() => {
+      void load();
+    }, 0);
+
+    return () => clearTimeout(timeoutId);
   }, [load]);
 
   const filtered: Negocio[] = useMemo(() => {
@@ -136,21 +139,40 @@ export default function RestaurantsScreen({ navigation }: Props) {
       pasaFiltros(n, filtrosActivos, resumenOpiniones(listaDe(n.id)).promedio),
     );
     // Sin GPS: orden del API. Con GPS: distancia real + orden por cercanía.
-    let conDistancia: Negocio[] = porFiltro;
-    if (userLoc) {
+    let conDistancia = porFiltro.map((n) => ({ ...n, distancia: '' }));
+    if (coordenadas) {
       conDistancia = porFiltro
         .map((n) => {
-          const km = haversineKm(userLoc, { latitude: n.lat, longitude: n.lng });
+          if (
+            typeof n.lat !== 'number' ||
+            !Number.isFinite(n.lat) ||
+            n.lat < -90 ||
+            n.lat > 90 ||
+            typeof n.lng !== 'number' ||
+            !Number.isFinite(n.lng) ||
+            n.lng < -180 ||
+            n.lng > 180
+          ) {
+            return { negocio: { ...n, distancia: '' }, km: null };
+          }
+          const km = haversineKm(coordenadas, { latitude: n.lat, longitude: n.lng });
+          if (!Number.isFinite(km)) {
+            return { negocio: { ...n, distancia: '' }, km: null };
+          }
           return { negocio: { ...n, distancia: formatDistancia(km) }, km };
         })
-        .sort((a, b) => a.km - b.km)
+        .sort((a, b) => {
+          if (a.km === null) return b.km === null ? 0 : 1;
+          if (b.km === null) return -1;
+          return a.km - b.km;
+        })
         .map((r) => r.negocio);
     }
     // Abiertos primero; los cerrados quedan visibles al final (no se ocultan).
     const abiertos: Negocio[] = conDistancia.filter((n) => estaAbierto(n));
     const cerrados: Negocio[] = conDistancia.filter((n) => !estaAbierto(n));
     return [...abiertos, ...cerrados];
-  }, [negocios, query, filtrosActivos, userLoc, conOverride, listaDe]);
+  }, [negocios, query, filtrosActivos, coordenadas, conOverride, listaDe]);
 
   if (loading && !refreshing) {
     // Area loading
@@ -267,11 +289,26 @@ export default function RestaurantsScreen({ navigation }: Props) {
         ) : null}
       </ScrollView>
 
-      <Text style={styles.gpsNote}>
-        {userLoc
-          ? '📍 Ordenado por tu ubicación real'
-          : 'Sin ubicación: activá el GPS para ordenar por cercanía'}
-      </Text>
+      <View style={styles.gpsNote}>
+        {estado === 'disponible' && <Text>📍 Ordenado por tu ubicación real</Text>}
+        {estado === 'calculando' && <Text>Calculando distancias reales…</Text>}
+        {estado === 'sin_permiso' && (
+          <>
+            <Text>Activa tu ubicación para ver distancias reales</Text>
+            <TouchableOpacity onPress={abrirAjustes}>
+              <Text style={{ color: colors.primary }}>Configuración</Text>
+            </TouchableOpacity>
+          </>
+        )}
+        {estado === 'no_disponible' && (
+          <>
+            <Text>No pudimos obtener tu ubicación</Text>
+            <TouchableOpacity onPress={reintentar}>
+              <Text style={{ color: colors.primary }}>Reintentar</Text>
+            </TouchableOpacity>
+          </>
+        )}
+      </View>
 
       {/*Area lista de restaurante*/}
       <FlatList

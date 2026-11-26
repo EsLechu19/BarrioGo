@@ -30,6 +30,7 @@ import { HorarioEditor } from '../components/negocio/HorarioEditor';
 import { RootStackParamList } from '../navigation/RootStackParamList';
 import { useColors } from '../context/ThemeContext';
 import type { Colors } from '../styles/colors';
+import { MapaSelector, type CoordenadasMapa } from '../components/MapaSelector';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'MiLocal'>;
 
@@ -65,8 +66,8 @@ export default function MiLocalScreen({ navigation }: Props) {
   // día (entrada+comida) y de cada extra.
   const [precioMenuTxt, setPrecioMenuTxt] = useState<string>('');
   const [precioExtraTxt, setPrecioExtraTxt] = useState<string>('');
-  const [latTxt, setLatTxt] = useState<string>('');
-  const [lngTxt, setLngTxt] = useState<string>('');
+  const [ubicacion, setUbicacion] = useState<CoordenadasMapa | null>(null);
+  const [mapaVisible, setMapaVisible] = useState<boolean>(false);
 
   const {
     leyendo: leyendoGps,
@@ -161,10 +162,14 @@ export default function MiLocalScreen({ navigation }: Props) {
             setPrecioMenuTxt(String(n.precioMenuDia));
           if (typeof n.precioExtra === 'number' && n.precioExtra > 0)
             setPrecioExtraTxt(String(n.precioExtra));
-          if (typeof n.lat === 'number' && Number.isFinite(n.lat))
-            setLatTxt(String(n.lat));
-          if (typeof n.lng === 'number' && Number.isFinite(n.lng))
-            setLngTxt(String(n.lng));
+          if (
+            typeof n.lat === 'number' &&
+            Number.isFinite(n.lat) &&
+            typeof n.lng === 'number' &&
+            Number.isFinite(n.lng)
+          ) {
+            setUbicacion({ lat: n.lat, lng: n.lng });
+          }
           if (typeof n.imagen === 'string') setIconoUrl(n.imagen);
           if (typeof n.portada === 'string') setPortadaUrl(n.portada);
           // Chequeo de forma del horario (no confiar ciegamente en Firestore).
@@ -206,8 +211,7 @@ export default function MiLocalScreen({ navigation }: Props) {
   async function usarMiUbicacion(): Promise<void> {
     const coords = await obtenerUbicacion();
     if (coords) {
-      setLatTxt(String(coords.latitude));
-      setLngTxt(String(coords.longitude));
+      setUbicacion({ lat: coords.latitude, lng: coords.longitude });
     }
   }
 
@@ -218,15 +222,6 @@ export default function MiLocalScreen({ navigation }: Props) {
     const nombreValido: string = nombre.trim();
     if (!nombreValido) {
       setFormError('El negocio necesita un nombre.');
-      return;
-    }
-    const lat: number = Number(latTxt.replace(',', '.'));
-    const lng: number = Number(lngTxt.replace(',', '.'));
-    if (
-      (latTxt.trim() && !Number.isFinite(lat)) ||
-      (lngTxt.trim() && !Number.isFinite(lng))
-    ) {
-      setFormError('La ubicación no es válida (revisá latitud y longitud).');
       return;
     }
     const precioMenu: number = Number(precioMenuTxt.replace(',', '.'));
@@ -265,8 +260,8 @@ export default function MiLocalScreen({ navigation }: Props) {
         ...(esRestauranteLocal && precioExtraTxt.trim()
           ? { precioExtra }
           : {}),
-        lat: latTxt.trim() ? lat : undefined,
-        lng: lngTxt.trim() ? lng : undefined,
+        lat: ubicacion?.lat,
+        lng: ubicacion?.lng,
         // Solo si el dueño tocó el editor; array vacío = sin horario.
         horario: horarioEditado,
       });
@@ -420,10 +415,8 @@ export default function MiLocalScreen({ navigation }: Props) {
         leyendo={leyendoGps}
         aviso={gpsAviso}
         onUsar={() => void usarMiUbicacion()}
-        lat={latTxt}
-        lng={lngTxt}
-        onLatChange={setLatTxt}
-        onLngChange={setLngTxt}
+        onElegirMapa={() => setMapaVisible(true)}
+        tieneUbicacion={ubicacion !== null}
       />
       {formError ? <Text style={styles.error}>{formError}</Text> : null}
       {formOk ? <Text style={styles.ok}>{formOk}</Text> : null}
@@ -505,6 +498,15 @@ export default function MiLocalScreen({ navigation }: Props) {
         />
       </View>
     </ScrollView>
+    {mapaVisible ? <MapaSelector
+      visible={mapaVisible}
+      initial={ubicacion}
+      onClose={() => setMapaVisible(false)}
+      onConfirm={(nuevas) => {
+        setUbicacion(nuevas);
+        setMapaVisible(false);
+      }}
+    /> : null}
     </View>
   );
 }

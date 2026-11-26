@@ -5,4 +5,6 @@ export interface DireccionUsuario {
   alias: string;
   detalle: string;
   esPrincipal: boolean;
+  lat?: number;
+  lng?: number;
 }

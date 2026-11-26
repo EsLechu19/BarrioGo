@@ -38,6 +38,8 @@ import type { Colors } from '../styles/colors';
 import { nombreVisible } from '../utils/usuario';
 import { resumenOpiniones, ResumenOpiniones } from '../utils/opinionesDemo';
 import { useOpiniones } from '../context/OpinionesContext';
+import { useUbicacion } from '../hooks/useUbicacion';
+import { formatDistancia, haversineKm } from '../services/location';
 import {
   DIAS_SEMANA_LARGO,
   SECCIONES_CARTA,
@@ -68,6 +70,7 @@ export default function DetalleScreen({ navigation, route }: Props) {
   const { toggle, esFavorito } = useFavorites();
   const { conOverride } = useEstadoNegocios();
   const { user } = useAuth();
+  const { coordenadas } = useUbicacion();
   // Opiniones de Firestore + sesión + ejemplos: viven en el contexto para que
   // Inicio, Restaurantes y Detalle midan el rating con la misma lista.
   const { listaDe, publicar } = useOpiniones();
@@ -81,6 +84,13 @@ export default function DetalleScreen({ navigation, route }: Props) {
   const [comidaSel, setComidaSel] = useState<Producto | null>(null);
   const colors = useColors();
   const styles = useMemo(() => makeStyles(colors), [colors]);
+
+  const distanciaReal: string | undefined = useMemo(() => {
+    if (!negocio || !coordenadas) return undefined;
+    if (!Number.isFinite(negocio.lat) || !Number.isFinite(negocio.lng)) return undefined;
+    const km = haversineKm(coordenadas, { latitude: negocio.lat, longitude: negocio.lng });
+    return formatDistancia(km);
+  }, [negocio, coordenadas]);
 
   // Referencia para evitar state viejo si el usuario cambia rápido de negocio.
   const activoRef = useRef(true);
@@ -502,7 +512,7 @@ export default function DetalleScreen({ navigation, route }: Props) {
           />
           )
       ) : tab === 'info' ? (
-        <InfoTab negocio={negocio} />
+        <InfoTab negocio={negocio} distanciaReal={distanciaReal} />
       ) : (
         <ReviewsTab
           opiniones={opiniones}

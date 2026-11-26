@@ -24,6 +24,7 @@ import { CategoriaNegocio } from '../types/Negocio';
 import { RootStackParamList } from '../navigation/RootStackParamList';
 import { useColors } from '../context/ThemeContext';
 import type { Colors } from '../styles/colors';
+import { MapaSelector, type CoordenadasMapa } from '../components/MapaSelector';
 
 type Props = NativeStackScreenProps<
   RootStackParamList,
@@ -51,11 +52,6 @@ function BotonVolver({ navigation, styles }: { navigation: any; styles: any }) {
   );
 }
 
-// GPS denegado o sin hardware: el registro sigue
-// con Lima por defecto y permite editar coordenadas.
-const DEFAULT_LAT = -12.0464;
-const DEFAULT_LNG = -77.0428;
-
 export default function RegistrarNegocioScreen({
   navigation,
 }: Props) {
@@ -76,12 +72,8 @@ export default function RegistrarNegocioScreen({
     useState<CategoriaNegocio | null>(null);
   const [descripcion, setDescripcion] = useState<string>('');
   const [direccion, setDireccion] = useState<string>('');
-  const [latTxt, setLatTxt] = useState<string>(
-    String(DEFAULT_LAT)
-  );
-  const [lngTxt, setLngTxt] = useState<string>(
-    String(DEFAULT_LNG)
-  );
+  const [ubicacion, setUbicacion] = useState<CoordenadasMapa | null>(null);
+  const [mapaVisible, setMapaVisible] = useState<boolean>(false);
 
   const {
     leyendo: leyendoGps,
@@ -89,13 +81,13 @@ export default function RegistrarNegocioScreen({
     usar: obtenerUbicacion,
   } = useUbicacionGps({
     mensajeSinUbicacion:
-      'No pudimos obtener tu ubicación (permiso denegado o sin señal). Seguimos con Lima por defecto.',
+      'No pudimos obtener tu ubicación. Elegí el punto en el mapa.',
     mensajeExito:
       'Ubicación actualizada con tu GPS.',
     mensajeError: (e) =>
       e instanceof Error
-        ? `No pudimos obtener tu ubicación: ${e.message}. Seguimos con Lima por defecto.`
-        : 'No pudimos obtener tu ubicación. Seguimos con Lima por defecto.',
+        ? `No pudimos obtener tu ubicación: ${e.message}. Elegí el punto en el mapa.`
+        : 'No pudimos obtener tu ubicación. Elegí el punto en el mapa.',
   });
 
   const [guardando, setGuardando] = useState<boolean>(false);
@@ -114,8 +106,7 @@ export default function RegistrarNegocioScreen({
     const coords = await obtenerUbicacion();
 
     if (coords) {
-      setLatTxt(String(coords.latitude));
-      setLngTxt(String(coords.longitude));
+      setUbicacion({ lat: coords.latitude, lng: coords.longitude });
     }
   }
 
@@ -148,20 +139,8 @@ export default function RegistrarNegocioScreen({
       return;
     }
 
-    const lat: number = Number(
-      latTxt.replace(',', '.')
-    );
-    const lng: number = Number(
-      lngTxt.replace(',', '.')
-    );
-
-    if (
-      !Number.isFinite(lat) ||
-      !Number.isFinite(lng)
-    ) {
-      setFormError(
-        'La ubicación no es válida (revisá latitud y longitud).'
-      );
+    if (!ubicacion) {
+      setFormError('Usá tu GPS o elegí la ubicación del negocio en el mapa.');
       return;
     }
 
@@ -174,8 +153,8 @@ export default function RegistrarNegocioScreen({
         categoria,
         descripcion: descripcion.trim(),
         direccion: direccion.trim(),
-        lat,
-        lng,
+        lat: ubicacion.lat,
+        lng: ubicacion.lng,
       });
 
       setNegocioId(id);
@@ -350,10 +329,8 @@ export default function RegistrarNegocioScreen({
         leyendo={leyendoGps}
         aviso={gpsAviso}
         onUsar={() => void usarMiUbicacion()}
-        lat={latTxt}
-        lng={lngTxt}
-        onLatChange={setLatTxt}
-        onLngChange={setLngTxt}
+        onElegirMapa={() => setMapaVisible(true)}
+        tieneUbicacion={ubicacion !== null}
       />
 
       {formError ? (
@@ -374,6 +351,15 @@ export default function RegistrarNegocioScreen({
         onPress={() => void registrar()}
         disabled={guardando}
       />
+      {mapaVisible ? <MapaSelector
+        visible={mapaVisible}
+        initial={ubicacion}
+        onClose={() => setMapaVisible(false)}
+        onConfirm={(nuevas) => {
+          setUbicacion(nuevas);
+          setMapaVisible(false);
+        }}
+      /> : null}
     </View>
   );
 }
