@@ -324,9 +324,11 @@ export default function DireccionesScreen({ navigation }: Props) {
       {mapaVisible ? <MapaSelector
         visible={mapaVisible}
         initial={coordenadas}
+        initialAddress={detalle}
         onClose={() => setMapaVisible(false)}
-        onConfirm={(nuevas) => {
+        onConfirm={(nuevas, direccion) => {
           setCoordenadas(nuevas);
+          if (direccion) setDetalle(direccion);
           setMapaVisible(false);
         }}
       /> : null}

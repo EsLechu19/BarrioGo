@@ -501,9 +501,11 @@ export default function MiLocalScreen({ navigation }: Props) {
     {mapaVisible ? <MapaSelector
       visible={mapaVisible}
       initial={ubicacion}
+      initialAddress={direccion}
       onClose={() => setMapaVisible(false)}
-      onConfirm={(nuevas) => {
+      onConfirm={(nuevas, direccionGeocodificada) => {
         setUbicacion(nuevas);
+        if (direccionGeocodificada) setDireccion(direccionGeocodificada);
         setMapaVisible(false);
       }}
     /> : null}

@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   Modal,
@@ -10,6 +10,7 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { Camera, Map, Marker } from '@maplibre/maplibre-react-native';
 import { getUserCoords } from '../services/location';
+import { geocodificarDireccion, reverseGeocodificarCoordenadas } from '../services/geocoding';
 import { useColors } from '../context/ThemeContext';
 import type { Colors } from '../styles/colors';
 
@@ -21,8 +22,9 @@ export type CoordenadasMapa = {
 type Props = {
   visible: boolean;
   initial?: CoordenadasMapa | null;
+  initialAddress?: string;
   onClose: () => void;
-  onConfirm: (coordenadas: CoordenadasMapa) => void;
+  onConfirm: (coordenadas: CoordenadasMapa, address: string | null) => void;
 };
 
 const LIMA_INICIAL: CoordenadasMapa = { lat: -12.0464, lng: -77.0428 };
@@ -41,14 +43,55 @@ function esCoordenadaValida(value: CoordenadasMapa | null | undefined): value is
   );
 }
 
-export function MapaSelector({ visible, initial, onClose, onConfirm }: Props) {
+export function MapaSelector({ visible, initial, initialAddress, onClose, onConfirm }: Props) {
   const colors = useColors();
   const styles = useMemo(() => makeStyles(colors), [colors]);
+  const address = initialAddress?.trim() ?? '';
   const [seleccion, setSeleccion] = useState<CoordenadasMapa>(
     esCoordenadaValida(initial) ? initial : LIMA_INICIAL,
   );
   const [leyendoGps, setLeyendoGps] = useState<boolean>(false);
+  const [confirmando, setConfirmando] = useState<boolean>(false);
+  const [estadoBusqueda, setEstadoBusqueda] = useState<'idle' | 'loading' | 'resolved' | 'unresolved'>(
+    visible && address ? 'loading' : 'idle',
+  );
   const [aviso, setAviso] = useState<string | null>(null);
+  const [seleccionManual, setSeleccionManual] = useState<boolean>(false);
+  const selectionChanged = useRef<boolean>(false);
+  const lookupPending = useRef<boolean>(false);
+  const requiereSeleccionManual = estadoBusqueda === 'unresolved' && !seleccionManual;
+
+  useEffect(() => {
+    if (!visible || !address) return;
+    let active = true;
+    lookupPending.current = true;
+    void geocodificarDireccion(address).then((coordinates) => {
+      if (!active) return;
+      lookupPending.current = false;
+      setEstadoBusqueda(coordinates ? 'resolved' : 'unresolved');
+      if (coordinates && !selectionChanged.current) setSeleccion(coordinates);
+    }).catch(() => {
+      if (!active) return;
+      lookupPending.current = false;
+      setEstadoBusqueda('unresolved');
+    });
+    return () => {
+      active = false;
+      lookupPending.current = false;
+    };
+  }, [address, visible]);
+
+  const confirmar = async (): Promise<void> => {
+    if (confirmando || lookupPending.current || requiereSeleccionManual) return;
+    setConfirmando(true);
+    let resolvedAddress: string | null = null;
+    try {
+      resolvedAddress = await reverseGeocodificarCoordenadas(seleccion);
+    } catch {
+      resolvedAddress = null;
+    }
+    onConfirm(seleccion, resolvedAddress);
+  };
 
   const usarMiUbicacion = useCallback(async (): Promise<void> => {
     setLeyendoGps(true);
@@ -59,6 +102,8 @@ export function MapaSelector({ visible, initial, onClose, onConfirm }: Props) {
         setAviso('No pudimos obtener tu ubicación. Elegí el punto manualmente.');
         return;
       }
+      selectionChanged.current = true;
+      setSeleccionManual(true);
       setSeleccion({ lat: coords.latitude, lng: coords.longitude });
     } catch {
       setAviso('No pudimos obtener tu ubicación. Elegí el punto manualmente.');
@@ -100,6 +145,8 @@ export function MapaSelector({ visible, initial, onClose, onConfirm }: Props) {
             touchPitch={false}
             onPress={(event) => {
               const [lng, lat] = event.nativeEvent.lngLat;
+              selectionChanged.current = true;
+              setSeleccionManual(true);
               setSeleccion({ lat, lng });
             }}
           >
@@ -113,7 +160,11 @@ export function MapaSelector({ visible, initial, onClose, onConfirm }: Props) {
           </Map>
         </View>
 
+        <Text style={styles.attribution}>Geocodificación © OpenStreetMap contributors</Text>
         {aviso ? <Text style={styles.notice}>{aviso}</Text> : null}
+        {requiereSeleccionManual ? (
+          <Text style={styles.notice}>No encontramos esa dirección. Elegí un punto en el mapa o usá tu ubicación para continuar.</Text>
+        ) : null}
         <TouchableOpacity
           style={[styles.secondaryButton, leyendoGps && styles.disabled]}
           onPress={() => void usarMiUbicacion()}
@@ -124,11 +175,12 @@ export function MapaSelector({ visible, initial, onClose, onConfirm }: Props) {
           <Text style={styles.secondaryText}>{leyendoGps ? 'Buscando ubicación...' : 'Usar mi ubicación'}</Text>
         </TouchableOpacity>
         <TouchableOpacity
-          style={styles.confirmButton}
-          onPress={() => onConfirm(seleccion)}
+          style={[styles.confirmButton, (confirmando || estadoBusqueda === 'loading' || requiereSeleccionManual) && styles.disabled]}
+          onPress={() => void confirmar()}
+          disabled={confirmando || estadoBusqueda === 'loading' || requiereSeleccionManual}
           accessibilityRole="button"
         >
-          <Text style={styles.confirmText}>Confirmar ubicación</Text>
+          {confirmando ? <ActivityIndicator color={colors.white} /> : <Text style={styles.confirmText}>Confirmar ubicación</Text>}
         </TouchableOpacity>
       </View>
     </Modal>
@@ -145,6 +197,7 @@ function makeStyles(c: Colors) {
     mapContainer: { flex: 1, minHeight: 250, overflow: 'hidden', borderRadius: 16, backgroundColor: c.border },
     map: { width: '100%', height: '100%' },
     notice: { color: c.textMuted, fontSize: 13, textAlign: 'center' },
+    attribution: { color: c.textMuted, fontSize: 10, textAlign: 'center' },
     secondaryButton: { flexDirection: 'row', justifyContent: 'center', alignItems: 'center', gap: 8, paddingVertical: 13, borderRadius: 14, borderWidth: 1, borderColor: c.border, backgroundColor: c.surface },
     secondaryText: { color: c.primary, fontSize: 15, fontWeight: '800' },
     confirmButton: { paddingVertical: 15, borderRadius: 14, alignItems: 'center', backgroundColor: c.primary },
