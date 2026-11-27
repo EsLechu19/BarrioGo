@@ -9,7 +9,12 @@ import {
   notificarNuevoPedidoNegocio,
 } from '../services/notificaciones';
 import { storage } from '../services/storage';
-import type { EstadoPedido, Pedido } from '../types/Pedido';
+import type { EstadoPago, EstadoPedido, Pedido } from '../types/Pedido';
+
+interface EstadoPedidoNotificacion {
+  estado: EstadoPedido;
+  estadoPago?: EstadoPago;
+}
 
 /**
  * Avisa al dueño del negocio cuando entra un pedido o cuando el cliente lo
@@ -19,7 +24,7 @@ import type { EstadoPedido, Pedido } from '../types/Pedido';
 export function BusinessNotificationBridge(): null {
   const { user, rol } = useAuth();
   const { negocioId } = useNegocioId();
-  const estadosPrevios = useRef<Record<string, EstadoPedido>>({});
+  const estadosPrevios = useRef<Record<string, EstadoPedidoNotificacion>>({});
 
   useEffect(() => {
     estadosPrevios.current = {};
@@ -35,20 +40,28 @@ export function BusinessNotificationBridge(): null {
       (pedidos: Pedido[]) => {
         if (!activo) return;
 
-        const mapa: Record<string, EstadoPedido> = {};
+        const mapa: Record<string, EstadoPedidoNotificacion> = {};
         if (primeraCarga) {
           // Línea base: los pedidos que ya existían no son avisos nuevos.
           primeraCarga = false;
         } else {
           for (const pedido of pedidos) {
             const estadoPrevio = estadosPrevios.current[pedido.id];
+            const esMercadoPagoSandbox = pedido.metodoPago?.tipo === 'mercadopago_sandbox';
+            const puedeAvisarNuevo = !esMercadoPagoSandbox || pedido.estadoPago === 'pagado';
 
             if (estadoPrevio === undefined) {
-              void avisarPedidoNuevo(uid, pedido);
+              if (puedeAvisarNuevo) void avisarPedidoNuevo(uid, pedido);
               continue;
             }
 
-            if (estadoPrevio !== pedido.estado && pedido.estado === 'cancelado') {
+            const seConfirmoPagoMercadoPago = esMercadoPagoSandbox &&
+              estadoPrevio.estadoPago !== 'pagado' && pedido.estadoPago === 'pagado';
+            if (seConfirmoPagoMercadoPago) {
+              void avisarPedidoNuevo(uid, pedido);
+            }
+
+            if (estadoPrevio.estado !== pedido.estado && pedido.estado === 'cancelado') {
               // Cancelación del cliente. Si la hizo el propio negocio al
               // rechazar, no se avisa: ya sabe lo que hizo.
               if (pedido.canceladoPor !== uid) {
@@ -58,7 +71,12 @@ export function BusinessNotificationBridge(): null {
           }
         }
 
-        for (const pedido of pedidos) mapa[pedido.id] = pedido.estado;
+        for (const pedido of pedidos) {
+          mapa[pedido.id] = {
+            estado: pedido.estado,
+            estadoPago: pedido.estadoPago,
+          };
+        }
         estadosPrevios.current = mapa;
       },
       () => {

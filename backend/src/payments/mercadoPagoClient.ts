@@ -5,6 +5,7 @@ export async function createMercadoPagoOrder(
   paymentId: string,
   idempotencyKey: string,
   validated: ValidatedOrders,
+  verifiedPayerEmail: string,
 ): Promise<Response> {
   const publicUrl = runtimeEnv.publicBackendUrl!;
   const returnUrl = `${publicUrl}/checkout-return?paymentId=${encodeURIComponent(paymentId)}`;
@@ -21,6 +22,7 @@ export async function createMercadoPagoOrder(
       total_amount: (validated.totalCents / 100).toFixed(2),
       external_reference: paymentId,
       items: validated.mpItems,
+      payer: { email: verifiedPayerEmail },
       config: { online: { success_url: returnUrl, failure_url: returnUrl, pending_url: returnUrl, auto_return: 'all' } },
     }),
   });

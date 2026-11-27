@@ -7,14 +7,16 @@ import { releasePaymentReservation, reservePayment } from './paymentRepository.j
 
 export type PaymentCreationOutcome =
   | { kind: 'not_configured' }
+  | { kind: 'email_verification_required' }
   | { kind: 'review_required' }
   | { kind: 'terminal'; paymentId: string; status: 'paid' | 'failed' }
   | { kind: 'checkout'; paymentId: string; status: string; checkoutUrl: string }
   | { kind: 'in_progress' }
-  | { kind: 'provider_error'; incomplete: boolean }
+  | { kind: 'provider_error'; outcome: 'rejected' | 'uncertain' }
   | { kind: 'created'; paymentId: string; checkoutUrl: string };
 
-export async function createOrReusePayment(userId: string, pedidoIds: unknown): Promise<PaymentCreationOutcome> {
+export async function createOrReusePayment(userId: string, verifiedEmail: string | undefined, pedidoIds: unknown): Promise<PaymentCreationOutcome> {
+  if (!verifiedEmail) return { kind: 'email_verification_required' };
   if (!isSandboxPaymentConfigured()) return { kind: 'not_configured' };
   const validated = await validatePendingOrders(userId, pedidoIds);
   const { paymentId, paymentRef, payment, shouldCreate } = await reservePayment(userId, validated);
@@ -28,10 +30,10 @@ export async function createOrReusePayment(userId: string, pedidoIds: unknown): 
 
   let mpResponse: Awaited<ReturnType<typeof fetch>>;
   try {
-    mpResponse = await createMercadoPagoOrder(paymentId, payment.idempotencyKey, validated);
+    mpResponse = await createMercadoPagoOrder(paymentId, payment.idempotencyKey, validated, verifiedEmail);
   } catch {
     await markPaymentForReview(paymentRef, 'uncertain_create_response');
-    return { kind: 'provider_error', incomplete: false };
+    return { kind: 'provider_error', outcome: 'uncertain' };
   }
   if (!mpResponse.ok) {
     if ([400, 401, 403, 422].includes(mpResponse.status)) {
@@ -39,7 +41,7 @@ export async function createOrReusePayment(userId: string, pedidoIds: unknown): 
     } else {
       await markPaymentForReview(paymentRef, 'uncertain_create_response');
     }
-    return { kind: 'provider_error', incomplete: false };
+    return { kind: 'provider_error', outcome: [400, 401, 403, 422].includes(mpResponse.status) ? 'rejected' : 'uncertain' };
   }
 
   let order: unknown;
@@ -47,14 +49,14 @@ export async function createOrReusePayment(userId: string, pedidoIds: unknown): 
     order = await mpResponse.json();
   } catch {
     await markPaymentForReview(paymentRef, 'malformed_create_response');
-    return { kind: 'provider_error', incomplete: true };
+    return { kind: 'provider_error', outcome: 'uncertain' };
   }
   const providerOrder = order as { id?: unknown; checkout_url?: unknown } | null;
   const mpOrderId = text(providerOrder?.id);
   const checkoutUrl = text(providerOrder?.checkout_url);
   if (!mpOrderId || !checkoutUrl) {
     await markPaymentForReview(paymentRef, 'malformed_create_response');
-    return { kind: 'provider_error', incomplete: true };
+    return { kind: 'provider_error', outcome: 'uncertain' };
   }
 
   await paymentRef.update({

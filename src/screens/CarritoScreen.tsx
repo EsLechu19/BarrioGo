@@ -32,7 +32,7 @@ import type { Colors } from '../styles/colors';
 import type { DireccionUsuario } from '../types/Direccion';
 import { UbicacionModal } from '../components/UbicacionModal';
 import * as WebBrowser from 'expo-web-browser';
-import { crearPagoMercadoPago } from '../services/mercadoPago';
+import { crearPagoMercadoPago, verificarElegibilidadMercadoPago } from '../services/mercadoPago';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Carrito'>;
 
@@ -244,6 +244,11 @@ export default function CarritoScreen({ navigation }: Props) {
     let pedidosMPGuardados: boolean = false;
     try {
       const esMercadoPagoSandbox: boolean = metodoPago.tipo === 'mercadopago_sandbox';
+      if (esMercadoPagoSandbox) {
+        // Verify the Firebase ID token's server-attested email claim before
+        // persisting orders that could otherwise be stranded without a payer.
+        await verificarElegibilidadMercadoPago();
+      }
       // Keep the established simulations unchanged. Mercado Pago remains
       // pending until the backend verifies an official provider notification.
       const pago = esMercadoPagoSandbox
@@ -315,7 +320,9 @@ export default function CarritoScreen({ navigation }: Props) {
         navigation.navigate('Tabs', { screen: 'PedidosTab' });
         Alert.alert(
           'Pedido guardado',
-          'No se pudo iniciar el checkout. Tus pedidos siguen pendientes y el pago no fue confirmado; revisa su estado antes de volver a intentarlo.',
+          e instanceof Error
+            ? e.message
+            : 'No se pudo iniciar el pago. Tus pedidos siguen pendientes; no los vuelvas a crear y consulta su estado antes de reintentar.',
         );
         return;
       }

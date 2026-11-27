@@ -40,6 +40,7 @@ export interface MpOrder {
 
 export interface AuthenticatedRequest extends Request {
   userId?: string;
+  verifiedEmail?: string;
 }
 
 export interface PedidoWithPayment extends PedidoData {
