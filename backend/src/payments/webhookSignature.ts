@@ -25,11 +25,11 @@ export interface WebhookSignatureDiagnostics {
   dataIdCase: 'upper' | 'lower' | 'mixed' | 'none';
   requestIdPresent: boolean;
   manifestMatches: {
-    canonicalRawId: boolean;
+    canonicalLowercaseIdWithRequestId: boolean;
+    rawIdWithRequestId: boolean;
     rawIdWithoutRequestId: boolean;
-    lowercaseIdWithRequestId: boolean;
     lowercaseIdWithoutRequestId: boolean;
-    trimmedSecretCanonical: boolean;
+    trimmedSecretLowercaseIdWithRequestId: boolean;
   };
 }
 
@@ -61,25 +61,25 @@ function getDiagnostics(
   const dataId = queryId ?? bodyId;
   const v1ValidHex = Boolean(v1 && /^[a-f0-9]{64}$/i.test(v1));
   const manifestMatches: WebhookSignatureDiagnostics['manifestMatches'] = {
-    canonicalRawId: false,
+    canonicalLowercaseIdWithRequestId: false,
+    rawIdWithRequestId: false,
     rawIdWithoutRequestId: false,
-    lowercaseIdWithRequestId: false,
     lowercaseIdWithoutRequestId: false,
-    trimmedSecretCanonical: false,
+    trimmedSecretLowercaseIdWithRequestId: false,
   };
 
-  // Candidate HMACs are diagnostic-only: do not add work or observable diagnostic
-  // output to the ordinary successful validation path.
+  // Candidate HMACs run only after a rejection and never change acceptance.
   if (secret && dataId && ts && v1ValidHex) {
     const actual = Buffer.from(v1!, 'hex');
-    const canonical = manifestFor(dataId, requestId, ts);
-    manifestMatches.canonicalRawId = safeDigestMatch(secret, canonical, actual);
+    const canonical = manifestFor(dataId.toLowerCase(), requestId, ts);
+    manifestMatches.canonicalLowercaseIdWithRequestId = Boolean(requestId)
+      && safeDigestMatch(secret, canonical, actual);
+    manifestMatches.rawIdWithRequestId = Boolean(requestId)
+      && safeDigestMatch(secret, manifestFor(dataId, requestId, ts), actual);
     manifestMatches.rawIdWithoutRequestId = safeDigestMatch(secret, manifestFor(dataId, '', ts), actual);
-    if (requestId) {
-      manifestMatches.lowercaseIdWithRequestId = safeDigestMatch(secret, manifestFor(dataId.toLowerCase(), requestId, ts), actual);
-    }
     manifestMatches.lowercaseIdWithoutRequestId = safeDigestMatch(secret, manifestFor(dataId.toLowerCase(), '', ts), actual);
-    manifestMatches.trimmedSecretCanonical = safeDigestMatch(secret.trim(), canonical, actual);
+    manifestMatches.trimmedSecretLowercaseIdWithRequestId = Boolean(requestId)
+      && safeDigestMatch(secret.trim(), canonical, actual);
   }
 
   return {
@@ -116,7 +116,7 @@ export function validateWebhookSignature(req: Request): WebhookSignatureResult {
     return fail('x_signature_missing_or_malformed');
   }
   if (!dataId) return fail('data_id_missing');
-  const manifest = manifestFor(dataId, requestId, ts);
+  const manifest = manifestFor(dataId.toLowerCase(), requestId, ts);
   const expected = crypto.createHmac('sha256', webhookSecret).update(manifest).digest();
   const actual = Buffer.from(v1, 'hex');
   if (actual.length !== expected.length || !crypto.timingSafeEqual(actual, expected)) {
