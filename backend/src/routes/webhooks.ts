@@ -1,7 +1,7 @@
 import { Router, type Response } from 'express';
 import { text } from '../payments/orderValidation.js';
 import { updatePaymentFromOfficialOrder } from '../payments/webhookService.js';
-import { signatureIsValid } from '../payments/webhookSignature.js';
+import { validateWebhookSignature } from '../payments/webhookSignature.js';
 
 function sendError(res: Response, status: number, message: string): void {
   res.status(status).json({ error: message });
@@ -10,7 +10,9 @@ function sendError(res: Response, status: number, message: string): void {
 export const webhooksRouter = Router();
 
 webhooksRouter.post('/mercadopago', async (req, res) => {
-  if (!signatureIsValid(req)) {
+  const signatureResult = validateWebhookSignature(req);
+  if (!signatureResult.valid) {
+    console.warn('Rejected Mercado Pago webhook signature', { reason: signatureResult.reason });
     sendError(res, 401, 'Invalid webhook signature.');
     return;
   }
