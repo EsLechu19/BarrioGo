@@ -164,6 +164,7 @@ function isDireccionUsuarioArray(value: unknown): value is DireccionUsuario[] {
 }
 
 const notificationWrites = new Map<string, Promise<void>>();
+let cartWrites: Promise<void> = Promise.resolve();
 let avisoPersistenciaMostrado = false;
 
 function avisarFalloPersistencia(key: string): void {
@@ -238,6 +239,19 @@ async function write(key: string, value: unknown): Promise<void> {
   }
 }
 
+function saveCart(items: ItemPedido[]): Promise<void> {
+  const current = cartWrites.then(async () => {
+    try {
+      await AsyncStorage.setItem(KEYS.cart, JSON.stringify(items));
+    } catch (error) {
+      avisarFalloPersistencia(KEYS.cart);
+      throw error;
+    }
+  });
+  cartWrites = current.catch(() => undefined);
+  return current;
+}
+
 async function remove(key: string): Promise<void> {
   try {
     await AsyncStorage.removeItem(key);
@@ -248,7 +262,7 @@ async function remove(key: string): Promise<void> {
 
 export const storage = {
   loadCart: () => read(KEYS.cart, isItemPedidoArray),
-  saveCart: (items: ItemPedido[]) => write(KEYS.cart, items),
+  saveCart,
   loadFavorites: () => read(KEYS.favorites, isStringArray),
   saveFavorites: (ids: string[]) => write(KEYS.favorites, ids),
   loadSession: () => read(KEYS.session, isSession),

@@ -38,7 +38,7 @@ type Props = NativeStackScreenProps<RootStackParamList, 'Carrito'>;
 
 export default function CarritoScreen({ navigation }: Props) {
   const insets = useSafeAreaInsets();
-  const { items, total, setCantidad, remove, clear } = useCart();
+  const { items, total, setCantidad, remove, clear, clearAndPersist } = useCart();
   const { user } = useAuth();
   const { conOverride } = useEstadoNegocios();
   const [enviando, setEnviando] = useState<boolean>(false);
@@ -242,6 +242,7 @@ export default function CarritoScreen({ navigation }: Props) {
       ) / 100;
     setEnviando(true);
     let pedidosMPGuardados: boolean = false;
+    let carritoMPPersistido: boolean = false;
     try {
       const esMercadoPagoSandbox: boolean = metodoPago.tipo === 'mercadopago_sandbox';
       if (esMercadoPagoSandbox) {
@@ -271,6 +272,9 @@ export default function CarritoScreen({ navigation }: Props) {
         const payment = await crearPagoMercadoPago(pedidosCreados.map((pedido) => pedido.id));
         if (!payment.checkoutUrl) throw new Error('Mercado Pago no devolvió la dirección de checkout.');
         paymentId = payment.paymentId;
+        await clearAndPersist();
+        carritoMPPersistido = true;
+        permitirSalida.current = true;
         try {
           await WebBrowser.openAuthSessionAsync(
             payment.checkoutUrl,
@@ -302,7 +306,7 @@ export default function CarritoScreen({ navigation }: Props) {
           });
         }
       }
-      clear();
+      if (!esMercadoPagoSandbox) clear();
       if (paymentId) {
         navigation.navigate('PagoMercadoPago', { paymentId });
         return;
@@ -316,13 +320,23 @@ export default function CarritoScreen({ navigation }: Props) {
       navigation.navigate('Tabs', { screen: 'PedidosTab' });
     } catch (e) {
       if (pedidosMPGuardados) {
-        clear();
+        let limpiezaFallida = false;
+        if (!carritoMPPersistido) {
+          try {
+            await clearAndPersist();
+          } catch {
+            limpiezaFallida = true;
+          }
+        }
+        permitirSalida.current = true;
         navigation.navigate('Tabs', { screen: 'PedidosTab' });
         Alert.alert(
           'Pedido guardado',
-          e instanceof Error
-            ? e.message
-            : 'No se pudo iniciar el pago. Tus pedidos siguen pendientes; no los vuelvas a crear y consulta su estado antes de reintentar.',
+          limpiezaFallida
+            ? 'No se pudo guardar el carrito vacío. Tus pedidos ya existen; no vuelvas a confirmarlos. Consulta el pedido antes de reintentar el pago.'
+            : e instanceof Error
+              ? e.message
+              : 'No se pudo iniciar el pago. Tus pedidos siguen pendientes; no los vuelvas a crear y consulta su estado antes de reintentar.',
         );
         return;
       }

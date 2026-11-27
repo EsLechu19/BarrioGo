@@ -13,6 +13,7 @@ interface CartContextValue {
   remove: (productoId: string) => void;
   setCantidad: (productoId: string, cantidad: number) => void;
   clear: () => void;
+  clearAndPersist: () => Promise<void>;
   cantidadDe: (productoId: string) => number;
 }
 
@@ -50,7 +51,9 @@ export function CartProvider({ children }: { children: ReactNode }) {
   }, []);
 
   useEffect(() => {
-    if (hydrated) storage.saveCart(items);
+    if (hydrated) void storage.saveCart(items).catch(() => {
+      // Persistence errors are reported by storage; keep the in-memory cart usable.
+    });
   }, [items, hydrated]);
 
   // Carrito multinegocio (Fase 2): acepta productos de varios negocios;
@@ -101,6 +104,11 @@ export function CartProvider({ children }: { children: ReactNode }) {
 
   const clear = useCallback(() => setItems([]), []);
 
+  const clearAndPersist = useCallback(async (): Promise<void> => {
+    setItems([]);
+    await storage.saveCart([]);
+  }, []);
+
   const cantidadDe = useCallback(
     (productoId: string) =>
       items.find((i) => i.productoId === productoId)?.cantidad ?? 0,
@@ -126,9 +134,10 @@ export function CartProvider({ children }: { children: ReactNode }) {
       remove,
       setCantidad,
       clear,
+      clearAndPersist,
       cantidadDe,
     }),
-    [items, count, total, add, remove, setCantidad, clear, cantidadDe],
+    [items, count, total, add, remove, setCantidad, clear, clearAndPersist, cantidadDe],
   );
 
   return <CartContext.Provider value={value}>{children}</CartContext.Provider>;
