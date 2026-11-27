@@ -7,7 +7,7 @@ Permitir que la persona escriba una dirección y vea el pin en el mapa, o elija 
 - Implementar geocodificación directa e inversa con manejo de errores y caché.
 - Conectar el flujo con los componentes y pantallas de dirección existentes.
 - Mantener las coordenadas como datos internos.
-- No modificar Firebase, Render, Mercado Pago, seeds, APK, commits ni push.
+- No modificar Firebase, Render, Mercado Pago, seeds ni APK.
 
 ## Tareas
 - [x] MAP-01 — Mapear los consumidores actuales de dirección y mapa. Route: delegated (multiple files). Exploración: `MapaSelector` lo usan `DireccionesScreen`, `UbicacionModal` (desde Home y carrito), `MiLocalScreen` y `RegistrarNegocioScreen`; `UbicacionInput` solo se usa en las dos pantallas de negocio. Las coordenadas se guardan opcionalmente en `DireccionUsuario` y `DireccionPedido`, por lo que las direcciones antiguas pueden carecer de ellas. `HomeScreen` y `CarritoScreen` consumen el modal; detalles del negocio muestran direcciones y mapas estáticos, sin editar la dirección.
@@ -22,4 +22,4 @@ Permitir que la persona escriba una dirección y vea el pin en el mapa, o elija 
 - No se modifica infraestructura externa ni se realiza commit/push.
 
 ## Progreso
-MAP-01, MAP-02 y MAP-03 completados. Seguimiento de revisión independiente: se cerró la carrera entre búsqueda directa y Confirmar; el caso sin resultado conserva el texto y bloquea Confirmar hasta que se seleccione un pin/GPS, evitando persistir coordenadas predeterminadas/obsoletas. Verificación repetida tras las correcciones: `npx tsc --noEmit`, `npx expo lint` y `git diff --check` pasaron. No se instalaron dependencias ni se modificó infraestructura externa; cambios locales sin stage ni commit.
+MAP-01, MAP-02 y MAP-03 completados. Seguimiento de revisión independiente: se cerró la carrera entre búsqueda directa y Confirmar; el caso sin resultado conserva el texto y bloquea Confirmar hasta que se seleccione un pin/GPS, evitando persistir coordenadas predeterminadas/obsoletas. Verificación repetida tras las correcciones: `npx tsc --noEmit`, `npx expo lint` y `git diff --check` pasaron. No se instalaron dependencias ni se modificó infraestructura externa. Implementación registrada en `466e089 feat: sincronizar dirección con mapa` y subida a `apf4` con autorización posterior del usuario.
