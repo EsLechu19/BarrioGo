@@ -332,7 +332,7 @@ export const storage = {
     return enqueueNotificationWrite(usuarioId, async () => {
       const existing = await readNotifications(usuarioId);
       const duplicate = existing.some(
-        (item) => item.pedidoId === notification.pedidoId && item.estado === notification.estado,
+        (item) => item.id === notification.id,
       );
       if (duplicate) return false;
       await writeNotifications(usuarioId, [notification, ...existing]);

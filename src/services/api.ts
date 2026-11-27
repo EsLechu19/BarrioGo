@@ -22,6 +22,7 @@ import {
   getDocs,
   onSnapshot,
   query,
+  runTransaction,
   setDoc,
   updateDoc,
   where,
@@ -497,6 +498,7 @@ function isPedido(value: unknown): value is Pedido {
     (p.clienteNombre === undefined || typeof p.clienteNombre === 'string') &&
     (p.negocioNombre === undefined || typeof p.negocioNombre === 'string') &&
     (p.estadoPago === undefined || isEstadoPago(p.estadoPago)) &&
+    (p.pagoActivoId === undefined || typeof p.pagoActivoId === 'string') &&
     (p.envio === undefined ||
       (typeof p.envio === 'number' && Number.isFinite(p.envio) && p.envio >= 0))
   );
@@ -784,7 +786,10 @@ export function escucharMisPedidos(
     );
     return onSnapshot(
       q,
+      { includeMetadataChanges: true },
       (snap) => {
+        // Do not expose local writes before Firestore confirms them.
+        if (snap.metadata.hasPendingWrites) return;
         try {
           const data: unknown = snap.docs.map((d) => ({
             id: d.id,
@@ -964,6 +969,12 @@ export async function rechazarPedidoNegocio(pedidoId: string): Promise<void> {
   }
 }
 
+export function puedeCancelarPedido(pedido: Pedido): boolean {
+  if (pedido.estado !== 'pendiente' || pedido.pagoActivoId) return false;
+  return pedido.metodoPago?.tipo !== 'mercadopago_sandbox' ||
+    pedido.estadoPago === 'fallido';
+}
+
 export async function cancelarPedido(
   pedidoId: string,
   usuarioId: string,
@@ -973,20 +984,25 @@ export async function cancelarPedido(
   if (!usuarioId.trim()) throw new Error('Falta el usuario del pedido.');
   const ref = doc(getFirestoreDb(), 'pedidos', pedidoId);
   try {
-    const snap = await getDoc(ref);
-    if (!snap.exists()) throw new Error('El pedido no existe.');
-    const data: unknown = { id: snap.id, ...snap.data() };
-    if (!isPedido(data)) throw new Error('El pedido no tiene un formato válido.');
-    if (data.usuarioId !== usuarioId) {
-      throw new Error('Solo podés cancelar tus propios pedidos.');
-    }
-    if (data.estado !== 'pendiente') {
-      throw new Error('El pedido ya fue aceptado y no se puede cancelar.');
-    }
-    await updateDoc(ref, {
-      estado: 'cancelado',
-      canceladoPor: usuarioId,
-      canceladoFecha: new Date().toISOString(),
+    await runTransaction(getFirestoreDb(), async (transaction) => {
+      const snap = await transaction.get(ref);
+      if (!snap.exists()) throw new Error('El pedido no existe.');
+      const data: unknown = { id: snap.id, ...snap.data() };
+      if (!isPedido(data)) throw new Error('El pedido no tiene un formato válido.');
+      if (data.usuarioId !== usuarioId) {
+        throw new Error('Solo podés cancelar tus propios pedidos.');
+      }
+      if (data.estado !== 'pendiente') {
+        throw new Error('El pedido ya fue aceptado y no se puede cancelar.');
+      }
+      if (!puedeCancelarPedido(data)) {
+        throw new Error('No puedes cancelar mientras el pago de Mercado Pago esté pendiente o aprobado.');
+      }
+      transaction.update(ref, {
+        estado: 'cancelado',
+        canceladoPor: usuarioId,
+        canceladoFecha: new Date().toISOString(),
+      });
     });
   } catch (e) {
     if (
@@ -994,7 +1010,8 @@ export async function cancelarPedido(
       (e.message === 'El pedido no existe.' ||
         e.message === 'El pedido no tiene un formato válido.' ||
         e.message === 'Solo podés cancelar tus propios pedidos.' ||
-        e.message === 'El pedido ya fue aceptado y no se puede cancelar.')
+        e.message === 'El pedido ya fue aceptado y no se puede cancelar.' ||
+        e.message === 'No puedes cancelar mientras el pago de Mercado Pago esté pendiente o aprobado.')
     ) {
       throw e;
     }

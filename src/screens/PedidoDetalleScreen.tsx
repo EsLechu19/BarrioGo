@@ -17,6 +17,7 @@ import {
   cancelarPedido,
   escucharMisPedidos,
   getNegocioById,
+  puedeCancelarPedido,
   simularPago,
 } from '../services/api';
 import { firebaseReady } from '../services/firebase';
@@ -205,16 +206,11 @@ export default function PedidoDetalleScreen({ navigation, route }: Props) {
     }
   };
 
-  // Fase 4: cancela solo los pedidos pendientes dados (nunca toca los ya
-  // aceptados). Misma regla del backend que la lista: pendiente → cancelado.
   const confirmarCancelacion = (aCancelar: Pedido[]): void => {
-    if (aCancelar.length === 0 || cancelando) return;
+    if (aCancelar.length === 0 || cancelando || aCancelar.some((p) => !puedeCancelarPedido(p))) return;
     const base: string =
       '¿Seguro que querés cancelar este pedido? Esta acción no se puede deshacer.';
-    const pagoNota: string = aCancelar.some((p) => p.estadoPago === 'pagado')
-      ? ' El pago fue simulado: no hay dinero real que reembolsar.'
-      : '';
-    Alert.alert('Cancelar pedido', `${base}${pagoNota}`, [
+    Alert.alert('Cancelar pedido', base, [
       { text: 'Seguir con el pedido', style: 'cancel' },
       {
         text: 'Sí, cancelar',
@@ -373,7 +369,7 @@ export default function PedidoDetalleScreen({ navigation, route }: Props) {
                 </Text>
               </TouchableOpacity>
             ) : null}
-            {pedido.estado === 'pendiente' ? (
+            {puedeCancelarPedido(pedido) ? (
               <TouchableOpacity
                 style={[styles.dangerButton, cancelando && styles.dangerButtonDisabled]}
                 onPress={() => confirmarCancelacion([pedido])}
@@ -383,6 +379,14 @@ export default function PedidoDetalleScreen({ navigation, route }: Props) {
                   {cancelando ? 'Cancelando...' : 'Cancelar pedido'}
                 </Text>
               </TouchableOpacity>
+            ) : pedido.estado === 'pendiente' && pedido.metodoPago?.tipo === 'mercadopago_sandbox' ? (
+              <Text style={styles.meta}>
+                {pedido.estadoPago === 'pagado'
+                  ? 'El pago ya fue aprobado. Contacta al negocio si necesitas ayuda con el pedido.'
+                  : pedido.estadoPago === 'pendiente'
+                    ? 'No puedes cancelar mientras el pago de Mercado Pago esté pendiente.'
+                    : 'No puedes cancelar mientras el checkout de Mercado Pago siga activo.'}
+              </Text>
             ) : null}
           </View>
         }

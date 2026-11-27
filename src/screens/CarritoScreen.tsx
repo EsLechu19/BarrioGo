@@ -289,18 +289,18 @@ export default function CarritoScreen({ navigation }: Props) {
         tokenSolicitado = true;
         void registrarPushToken(usuarioId);
       };
-      // Aviso local de "pedido realizado" por cada pedido del carrito. No
-      // bloquea el checkout: si el SO o el historial fallan, el pedido ya
-      // está creado y el cliente no debe ver un error.
-      for (const pedido of pedidosCreados) {
-        void registrarCambioEstado(
-          usuarioId,
-          { id: pedido.id, estado: 'pendiente' },
-          'nuevo',
-          registrarToken,
-        ).catch(() => {
-          // Silencioso: el pedido ya está confirmado en Firestore.
-        });
+      // Mercado Pago orders notify the customer only after payment approval.
+      if (!esMercadoPagoSandbox) {
+        for (const pedido of pedidosCreados) {
+          void registrarCambioEstado(
+            usuarioId,
+            { id: pedido.id, estado: 'pendiente' },
+            'nuevo',
+            registrarToken,
+          ).catch(() => {
+            // Notification failures do not undo a saved order.
+          });
+        }
       }
       clear();
       if (paymentId) {

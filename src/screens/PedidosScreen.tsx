@@ -12,7 +12,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { TabScreenProps } from '../navigation/TabScreenProps';
 import { useAuth } from '../context/AuthContext';
-import { cancelarPedido, escucharMisPedidos } from '../services/api';
+import { cancelarPedido, escucharMisPedidos, puedeCancelarPedido } from '../services/api';
 import { firebaseReady } from '../services/firebase';
 import { Pedido } from '../types/Pedido';
 import { useColors } from '../context/ThemeContext';
@@ -126,9 +126,8 @@ export default function PedidosScreen({ navigation }: Props) {
         renderItem={({ item: pedido }) => {
           const estadoVista: EstadoVisible = pedido.estado;
           const colorEstado: string = ESTADO_COLORS[estadoVista];
-          // Solo se puede cancelar mientras sigue pendiente.
           const puedeCancelar: boolean =
-            pedido.estado === 'pendiente' && cancelandoId !== pedido.id;
+            puedeCancelarPedido(pedido) && cancelandoId !== pedido.id;
           const confirmarCancelacion = (): void => {
             const pagoNota: string =
               pedido.estadoPago === 'pagado'

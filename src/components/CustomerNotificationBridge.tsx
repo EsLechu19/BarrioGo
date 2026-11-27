@@ -5,12 +5,14 @@ import { firebaseReady } from '../services/firebase';
 import {
   registrarCambioEstado,
 } from '../services/notificaciones';
-import type { EstadoPedido, Pedido } from '../types/Pedido';
+import type { EstadoPago, EstadoPedido, Pedido } from '../types/Pedido';
+
+type EstadoPrevio = { estado: EstadoPedido; estadoPago?: EstadoPago };
 
 /** Keeps customer notification history independent from screen mounting. */
 export function CustomerNotificationBridge(): null {
   const { user, rol } = useAuth();
-  const estadosPrevios = useRef<Record<string, EstadoPedido>>({});
+  const estadosPrevios = useRef<Record<string, EstadoPrevio>>({});
 
   useEffect(() => {
     estadosPrevios.current = {};
@@ -25,7 +27,7 @@ export function CustomerNotificationBridge(): null {
       (pedidos: Pedido[]) => {
         if (!activo) return;
 
-        const mapa: Record<string, EstadoPedido> = {};
+        const mapa: Record<string, EstadoPrevio> = {};
         if (primeraCarga) {
           // La primera lectura es la línea base: los pedidos que ya existían
           // no son avisos, son el estado previo.
@@ -33,14 +35,22 @@ export function CustomerNotificationBridge(): null {
         } else {
           for (const pedido of pedidos) {
             const estadoPrevio = estadosPrevios.current[pedido.id];
-            if (estadoPrevio === undefined) {
+            const esMercadoPago = pedido.metodoPago?.tipo === 'mercadopago_sandbox';
+            const pagoConfirmado = esMercadoPago && pedido.estadoPago === 'pagado' &&
+              estadoPrevio?.estadoPago !== 'pagado';
+            if (pagoConfirmado) {
+              void registrarCambioEstado(uid, pedido, 'pago_aprobado').catch(() => {
+                // Notification failures do not affect payment state.
+              });
+            } else if (estadoPrevio === undefined) {
+              if (esMercadoPago) continue;
               // Pedido nuevo: hecho en otro dispositivo o recién creado. El
-              // historial deduplica por pedido+estado, así que no duplica el
+              // historial deduplica por identificador, así que no duplica el
               // aviso que ya se mandó al confirmar el pedido.
               void registrarCambioEstado(uid, pedido, 'nuevo').catch(() => {
                 // Fallos de historial o del SO no son fatales.
               });
-            } else if (estadoPrevio !== pedido.estado) {
+            } else if (estadoPrevio.estado !== pedido.estado) {
               void registrarCambioEstado(uid, pedido).catch(() => {
                 // Fallos de historial o del SO no son fatales.
               });
@@ -48,7 +58,9 @@ export function CustomerNotificationBridge(): null {
           }
         }
 
-        for (const pedido of pedidos) mapa[pedido.id] = pedido.estado;
+        for (const pedido of pedidos) {
+          mapa[pedido.id] = { estado: pedido.estado, estadoPago: pedido.estadoPago };
+        }
         estadosPrevios.current = mapa;
       },
       () => {

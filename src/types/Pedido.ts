@@ -58,6 +58,8 @@ export interface Pedido {
   // Resultado del pago simulado al confirmar (Fase 3). Ausente = pedido
   // creado antes de la Fase 3: la app no muestra nada de pago.
   estadoPago?: EstadoPago;
+  // Active checkout reservation managed by the payment backend.
+  pagoActivoId?: string;
   // Costo de envío cobrado (soles). Ausente = pedido sin envío cobrado.
   envio?: number;
 }

@@ -14,6 +14,8 @@ export const NOTIFICATION_CHANNEL_ID = 'barriogo-pedidos-v2';
 const NOTIFICATION_SOUND = 'xd.wav';
 
 export type RolNotificacion = 'cliente' | 'negocio';
+type EventoNotificacion = 'nuevo' | 'estado' | 'cancelado' | 'pago_aprobado';
+const PAGO_APROBADO_MENSAJE = 'Pago aprobado. Tu pedido fue enviado';
 
 // Lo mínimo de un pedido que necesita una notificación. Permite avisar un
 // pedido recién creado sin inventar los datos que solo living en Firestore.
@@ -87,7 +89,7 @@ export async function asegurarPermisoNotificaciones(): Promise<boolean> {
 export function obtenerMensajeNotificacion(
   pedido: Pedido,
   rol: RolNotificacion,
-  evento: 'nuevo' | 'estado' | 'cancelado' = 'estado'
+  evento: EventoNotificacion = 'estado'
 ): { titulo: string; cuerpo: string } {
   const numero = `#${pedido.id}`;
   const nombreNegocio = pedido.negocioNombre || 'negocio';
@@ -111,6 +113,10 @@ export function obtenerMensajeNotificacion(
       titulo: 'BarrioGo Negocios',
       cuerpo: `El pedido ${numero} cambió a ${ESTADO_LABELS[pedido.estado]}.`,
     };
+  }
+
+  if (evento === 'pago_aprobado') {
+    return { titulo: PAGO_APROBADO_MENSAJE, cuerpo: '' };
   }
 
   switch (pedido.estado) {
@@ -156,7 +162,7 @@ export function obtenerMensajeNotificacion(
 export async function notificarPedido(
   pedido: PedidoNotificable,
   rol: RolNotificacion,
-  evento: 'nuevo' | 'estado' | 'cancelado' = 'estado',
+  evento: EventoNotificacion = 'estado',
   onPermisoOtorgado?: () => void,
 ): Promise<void> {
   try {
@@ -182,7 +188,7 @@ export async function notificarPedido(
     await Notifications.scheduleNotificationAsync({
       content: {
         title: mensaje.titulo,
-        body: mensaje.cuerpo,
+        ...(mensaje.cuerpo ? { body: mensaje.cuerpo } : {}),
         ...(conAssetsPropios ? { sound: NOTIFICATION_SOUND } : {}),
         data: {
           pedidoId: pedido.id,
@@ -244,21 +250,21 @@ export function avisarHistorialActualizado(usuarioId: string): void {
 export async function registrarCambioEstado(
   usuarioId: string,
   pedido: PedidoNotificable,
-  evento: 'nuevo' | 'estado' | 'cancelado' = 'estado',
+  evento: EventoNotificacion = 'estado',
   onPermisoOtorgado?: () => void,
 ): Promise<void> {
   const preferencias = await storage.loadUserPreferences(usuarioId);
 
   if (preferencias?.notificaciones === false) return;
 
-  const mensaje = obtenerMensajeNotificacion(pedido as Pedido, 'cliente');
+  const mensaje = obtenerMensajeNotificacion(pedido as Pedido, 'cliente', evento);
 
   const notification = {
-    id: `${pedido.id}:${pedido.estado}`,
+    id: evento === 'pago_aprobado' ? `${pedido.id}:pago_aprobado` : `${pedido.id}:${pedido.estado}`,
     usuarioId,
     pedidoId: pedido.id,
     estado: pedido.estado,
-    texto: mensaje.cuerpo,
+    texto: evento === 'pago_aprobado' ? mensaje.titulo : mensaje.cuerpo,
     creadaEn: new Date().toISOString(),
     leida: false,
   };
