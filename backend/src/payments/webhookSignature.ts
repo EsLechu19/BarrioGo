@@ -13,7 +13,7 @@ export function signatureIsValid(req: Request): boolean {
   const ts = parts.ts;
   const v1 = parts.v1;
   if (!dataId || !ts || !v1 || !/^[a-f0-9]{64}$/i.test(v1)) return false;
-  const manifest = `id:${dataId};${requestId ? `request-id:${requestId};` : ''}ts:${ts};`;
+  const manifest = `id:${dataId.toLowerCase()};${requestId ? `request-id:${requestId};` : ''}ts:${ts};`;
   const expected = crypto.createHmac('sha256', webhookSecret).update(manifest).digest();
   const actual = Buffer.from(v1, 'hex');
   return actual.length === expected.length && crypto.timingSafeEqual(actual, expected);

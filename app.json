@@ -27,7 +27,7 @@
     "name": "BarrioGo",
     "slug": "barriogov2",
     "scheme": "barriogo",
-    "version": "3.2.0",
+    "version": "4.2.0",
     "orientation": "portrait",
     "icon": "./assets/img/icon1.png",
     "userInterfaceStyle": "light",
