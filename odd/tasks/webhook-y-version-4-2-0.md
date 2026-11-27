@@ -11,12 +11,12 @@ Permitir que los webhooks de órdenes aprobadas de Mercado Pago se verifiquen co
 - No tocar Firebase, seeds, reglas, mapas, checkout, credenciales ni secretos.
 
 ## Tareas
-- [x] WEB-01 — Revisar configuración de versión y corregir firma del webhook. Route: delegated (two files). `data.id` is lowercased only in the HMAC manifest; `app.json` version is `4.2.0`.
+- [x] WEB-01 — Revisar configuración de versión y corregir firma del webhook. Route: delegated (two files). El manifiesto HMAC conserva la capitalización original de `data.id`; `app.json` version is `4.2.0`.
 - [x] WEB-02 — Ejecutar verificaciones y documentar resultados. Route: delegated verification. `backend`: `npm run typecheck`, `npm run lint`, and `npm run build` passed. Root: `npx tsc --noEmit`, `npx expo lint`, and `git diff --check` passed; Git emitted only LF-to-CRLF normalization warnings for the two edited source/config files.
 - [x] WEB-03 — Preparar commits y subir a apf4 con autorización del usuario. Implementación subida en `874df0d fix: validar webhook de Mercado Pago`.
 - [x] WEB-04 — Restaurar la capitalización original de `data.id` para la firma HMAC de Orders, conservando los requisitos de firma y la comparación timing-safe. Route: delegated (backend correction).
 - [x] WEB-05 — Añadir `POST /api/payments/:paymentId/reconcile`; verifica propiedad, lee el `mpOrderId` almacenado y reutiliza la reconciliación transaccional tras consultar la orden oficial. La pantalla reconcilia tanto al abrirse como al usar “Consultar estado”, y luego vuelve a leer el estado; los errores conservan el estado actual y las respuestas obsoletas no actualizan la pantalla. Route: delegated (backend + frontend).
-- [ ] WEB-06 — Verificación local final (incluyendo reconciliación al abrir la pantalla) completada: backend typecheck/lint/build, TypeScript raíz, Expo lint y diff check pasaron. No se hizo commit ni push porque están prohibidos para esta tarea. Route: delegated verification; publicación pendiente de autorización.
+- [x] WEB-06 — Verificación local final (incluyendo reconciliación al abrir la pantalla) completada: backend typecheck/lint/build, TypeScript raíz, Expo lint y diff check pasaron. Implementación publicada con autorización en `c70cf5a fix: reconciliar pagos de Mercado Pago`. Route: delegated verification.
 
 ## Criterios de aceptación
 - El HMAC usa la capitalización original recibida para `data.id`; se conserva la validación estricta y timing-safe.
