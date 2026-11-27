@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light">
+  <title>Eliminar cuenta | BarrioGo</title>
+  <meta name="description" content="Cómo solicitar manualmente la eliminación de una cuenta de BarrioGo y qué ocurre con los datos asociados.">
+  <style>
+    :root { font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; color: #243241; background: #f7f9fb; line-height: 1.65; }
+    * { box-sizing: border-box; }
+    body { margin: 0; }
+    a { color: #9a4216; text-underline-offset: .2em; }
+    a:focus-visible { outline: 3px solid #f97316; outline-offset: 3px; }
+    .wrap { width: min(100% - 2rem, 760px); margin-inline: auto; }
+    header { background: #fff; border-bottom: 1px solid #e6eaf0; }
+    header .wrap { display: flex; align-items: center; justify-content: space-between; gap: 1rem; padding-block: 1rem; }
+    .brand { color: #172534; font-size: 1.1rem; font-weight: 800; text-decoration: none; }
+    nav { display: flex; flex-wrap: wrap; gap: .9rem; font-size: .9rem; }
+    main { padding-block: clamp(2rem, 5vw, 4rem); }
+    h1, h2 { color: #172534; line-height: 1.25; }
+    h1 { margin: .4rem 0 1rem; font-size: clamp(2rem, 5vw, 2.8rem); }
+    h2 { margin-top: 2.3rem; font-size: 1.35rem; }
+    p, li { max-width: 72ch; }
+    ol, ul { padding-left: 1.4rem; }
+    li + li { margin-top: .65rem; }
+    .eyebrow { color: #9a4216; font-size: .8rem; font-weight: 800; letter-spacing: .1em; text-transform: uppercase; }
+    .lead { font-size: 1.12rem; color: #425365; }
+    .action { display: inline-block; margin-block: .4rem; padding: .75rem 1.1rem; border-radius: .5rem; background: #b84f19; color: #fff; font-weight: 700; text-decoration: none; }
+    .action:hover, .action:focus-visible { background: #8f3a11; color: #fff; }
+    .note { padding: 1rem 1.2rem; border-left: 4px solid #f97316; border-radius: .4rem; background: #fff; }
+    footer { border-top: 1px solid #e6eaf0; padding-block: 1.5rem; color: #5f6e7b; font-size: .9rem; }
+    @media (max-width: 520px) { header .wrap { align-items: flex-start; flex-direction: column; } }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="wrap">
+      <a class="brand" href="privacy.html">BarrioGo</a>
+      <nav aria-label="Enlaces legales">
+        <a href="privacy.html">Privacidad</a>
+        <a href="delete-account.html" aria-current="page">Eliminar cuenta</a>
+      </nav>
+    </div>
+  </header>
+  <main class="wrap">
+    <span class="eyebrow">Solicitud por correo</span>
+    <h1>Eliminar tu cuenta de BarrioGo</h1>
+    <p class="lead">Puedes solicitar la eliminación de tu cuenta y los datos asociados aunque ya no tengas instalada la aplicación. La solicitud se atiende manualmente por correo; esta página no modifica tu cuenta ni Firebase por sí sola.</p>
+
+    <h2>Cómo solicitarla</h2>
+    <ol>
+      <li>Desde el <strong>correo registrado en BarrioGo</strong>, escribe a <a href="mailto:jotah26.dev@gmail.com">jotah26.dev@gmail.com</a>.</li>
+      <li>Usa el asunto exacto <strong>Solicitud de eliminación de cuenta BarrioGo</strong> e indica que deseas eliminar tu cuenta.</li>
+      <li>Responderemos a ese correo para verificar la titularidad y coordinar la eliminación. Si ya no tienes acceso al correo registrado, indícalo al escribir para revisar una forma alternativa de verificación.</li>
+    </ol>
+    <p><a class="action" href="mailto:jotah26.dev@gmail.com?subject=Solicitud%20de%20eliminaci%C3%B3n%20de%20cuenta%20BarrioGo">Redactar solicitud</a></p>
+    <p>No incluyas contraseñas, números de tarjeta ni documentos de identidad en el primer mensaje.</p>
+
+    <h2>Qué datos se eliminan</h2>
+    <p>Tras verificar la solicitud, gestionaremos manualmente la eliminación de la cuenta de autenticación, el perfil de BarrioGo y sus datos asociados en Firestore, incluidos los tokens de notificaciones push. También revisaremos y eliminaremos las fotos propias alojadas en Cloudinary cuando correspondan a esa cuenta.</p>
+    <p>Las direcciones guardadas solo en el dispositivo y el historial local de notificaciones no pueden borrarse a distancia: elimínalos desde la aplicación o borra sus datos del dispositivo. La dirección incluida en un pedido sigue el plazo de conservación de pedidos indicado abajo.</p>
+
+    <h2>Qué datos se conservan temporalmente</h2>
+    <p>Los registros de pedidos y pagos asociados a la cuenta se conservan durante <strong>90 días desde la solicitud</strong> para resolver incidencias pendientes. Después se eliminan o anonimizan. Este plazo no significa que la cuenta permanezca activa durante esos 90 días.</p>
+    <p>Si usaste el checkout externo de Mercado Pago, la eliminación de datos que Mercado Pago haya recibido directamente se rige por sus propios procesos; BarrioGo no almacena números de tarjeta.</p>
+
+    <p class="note">Este es un proceso manual. Enviar el correo inicia la solicitud, pero no borra los datos de forma instantánea. Para más información sobre el tratamiento de datos, consulta la <a href="privacy.html">política de privacidad de BarrioGo</a>.</p>
+  </main>
+  <footer><div class="wrap">BarrioGo · <a href="privacy.html">Política de privacidad</a></div></footer>
+</body>
+</html>

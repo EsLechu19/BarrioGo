@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light">
+  <title>Política de privacidad | BarrioGo</title>
+  <meta name="description" content="Cómo BarrioGo trata los datos de cuentas, pedidos, ubicación, fotografías, notificaciones y pagos de prueba.">
+  <style>
+    :root { font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; color: #243241; background: #f7f9fb; line-height: 1.65; }
+    * { box-sizing: border-box; }
+    body { margin: 0; }
+    a { color: #9a4216; text-underline-offset: .2em; }
+    a:focus-visible { outline: 3px solid #f97316; outline-offset: 3px; }
+    .wrap { width: min(100% - 2rem, 760px); margin-inline: auto; }
+    header { background: #fff; border-bottom: 1px solid #e6eaf0; }
+    header .wrap { display: flex; align-items: center; justify-content: space-between; gap: 1rem; padding-block: 1rem; }
+    .brand { color: #172534; font-size: 1.1rem; font-weight: 800; text-decoration: none; }
+    nav { display: flex; flex-wrap: wrap; gap: .9rem; font-size: .9rem; }
+    main { padding-block: clamp(2rem, 5vw, 4rem); }
+    h1, h2 { color: #172534; line-height: 1.25; }
+    h1 { margin: .4rem 0 1rem; font-size: clamp(2rem, 5vw, 2.8rem); }
+    h2 { margin-top: 2.3rem; font-size: 1.35rem; }
+    p, li { max-width: 72ch; }
+    ul { padding-left: 1.4rem; }
+    li + li { margin-top: .55rem; }
+    .eyebrow { color: #9a4216; font-size: .8rem; font-weight: 800; letter-spacing: .1em; text-transform: uppercase; }
+    .lead { font-size: 1.12rem; color: #425365; }
+    .note { padding: 1rem 1.2rem; border-left: 4px solid #f97316; border-radius: .4rem; background: #fff; }
+    footer { border-top: 1px solid #e6eaf0; padding-block: 1.5rem; color: #5f6e7b; font-size: .9rem; }
+    @media (max-width: 520px) { header .wrap { align-items: flex-start; flex-direction: column; } }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="wrap">
+      <a class="brand" href="privacy.html">BarrioGo</a>
+      <nav aria-label="Enlaces legales">
+        <a href="privacy.html" aria-current="page">Privacidad</a>
+        <a href="delete-account.html">Eliminar cuenta</a>
+      </nav>
+    </div>
+  </header>
+  <main class="wrap">
+    <span class="eyebrow">Información para usuarios</span>
+    <h1>Política de privacidad</h1>
+    <p class="lead">BarrioGo conecta a clientes con negocios de barrio. Esta política explica qué datos utiliza la aplicación y con qué servicios se transmiten.</p>
+    <p><strong>Última actualización:</strong> 27 de noviembre de 2026. Para consultas sobre privacidad, escribe a <a href="mailto:jotah26.dev@gmail.com">jotah26.dev@gmail.com</a>.</p>
+
+    <h2>Datos de cuenta y perfil</h2>
+    <p>Para crear una cuenta o iniciar sesión se utiliza Firebase Authentication. Tratamos el nombre, el correo electrónico y el identificador de cuenta; si eliges registrarte con correo, Firebase gestiona la credencial de acceso. También puedes iniciar sesión con Google de forma opcional: Google proporciona una credencial a Firebase y BarrioGo utiliza el nombre y correo de esa cuenta. El teléfono y la foto de perfil se añaden solo si decides proporcionarlos. El perfil se guarda en Firebase Firestore; algunos datos de perfil también se conservan en el dispositivo.</p>
+
+    <h2>Direcciones, ubicación y mapas</h2>
+    <p>Las direcciones que guardas para elegir una entrega se conservan en el almacenamiento local del dispositivo. Al confirmar un pedido, la dirección seleccionada y, si existen, sus coordenadas se guardan con el pedido en Firebase Firestore para gestionar la entrega. Puedes indicar una dirección o un punto en el mapa; el acceso al GPS requiere tu permiso y se usa para ayudarte a ubicarte.</p>
+    <p>El mapa utiliza MapLibre y descarga mapas de OpenFreeMap. Al buscar una dirección o convertir un punto del mapa en una dirección, BarrioGo envía la dirección o las coordenadas a Nominatim, un servicio de OpenStreetMap. Los negocios también pueden publicar la dirección y ubicación de su local.</p>
+
+    <h2>Pedidos, pagos y contenido que eliges publicar</h2>
+    <p>Los pedidos se guardan en Firebase Firestore con el identificador de usuario, negocio, productos, cantidades, importes, método de pago, estado y dirección de entrega. Estos datos permiten al negocio preparar y gestionar el pedido. Si publicas una opinión, guardamos su valoración, texto, nombre e identificador de cuenta.</p>
+    <p>El pago de prueba de Mercado Pago es opcional y abre un checkout externo. Para iniciar ese pago, BarrioGo envía al servicio de pagos los identificadores de pedido; el backend transmite a Mercado Pago el correo verificado del comprador, los productos y el importe. <strong>BarrioGo no recibe ni almacena números de tarjeta.</strong> Los datos que introduces directamente en el checkout de Mercado Pago se rigen también por las condiciones de ese servicio.</p>
+
+    <h2>Fotografías y notificaciones</h2>
+    <p>Si eliges una foto de perfil, negocio o producto, la imagen se sube a Cloudinary y su dirección web se guarda con el perfil, negocio o producto en Firestore. No se suben fotos de tu galería sin que las selecciones.</p>
+    <p>Si autorizas las notificaciones, la aplicación obtiene un token de Expo Push y lo guarda en tu perfil de Firestore para poder enviar avisos de pedidos. Cuando se utiliza el servicio de notificaciones, el token y el contenido del aviso se transmiten a Expo y a los servicios de entrega de notificaciones del dispositivo. El historial de avisos de la aplicación se guarda localmente.</p>
+
+    <h2>Conservación y eliminación</h2>
+    <p>Mantenemos los datos de cuenta y servicio mientras sean necesarios para operar BarrioGo o hasta tramitar una solicitud de eliminación. Tras solicitar la eliminación de la cuenta, los datos de pedidos y pagos se conservan durante <strong>90 días</strong> para resolver incidencias y luego se eliminan o anonimizan. El proceso se realiza manualmente; esta página no borra datos por sí sola. Las direcciones y avisos guardados solo en el dispositivo deben borrarse en ese dispositivo.</p>
+    <p class="note">Puedes iniciar la solicitud y conocer exactamente qué datos se eliminan en <a href="delete-account.html">Eliminar cuenta de BarrioGo</a>.</p>
+
+    <h2>Contacto</h2>
+    <p>Para preguntas sobre estos datos o sobre una solicitud de eliminación, escribe a <a href="mailto:jotah26.dev@gmail.com">jotah26.dev@gmail.com</a>. No envíes contraseñas ni datos de tarjeta por correo.</p>
+  </main>
+  <footer><div class="wrap">BarrioGo · <a href="delete-account.html">Solicitar eliminación de cuenta</a></div></footer>
+</body>
+</html>
