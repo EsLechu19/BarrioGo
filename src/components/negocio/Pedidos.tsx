@@ -83,6 +83,13 @@ export function Pedidos({
       ) : (
         pedidos.map((item) => {
           const colorEstado: string = ESTADO_COLORS[item.estado];
+          const esperandoPagoMercadoPago: boolean =
+            item.metodoPago?.tipo === 'mercadopago_sandbox' &&
+            item.estado === 'pendiente' &&
+            item.estadoPago === 'pendiente';
+          const bloquearAccionesPagoMercadoPago: boolean =
+            item.metodoPago?.tipo === 'mercadopago_sandbox' &&
+            item.estadoPago !== 'pagado';
           return (
             <SeccionCard
               key={item.id}
@@ -97,8 +104,8 @@ export function Pedidos({
               }
               iconoFondo={`${colorEstado}1A`}
               iconoColor={colorEstado}
-               badgeTexto={ESTADO_LABELS[item.estado]}
-               badgeColor={colorEstado}
+               badgeTexto={esperandoPagoMercadoPago ? 'Esperando confirmación de pago' : ESTADO_LABELS[item.estado]}
+               badgeColor={esperandoPagoMercadoPago ? '#F59E0B' : colorEstado}
               >
                <View style={styles.detailArea}>
                  <Text style={styles.detailTitle}>Detalle del pedido</Text>
@@ -128,8 +135,26 @@ export function Pedidos({
                    </Text>
                  ) : null}
                </View>
-               {
-                 item.estado !== 'entregado' && item.estado !== 'cancelado' ? (
+               {esperandoPagoMercadoPago ? (
+                 <View style={styles.doneRow}>
+                   <Ionicons name="time-outline" size={16} color="#F59E0B" />
+                   <Text style={[styles.doneText, { color: '#F59E0B' }]}>Esperando confirmación de pago</Text>
+                 </View>
+               ) : item.estado === 'cancelado' ? (
+                  <View style={styles.doneRow}>
+                    <Ionicons name="close-circle-outline" size={16} color={colors.error} />
+                    <Text style={[styles.doneText, { color: colors.error }]}>Pedido cancelado</Text>
+                  </View>
+                ) : item.estado === 'entregado' ? (
+                  <View style={styles.doneRow}>
+                    <Ionicons
+                       name="checkmark-done-outline"
+                       size={16}
+                       color={colors.success}
+                     />
+                    <Text style={styles.doneText}>Pedido completado</Text>
+                  </View>
+                ) : bloquearAccionesPagoMercadoPago ? null : (
                    <View style={styles.actions}>
                    <TouchableOpacity
                     style={[
@@ -157,22 +182,7 @@ export function Pedidos({
                      </TouchableOpacity>
                    ) : null}
                    </View>
-                 ) : item.estado === 'cancelado' ? (
-                  <View style={styles.doneRow}>
-                    <Ionicons name="close-circle-outline" size={16} color={colors.error} />
-                    <Text style={[styles.doneText, { color: colors.error }]}>Pedido cancelado</Text>
-                  </View>
-                ) : (
-                  <View style={styles.doneRow}>
-                    <Ionicons
-                       name="checkmark-done-outline"
-                       size={16}
-                       color={colors.success}
-                     />
-                    <Text style={styles.doneText}>Pedido completado</Text>
-                  </View>
-                )
-              }
+               )}
             </SeccionCard>
           );
         })

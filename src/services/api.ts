@@ -886,6 +886,12 @@ export async function cambiarEstadoPedido(
     const snap = await getDoc(ref);
     const data: unknown = snap.exists() ? { id: snap.id, ...snap.data() } : null;
     if (!isPedido(data)) throw new Error('El pedido no existe o no es válido.');
+    if (
+      data.metodoPago?.tipo === 'mercadopago_sandbox' &&
+      data.estadoPago !== 'pagado'
+    ) {
+      throw new Error('El pago de Mercado Pago todavía no está confirmado.');
+    }
     const siguiente: EstadoPedido | undefined =
       data.estado === 'pendiente'
         ? 'confirmado'
@@ -902,6 +908,7 @@ export async function cambiarEstadoPedido(
     if (
       e instanceof Error &&
       (e.message === 'El pedido no existe o no es válido.' ||
+        e.message === 'El pago de Mercado Pago todavía no está confirmado.' ||
         e.message === 'La transición de estado del pedido no es válida.')
     ) {
       throw e;
@@ -925,6 +932,12 @@ export async function rechazarPedidoNegocio(pedidoId: string): Promise<void> {
     if (!snap.exists()) throw new Error('El pedido no existe.');
     const data: unknown = { id: snap.id, ...snap.data() };
     if (!isPedido(data)) throw new Error('El pedido no tiene un formato válido.');
+    if (
+      data.metodoPago?.tipo === 'mercadopago_sandbox' &&
+      data.estadoPago !== 'pagado'
+    ) {
+      throw new Error('El pago de Mercado Pago todavía no está confirmado.');
+    }
     if (data.estado !== 'pendiente') {
       throw new Error('Solo se puede rechazar un pedido pendiente.');
     }
@@ -938,6 +951,7 @@ export async function rechazarPedidoNegocio(pedidoId: string): Promise<void> {
       e instanceof Error &&
       (e.message === 'El pedido no existe.' ||
         e.message === 'El pedido no tiene un formato válido.' ||
+        e.message === 'El pago de Mercado Pago todavía no está confirmado.' ||
         e.message === 'Solo se puede rechazar un pedido pendiente.')
     ) {
       throw e;

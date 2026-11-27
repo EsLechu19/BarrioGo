@@ -134,6 +134,9 @@ service cloud.firestore {
 
       function esTransicionValida() {
         return !('pagoActivoId' in resource.data)
+          && (!(('metodoPago' in resource.data)
+            && resource.data.metodoPago.tipo == 'mercadopago_sandbox')
+            || resource.data.estadoPago == 'pagado')
           && ((resource.data.estado == 'pendiente'
             && request.resource.data.estado == 'confirmado')
           || (resource.data.estado == 'confirmado'
@@ -157,6 +160,9 @@ service cloud.firestore {
         return esDuenoNegocio(resource.data.negocioId)
           && resource.data.estado == 'pendiente'
           && !('pagoActivoId' in resource.data)
+          && (!(('metodoPago' in resource.data)
+            && resource.data.metodoPago.tipo == 'mercadopago_sandbox')
+            || resource.data.estadoPago == 'pagado')
           && request.resource.data.estado == 'cancelado'
           && request.resource.data.usuarioId == resource.data.usuarioId
           && request.resource.data.negocioId == resource.data.negocioId
