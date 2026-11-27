@@ -12,7 +12,10 @@ export const webhooksRouter = Router();
 webhooksRouter.post('/mercadopago', async (req, res) => {
   const signatureResult = validateWebhookSignature(req);
   if (!signatureResult.valid) {
-    console.warn('Rejected Mercado Pago webhook signature', { reason: signatureResult.reason });
+    console.warn('Rejected Mercado Pago webhook signature', {
+      reason: signatureResult.reason,
+      ...signatureResult.diagnostics,
+    });
     sendError(res, 401, 'Invalid webhook signature.');
     return;
   }
