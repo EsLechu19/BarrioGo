@@ -4,10 +4,12 @@ import { cents, text } from './orderValidation.js';
 import { getOfficialMercadoPagoOrder } from './mercadoPagoClient.js';
 import type { PaymentData, PedidoWithPayment } from '../types/payment.js';
 
-export async function updatePaymentFromOfficialOrder(orderId: string): Promise<void> {
+export async function updatePaymentFromOfficialOrder(orderId: string, expectedPaymentId?: string): Promise<void> {
   const order = await getOfficialMercadoPagoOrder(orderId);
   const paymentId = text(order.external_reference);
-  if (!paymentId || order.id !== orderId) throw new Error('Provider order is not linked to a payment.');
+  if (!paymentId || order.id !== orderId || (expectedPaymentId && paymentId !== expectedPaymentId)) {
+    throw new Error('Provider order is not linked to the expected payment.');
+  }
   const paymentRef = db.collection('pagos').doc(paymentId);
   const orderAmount = cents(Number(order.total_amount));
   const paidAmount = cents(Number(order.total_paid_amount));

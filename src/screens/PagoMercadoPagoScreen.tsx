@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { ActivityIndicator, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -7,7 +7,7 @@ import type { RootStackParamList } from '../navigation/RootStackParamList';
 import { ScreenHeader } from '../components/ScreenHeader';
 import { useColors } from '../context/ThemeContext';
 import type { Colors } from '../styles/colors';
-import { consultarPagoMercadoPago, type MercadoPagoPaymentStatus } from '../services/mercadoPago';
+import { consultarPagoMercadoPago, reconciliarPagoMercadoPago, type MercadoPagoPaymentStatus } from '../services/mercadoPago';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'PagoMercadoPago'>;
 
@@ -25,51 +25,89 @@ export default function PagoMercadoPagoScreen({ navigation, route }: Props) {
   const colors = useColors();
   const styles = useMemo(() => makeStyles(colors), [colors]);
   const [status, setStatus] = useState<MercadoPagoPaymentStatus | null>(null);
+  const [statusPaymentId, setStatusPaymentId] = useState<string | null>(null);
   const [checkoutUrl, setCheckoutUrl] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [errorPaymentId, setErrorPaymentId] = useState<string | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
+  const [requestPaymentId, setRequestPaymentId] = useState<string | null>(null);
+  const statusRequestId = useRef<number>(0);
+
+  const fetchCurrentStatus = useCallback(async () => {
+    await reconciliarPagoMercadoPago(route.params.paymentId);
+    return consultarPagoMercadoPago(route.params.paymentId);
+  }, [route.params.paymentId]);
 
   const loadStatus = useCallback(async (): Promise<void> => {
+    const requestId = ++statusRequestId.current;
     setLoading(true);
     setError(null);
     try {
-      const payment = await consultarPagoMercadoPago(route.params.paymentId);
-      setStatus(payment.status);
-      setCheckoutUrl(payment.checkoutUrl ?? null);
+      const payment = await fetchCurrentStatus();
+      if (requestId === statusRequestId.current) {
+        setStatus(payment.status);
+        setStatusPaymentId(route.params.paymentId);
+        setCheckoutUrl(payment.checkoutUrl ?? null);
+        setError(null);
+        setErrorPaymentId(null);
+      }
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'No se pudo consultar el estado.');
+      if (requestId === statusRequestId.current) {
+        setError(e instanceof Error ? e.message : 'No se pudo consultar el estado.');
+        setErrorPaymentId(route.params.paymentId);
+      }
     } finally {
-      setLoading(false);
+      if (requestId === statusRequestId.current) {
+        setRequestPaymentId(route.params.paymentId);
+        setLoading(false);
+      }
     }
-  }, [route.params.paymentId]);
+  }, [fetchCurrentStatus, route.params.paymentId]);
 
   useEffect(() => {
-    let active = true;
-    void consultarPagoMercadoPago(route.params.paymentId)
+    const requestId = ++statusRequestId.current;
+    void fetchCurrentStatus()
       .then((payment) => {
-        if (active) {
+        if (requestId === statusRequestId.current) {
           setStatus(payment.status);
+          setStatusPaymentId(route.params.paymentId);
           setCheckoutUrl(payment.checkoutUrl ?? null);
+          setError(null);
+          setErrorPaymentId(null);
         }
       })
       .catch((e: unknown) => {
-        if (active) setError(e instanceof Error ? e.message : 'No se pudo consultar el estado.');
+        if (requestId === statusRequestId.current) {
+          setError(e instanceof Error ? e.message : 'No se pudo consultar el estado.');
+          setErrorPaymentId(route.params.paymentId);
+        }
       })
-      .finally(() => { if (active) setLoading(false); });
-    return () => { active = false; };
-  }, [route.params.paymentId]);
+      .finally(() => {
+        if (requestId === statusRequestId.current) {
+          setRequestPaymentId(route.params.paymentId);
+          setLoading(false);
+        }
+      });
+    return () => { statusRequestId.current += 1; };
+  }, [fetchCurrentStatus, route.params.paymentId]);
+
+  const currentPaymentStatus = statusPaymentId === route.params.paymentId ? status : null;
+  const currentCheckoutUrl = statusPaymentId === route.params.paymentId ? checkoutUrl : null;
+  const isLoading = loading || requestPaymentId !== route.params.paymentId;
 
   const reopenCheckout = async (): Promise<void> => {
-    if (!checkoutUrl) return;
+    if (!currentCheckoutUrl) return;
     setError(null);
+    setErrorPaymentId(null);
     try {
       await WebBrowser.openAuthSessionAsync(
-        checkoutUrl,
+        currentCheckoutUrl,
         `barriogo://checkout-return?paymentId=${encodeURIComponent(route.params.paymentId)}`,
       );
     } catch (e) {
       // Keep checkoutUrl available so the owner can retry opening it.
       setError(e instanceof Error ? e.message : 'No se pudo abrir Mercado Pago.');
+      setErrorPaymentId(route.params.paymentId);
       return;
     }
     await loadStatus();
@@ -79,15 +117,15 @@ export default function PagoMercadoPagoScreen({ navigation, route }: Props) {
     <View style={[styles.container, { paddingTop: insets.top + 12 }]}>
       <ScreenHeader titulo="Pago de prueba" onBack={() => navigation.navigate('Tabs', { screen: 'PedidosTab' })} backAccessibilityLabel="Volver a pedidos" />
       <View style={styles.content}>
-        {loading ? <ActivityIndicator color={colors.primary} size="large" /> : null}
-        {status ? <Text style={styles.message}>{STATUS_TEXT[status]}</Text> : null}
-        {error ? <Text style={styles.error}>{error}</Text> : null}
+        {isLoading ? <ActivityIndicator color={colors.primary} size="large" /> : null}
+        {currentPaymentStatus ? <Text style={styles.message}>{STATUS_TEXT[currentPaymentStatus]}</Text> : null}
+        {error && errorPaymentId === route.params.paymentId ? <Text style={styles.error}>{error}</Text> : null}
         <Text style={styles.note}>El estado se confirma desde Mercado Pago; cerrar el navegador no cancela el pedido.</Text>
-        <TouchableOpacity style={styles.button} onPress={() => void loadStatus()} disabled={loading}>
-          <Text style={styles.buttonText}>{loading ? 'Consultando…' : 'Consultar estado'}</Text>
+        <TouchableOpacity style={styles.button} onPress={() => void loadStatus()} disabled={isLoading}>
+          <Text style={styles.buttonText}>{isLoading ? 'Consultando…' : 'Consultar estado'}</Text>
         </TouchableOpacity>
-        {status === 'pending' && checkoutUrl ? (
-          <TouchableOpacity style={styles.button} onPress={() => void reopenCheckout()} disabled={loading}>
+        {currentPaymentStatus === 'pending' && currentCheckoutUrl ? (
+          <TouchableOpacity style={styles.button} onPress={() => void reopenCheckout()} disabled={isLoading}>
             <Text style={styles.buttonText}>Volver a Mercado Pago</Text>
           </TouchableOpacity>
         ) : null}

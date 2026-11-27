@@ -29,6 +29,7 @@ const ERROR_MESSAGES: Record<string, string> = {
   PAYMENT_RESUME_FAILED: 'No se pudo retomar el pago. Inténtalo de nuevo más tarde.',
   PAYMENT_NOT_FOUND: 'No encontramos ese pago en tu cuenta.',
   PAYMENT_STATUS_UNAVAILABLE: 'No se pudo consultar el pago. Inténtalo de nuevo más tarde.',
+  PAYMENT_RECONCILIATION_UNAVAILABLE: 'No pudimos confirmar el estado con Mercado Pago. El estado mostrado no cambió; inténtalo de nuevo más tarde.',
 };
 
 async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
@@ -79,6 +80,16 @@ export function consultarPagoMercadoPago(paymentId: string): Promise<MercadoPago
     throw new Error('El identificador del pago no es válido.');
   }
   return request<MercadoPagoPayment>(`/api/payments/${encodeURIComponent(paymentId)}`);
+}
+
+export function reconciliarPagoMercadoPago(paymentId: string): Promise<MercadoPagoPayment> {
+  if (!/^[a-f0-9]{64}$/.test(paymentId)) {
+    throw new Error('El identificador del pago no es válido.');
+  }
+  return request<MercadoPagoPayment>(`/api/payments/${encodeURIComponent(paymentId)}/reconcile`, {
+    method: 'POST',
+    body: JSON.stringify({}),
+  });
 }
 
 export function consultarPagoPedidoMercadoPago(pedidoId: string): Promise<MercadoPagoPayment> {

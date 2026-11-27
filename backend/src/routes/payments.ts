@@ -1,7 +1,7 @@
 import { Router, type Response as ExpressResponse } from 'express';
 import { requireFirebaseUser } from '../middleware/requireFirebaseUser.js';
 import { text } from '../payments/orderValidation.js';
-import { createOrReusePayment, readPaymentStatus, resumePendingPayment } from '../payments/paymentService.js';
+import { createOrReusePayment, readPaymentStatus, reconcilePendingPayment, resumePendingPayment } from '../payments/paymentService.js';
 import type { AuthenticatedRequest } from '../types/payment.js';
 
 function sendError(res: ExpressResponse, status: number, code: string): void {
@@ -76,6 +76,24 @@ paymentsRouter.get('/order/:pedidoId', requireFirebaseUser, async (req: Authenti
     res.json({ paymentId: outcome.paymentId, status: outcome.status, pedidoIds: outcome.pedidoIds, checkoutUrl: outcome.checkoutUrl });
   } catch {
     sendError(res, 500, 'PAYMENT_RESUME_FAILED');
+  }
+});
+
+paymentsRouter.post('/:paymentId/reconcile', requireFirebaseUser, async (req: AuthenticatedRequest, res) => {
+  const paymentId = text(req.params.paymentId);
+  if (!paymentId || !/^[a-f0-9]{64}$/.test(paymentId)) {
+    sendError(res, 400, 'INVALID_PAYMENT_IDENTIFIER');
+    return;
+  }
+  try {
+    const status = await reconcilePendingPayment(req.userId!, paymentId);
+    if (!status) {
+      sendError(res, 404, 'PAYMENT_NOT_FOUND');
+      return;
+    }
+    res.json(status);
+  } catch {
+    sendError(res, 502, 'PAYMENT_RECONCILIATION_UNAVAILABLE');
   }
 });
 

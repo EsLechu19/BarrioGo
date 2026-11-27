@@ -2,6 +2,7 @@ import { FieldValue } from 'firebase-admin/firestore';
 import { db } from '../config/firebase.js';
 import { isSandboxPaymentConfigured } from '../config/env.js';
 import { createMercadoPagoOrder } from './mercadoPagoClient.js';
+import { updatePaymentFromOfficialOrder } from './webhookService.js';
 import { text, validatePendingOrders } from './orderValidation.js';
 import { releasePaymentReservation, reservePayment } from './paymentRepository.js';
 
@@ -110,4 +111,17 @@ export async function readPaymentStatus(userId: string, paymentId: string) {
     pedidoIds: data.pedidoIds,
     ...(data.status === 'pending' && data.checkoutUrl ? { checkoutUrl: data.checkoutUrl } : {}),
   };
+}
+
+export async function reconcilePendingPayment(userId: string, paymentId: string) {
+  const paymentRef = db.collection('pagos').doc(paymentId);
+  const paymentSnap = await paymentRef.get();
+  if (!paymentSnap.exists || paymentSnap.data()?.usuarioId !== userId) return null;
+
+  const payment = paymentSnap.data() as { status: string; mpOrderId?: string };
+  if (payment.status === 'pending' && payment.mpOrderId) {
+    await updatePaymentFromOfficialOrder(payment.mpOrderId, paymentId);
+  }
+
+  return readPaymentStatus(userId, paymentId);
 }
