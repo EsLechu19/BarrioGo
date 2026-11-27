@@ -29,9 +29,10 @@ export async function createMercadoPagoOrder(
 }
 
 export async function getOfficialMercadoPagoOrder(orderId: string): Promise<MpOrder> {
-  if (!runtimeEnv.mercadoPagoAccessToken?.startsWith('TEST-')) throw new Error('Test payment provider is not configured.');
+  const accessToken = runtimeEnv.mercadoPagoAccessToken;
+  if (!accessToken?.trim()) throw new Error('Payment provider is not configured.');
   const response = await fetch(`https://api.mercadopago.com/v1/orders/${encodeURIComponent(orderId)}`, {
-    headers: { Authorization: `Bearer ${runtimeEnv.mercadoPagoAccessToken}` },
+    headers: { Authorization: `Bearer ${accessToken}` },
   });
   if (!response.ok) throw new Error('Could not confirm the provider order state.');
   return await response.json() as MpOrder;
