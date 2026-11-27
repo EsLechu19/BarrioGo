@@ -17,11 +17,11 @@ export const runtimeEnv = {
 };
 
 export function isSandboxPaymentConfigured(): boolean {
-  return runtimeEnv.mercadoPagoAccessToken?.startsWith('TEST-') === true &&
+  return Boolean(runtimeEnv.mercadoPagoAccessToken) &&
     Boolean(runtimeEnv.publicBackendUrl) &&
     /^https:\/\//i.test(runtimeEnv.publicBackendUrl ?? '');
 }
 
 export function hasSandboxAccessToken(): boolean {
-  return runtimeEnv.mercadoPagoAccessToken?.startsWith('TEST-') === true;
+  return Boolean(runtimeEnv.mercadoPagoAccessToken);
 }
